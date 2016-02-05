@@ -1,26 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2010-2011 Umeå University
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#            http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 """
 Contains a class that can do SAML ECP Authentication for other python
 programs.
 """
 
-import cookielib
+from six.moves import http_cookiejar as cookielib
 import logging
 
 from saml2 import soap
@@ -87,7 +74,7 @@ class Client(Entity):
         if metadata_file:
             self._metadata = MetadataStore([saml, samlp], None, config)
             self._metadata.load("local", metadata_file)
-            logger.debug("Loaded metadata from '%s'" % metadata_file)
+            logger.debug("Loaded metadata from '%s'", metadata_file)
         else:
             self._metadata = None
 
@@ -122,12 +109,12 @@ class Client(Entity):
         if headers:
             ht_args["headers"].extend(headers)
 
-        logger.debug("[P2] Sending request: %s" % ht_args["data"])
+        logger.debug("[P2] Sending request: %s", ht_args["data"])
 
         # POST the request to the IdP
         response = self.send(**ht_args)
 
-        logger.debug("[P2] Got IdP response: %s" % response)
+        logger.debug("[P2] Got IdP response: %s", response)
 
         if response.status_code != 200:
             raise SAMLError(
@@ -140,12 +127,12 @@ class Client(Entity):
         if respdict is None:
             raise SAMLError("Unexpected reply from the IdP")
 
-        logger.debug("[P2] IdP response dict: %s" % respdict)
+        logger.debug("[P2] IdP response dict: %s", respdict)
 
         idp_response = respdict["body"]
         assert idp_response.c_tag == "Response"
 
-        logger.debug("[P2] IdP AUTHN response: %s" % idp_response)
+        logger.debug("[P2] IdP AUTHN response: %s", idp_response)
 
         _ecp_response = None
         for item in respdict["header"]:
@@ -160,7 +147,7 @@ class Client(Entity):
             _ = self.send(rc_url, "POST", data=soap.soap_fault(error))
             # Raise an exception so the user knows something went wrong
             raise SAMLError(error)
-        
+
         return idp_response
 
     @staticmethod
@@ -168,7 +155,7 @@ class Client(Entity):
         if respdict is None:
             raise SAMLError("Unexpected reply from the SP")
 
-        logger.debug("[P1] SP response dict: %s" % respdict)
+        logger.debug("[P1] SP response dict: %s", respdict)
 
         # AuthnRequest in the body or not
         authn_request = respdict["body"]
@@ -214,7 +201,7 @@ class Client(Entity):
         ht_args = self.use_soap(idp_response, args["rc_url"],
                                 [args["relay_state"]])
 
-        logger.debug("[P3] Post to SP: %s" % ht_args["data"])
+        logger.debug("[P3] Post to SP: %s", ht_args["data"])
 
         ht_args["headers"].append(('Content-Type', 'application/vnd.paos+xml'))
 
@@ -226,15 +213,15 @@ class Client(Entity):
             # url I started off with.
             pass
         else:
-            print response.error
+            print(response.error)
             raise SAMLError(
                 "Error POSTing package to SP: %s" % response.error)
 
-        logger.debug("[P3] SP response: %s" % response.text)
+        logger.debug("[P3] SP response: %s", response.text)
 
         self.done_ecp = True
         logger.debug("Done ECP")
-            
+
         return None
 
     def add_paos_headers(self, headers=None):
@@ -279,7 +266,7 @@ class Client(Entity):
         opargs["headers"] = self.add_paos_headers(opargs["headers"])
 
         response = self.send(url, op, **opargs)
-        logger.debug("[Op] SP response: %s" % response)
+        logger.debug("[Op] SP response: %s", response)
 
         if response.status_code != 200:
             raise SAMLError(
@@ -303,7 +290,7 @@ class Client(Entity):
         except (soap.XmlParseError, AssertionError, KeyError):
             pass
 
-        #print "RESP",response, self.http.response
+        #print("RESP",response, self.http.response)
 
         if  response.status_code != 404:
             raise SAMLError("Error performing operation: %s" % (

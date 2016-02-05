@@ -3,10 +3,10 @@ import hmac
 import logging
 import time
 import cgi
+import six
 
-from urllib import quote
-from urlparse import parse_qs
-from Cookie import SimpleCookie
+from six.moves.urllib.parse import quote, parse_qs
+from six.moves.http_cookies import SimpleCookie
 
 from saml2 import BINDING_HTTP_ARTIFACT, SAMLError
 from saml2 import BINDING_HTTP_REDIRECT
@@ -16,7 +16,6 @@ from saml2 import BINDING_SOAP
 from saml2 import time_util
 
 __author__ = 'rohe0002'
-
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +60,7 @@ class Response(object):
             mte = self.mako_lookup.get_template(self.mako_template)
             return [mte.render(**argv)]
         else:
-            if isinstance(message, basestring):
+            if isinstance(message, six.string_types):
                 return [message]
             else:
                 return message
@@ -73,8 +72,8 @@ class Created(Response):
 
 class Redirect(Response):
     _template = '<html>\n<head><title>Redirecting to %s</title></head>\n' \
-        '<body>\nYou are being redirected to <a href="%s">%s</a>\n' \
-        '</body>\n</html>'
+                '<body>\nYou are being redirected to <a href="%s">%s</a>\n' \
+                '</body>\n</html>'
     _status = '302 Found'
 
     def __call__(self, environ, start_response, **kwargs):
@@ -86,8 +85,8 @@ class Redirect(Response):
 
 class SeeOther(Response):
     _template = '<html>\n<head><title>Redirecting to %s</title></head>\n' \
-        '<body>\nYou are being redirected to <a href="%s">%s</a>\n' \
-        '</body>\n</html>'
+                '<body>\nYou are being redirected to <a href="%s">%s</a>\n' \
+                '</body>\n</html>'
     _status = '303 See Other'
 
     def __call__(self, environ, start_response, **kwargs):
@@ -142,6 +141,21 @@ class BadGateway(Response):
     _status = "502 Bad Gateway"
 
 
+class HttpParameters():
+    """GET or POST signature parameters for Redirect or POST-SimpleSign bindings
+    because they are not contained in XML unlike the POST binding
+    """
+    signature = None
+    sigalg = None
+    # Relaystate and SAML message are stored elsewhere
+    def __init__(self, dict):
+        try:
+            self.signature = dict["Signature"][0]
+            self.sigalg = dict["SigAlg"][0]
+        except KeyError:
+            pass
+
+
 def extract(environ, empty=False, err=False):
     """Extracts strings in form data and returns a dict.
 
@@ -151,7 +165,7 @@ def extract(environ, empty=False, err=False):
     """
     formdata = cgi.parse(environ['wsgi.input'], environ, empty, err)
     # Remove single entries from lists
-    for key, value in formdata.iteritems():
+    for key, value in iter(formdata.items()):
         if len(value) == 1:
             formdata[key] = value[0]
     return formdata
@@ -252,7 +266,7 @@ def unpack_artifact(environ):
 
 def unpack_any(environ):
     if environ['REQUEST_METHOD'].upper() == 'GET':
-    # Could be either redirect or artifact
+        # Could be either redirect or artifact
         _dict = unpack_redirect(environ)
         if "ID" in _dict:
             binding = BINDING_URI
@@ -293,7 +307,7 @@ def cookie_signature(seed, *parts):
     return sha1.hexdigest()
 
 
-def make_cookie(name, load, seed, expire=0, domain="",  path="",
+def make_cookie(name, load, seed, expire=0, domain="", path="",
                 timestamp=""):
     """
     Create and return a cookie

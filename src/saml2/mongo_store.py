@@ -6,39 +6,26 @@ from pymongo.mongo_replica_set_client import MongoReplicaSetClient
 import pymongo.uri_parser
 import pymongo.errors
 from saml2.eptid import Eptid
-from saml2.mdstore import MetaData
+from saml2.mdstore import InMemoryMetaData
+from saml2.mdstore import metadata_modules
+from saml2.mdstore import load_metadata_modules
 from saml2.s_utils import PolicyError
 
-from saml2.ident import code, IdentDB, Unknown
-from saml2.mdie import to_dict, from_dict
+from saml2.ident import code_binary
+from saml2.ident import IdentDB
+from saml2.ident import Unknown
+from saml2.mdie import to_dict
+from saml2.mdie import from_dict
 
-from saml2 import md
-from saml2 import saml
-from saml2.extension import mdui
-from saml2.extension import idpdisc
-from saml2.extension import dri
-from saml2.extension import mdattr
-from saml2.extension import ui
-import xmldsig
-import xmlenc
+import six
 
-
-ONTS = {
-    saml.NAMESPACE: saml,
-    mdui.NAMESPACE: mdui,
-    mdattr.NAMESPACE: mdattr,
-    dri.NAMESPACE: dri,
-    ui.NAMESPACE: ui,
-    idpdisc.NAMESPACE: idpdisc,
-    md.NAMESPACE: md,
-    xmldsig.NAMESPACE: xmldsig,
-    xmlenc.NAMESPACE: xmlenc
-}
 
 __author__ = 'rolandh'
 
 logger = logging.getLogger(__name__)
 
+ONTS = load_metadata_modules()
+MMODS = metadata_modules()
 
 class CorruptDatabase(Exception):
     pass
@@ -58,12 +45,12 @@ class SessionStorageMDB(object):
 
     def store_assertion(self, assertion, to_sign):
         name_id = assertion.subject.name_id
-        nkey = sha1(code(name_id)).hexdigest()
+        nkey = sha1(code_binary(name_id)).hexdigest()
 
         doc = {
             "name_id_key": nkey,
             "assertion_id": assertion.id,
-            "assertion": to_dict(assertion, ONTS.values(), True),
+            "assertion": to_dict(assertion, MMODS, True),
             "to_sign": to_sign
         }
 
@@ -93,7 +80,7 @@ class SessionStorageMDB(object):
         :return:
         """
         result = []
-        key = sha1(code(name_id)).hexdigest()
+        key = sha1(code_binary(name_id)).hexdigest()
         for item in self.assertion.find({"name_id_key": key}):
             assertion = from_dict(item["assertion"], ONTS, True)
             if session_index or requested_context:
@@ -112,8 +99,8 @@ class SessionStorageMDB(object):
         return result
 
     def remove_authn_statements(self, name_id):
-        logger.debug("remove authn about: %s" % name_id)
-        key = sha1(code(name_id)).hexdigest()
+        logger.debug("remove authn about: %s", name_id)
+        key = sha1(code_binary(name_id)).hexdigest()
         for item in self.assertion.find({"name_id_key": key}):
             self.assertion.remove(item["_id"])
 
@@ -150,10 +137,11 @@ class IdentMDB(IdentDB):
         return _id
 
     def store(self, ident, name_id):
-        self.mdb.store(ident, name_id=to_dict(name_id, ONTS.values(), True))
+        self.mdb.store(ident, name_id=to_dict(name_id, MMODS, True))
 
     def find_nameid(self, userid, nformat=None, sp_name_qualifier=None,
-                    name_qualifier=None, sp_provided_id=None):
+                    name_qualifier=None, sp_provided_id=None, **kwargs):
+        # reset passed for compatibility kwargs for next usage
         kwargs = {}
         if nformat:
             kwargs["name_format"] = nformat
@@ -170,13 +158,13 @@ class IdentMDB(IdentDB):
         return res
 
     def find_local_id(self, name_id):
-        cnid = to_dict(name_id, ONTS.values(), True)
+        cnid = to_dict(name_id, MMODS, True)
         for item in self.mdb.get(name_id=cnid):
             return item[self.mdb.primary_key]
         return None
 
     def remove_remote(self, name_id):
-        cnid = to_dict(name_id, ONTS.values(), True)
+        cnid = to_dict(name_id, MMODS, True)
         self.mdb.remove(name_id=cnid)
 
     def handle_name_id_mapping_request(self, name_id, name_id_policy):
@@ -323,14 +311,14 @@ def protect(dic):
     res = {}
     for key, val in dic.items():
         key = key.replace(".", "__")
-        if isinstance(val, basestring):
+        if isinstance(val, six.string_types):
             pass
         elif isinstance(val, dict):
             val = protect(val)
         elif isinstance(val, list):
             li = []
             for va in val:
-                if isinstance(va, basestring):
+                if isinstance(va, six.string_types):
                     pass
                 elif isinstance(va, dict):
                     va = protect(va)
@@ -348,14 +336,14 @@ def unprotect(dic):
             pass
         else:
             key = key.replace("__", ".")
-        if isinstance(val, basestring):
+        if isinstance(val, six.string_types):
             pass
         elif isinstance(val, dict):
             val = unprotect(val)
         elif isinstance(val, list):
             li = []
             for va in val:
-                if isinstance(va, basestring):
+                if isinstance(va, six.string_types):
                     pass
                 elif isinstance(val, dict):
                     va = unprotect(va)
@@ -376,9 +364,9 @@ def export_mdstore_to_mongo_db(mds, database, collection, sub_collection=""):
         mdb.store(key, **kwargs)
 
 
-class MetadataMDB(MetaData):
-    def __init__(self, onts, attrc, database="", collection=""):
-        MetaData.__init__(self, onts, attrc)
+class MetadataMDB(InMemoryMetaData):
+    def __init__(self, attrc, database="", collection=""):
+        super(MetadataMDB, self).__init__(attrc)
         self.mdb = MDB(database, collection)
         self.mdb.primary_key = "entity_id"
 

@@ -5,10 +5,9 @@
 #
 
 import saml2
-from saml2 import SamlBase
-
-import xmldsig as ds
 from saml2 import saml
+from saml2 import SamlBase
+from saml2 import xmldsig as ds
 
 NAMESPACE = 'urn:oasis:names:tc:SAML:2.0:protocol'
 
@@ -99,7 +98,8 @@ def status_detail_type__from_string(xml_string):
 
 
 class AuthnContextComparisonType_(SamlBase):
-    """The urn:oasis:names:tc:SAML:2.0:protocol:AuthnContextComparisonType element """
+    """The urn:oasis:names:tc:SAML:2.0:protocol:AuthnContextComparisonType
+    element """
 
     c_tag = 'AuthnContextComparisonType'
     c_namespace = NAMESPACE
@@ -136,12 +136,12 @@ class NameIDPolicyType_(SamlBase):
                  text=None,
                  extension_elements=None,
                  extension_attributes=None,
-    ):
+                 ):
         SamlBase.__init__(self,
                           text=text,
                           extension_elements=extension_elements,
                           extension_attributes=extension_attributes,
-        )
+                          )
         self.format = format
         self.sp_name_qualifier = sp_name_qualifier
         self.allow_create = allow_create
@@ -186,13 +186,11 @@ class IDPEntryType_(SamlBase):
                  loc=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         SamlBase.__init__(self,
                           text=text,
                           extension_elements=extension_elements,
-                          extension_attributes=extension_attributes,
-        )
+                          extension_attributes=extension_attributes)
         self.provider_id = provider_id
         self.name = name
         self.loc = loc
@@ -362,13 +360,11 @@ class RequestAbstractType_(SamlBase):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         SamlBase.__init__(self,
                           text=text,
                           extension_elements=extension_elements,
-                          extension_attributes=extension_attributes,
-        )
+                          extension_attributes=extension_attributes)
         self.issuer = issuer
         self.signature = signature
         self.extensions = extensions
@@ -380,7 +376,9 @@ class RequestAbstractType_(SamlBase):
 
 
 class AssertionIDRequestType_(RequestAbstractType_):
-    """The urn:oasis:names:tc:SAML:2.0:protocol:AssertionIDRequestType element """
+    """
+    The urn:oasis:names:tc:SAML:2.0:protocol:AssertionIDRequestType element
+    """
 
     c_tag = 'AssertionIDRequestType'
     c_namespace = NAMESPACE
@@ -405,8 +403,7 @@ class AssertionIDRequestType_(RequestAbstractType_):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         RequestAbstractType_.__init__(self,
                                       issuer=issuer,
                                       signature=signature,
@@ -418,8 +415,7 @@ class AssertionIDRequestType_(RequestAbstractType_):
                                       consent=consent,
                                       text=text,
                                       extension_elements=extension_elements,
-                                      extension_attributes=extension_attributes,
-        )
+                                      extension_attributes=extension_attributes)
         self.assertion_id_ref = assertion_id_ref or []
 
 
@@ -429,7 +425,9 @@ def assertion_id_request_type__from_string(xml_string):
 
 
 class SubjectQueryAbstractType_(RequestAbstractType_):
-    """The urn:oasis:names:tc:SAML:2.0:protocol:SubjectQueryAbstractType element """
+    """
+    The urn:oasis:names:tc:SAML:2.0:protocol:SubjectQueryAbstractType element
+    """
 
     c_tag = 'SubjectQueryAbstractType'
     c_namespace = NAMESPACE
@@ -437,8 +435,8 @@ class SubjectQueryAbstractType_(RequestAbstractType_):
     c_attributes = RequestAbstractType_.c_attributes.copy()
     c_child_order = RequestAbstractType_.c_child_order[:]
     c_cardinality = RequestAbstractType_.c_cardinality.copy()
-    c_children['{urn:oasis:names:tc:SAML:2.0:assertion}Subject'] = ('subject',
-                                                                    saml.Subject)
+    c_children['{urn:oasis:names:tc:SAML:2.0:assertion}Subject'] = (
+        'subject', saml.Subject)
     c_child_order.extend(['subject'])
 
     def __init__(self,
@@ -453,8 +451,7 @@ class SubjectQueryAbstractType_(RequestAbstractType_):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         RequestAbstractType_.__init__(self,
                                       issuer=issuer,
                                       signature=signature,
@@ -466,13 +463,13 @@ class SubjectQueryAbstractType_(RequestAbstractType_):
                                       consent=consent,
                                       text=text,
                                       extension_elements=extension_elements,
-                                      extension_attributes=extension_attributes,
-        )
+                                      extension_attributes=extension_attributes)
         self.subject = subject
 
 
 class RequestedAuthnContextType_(SamlBase):
-    """The urn:oasis:names:tc:SAML:2.0:protocol:RequestedAuthnContextType element """
+    """The urn:oasis:names:tc:SAML:2.0:protocol:RequestedAuthnContextType
+    element """
 
     c_tag = 'RequestedAuthnContextType'
     c_namespace = NAMESPACE
@@ -482,8 +479,8 @@ class RequestedAuthnContextType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_children[
         '{urn:oasis:names:tc:SAML:2.0:assertion}AuthnContextClassRef'] = (
-            'authn_context_class_ref',
-            [saml.AuthnContextClassRef])
+        'authn_context_class_ref',
+        [saml.AuthnContextClassRef])
     c_cardinality['authn_context_class_ref'] = {"min": 0}
     c_children['{urn:oasis:names:tc:SAML:2.0:assertion}AuthnContextDeclRef'] = (
         'authn_context_decl_ref',
@@ -499,13 +496,11 @@ class RequestedAuthnContextType_(SamlBase):
                  comparison=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         SamlBase.__init__(self,
                           text=text,
                           extension_elements=extension_elements,
-                          extension_attributes=extension_attributes,
-        )
+                          extension_attributes=extension_attributes)
         self.authn_context_class_ref = authn_context_class_ref or []
         self.authn_context_decl_ref = authn_context_decl_ref or []
         self.comparison = comparison
@@ -544,8 +539,7 @@ class AttributeQueryType_(SubjectQueryAbstractType_):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         SubjectQueryAbstractType_.__init__(self,
                                            subject=subject,
                                            issuer=issuer,
@@ -558,8 +552,7 @@ class AttributeQueryType_(SubjectQueryAbstractType_):
                                            consent=consent,
                                            text=text,
                                            extension_elements=extension_elements,
-                                           extension_attributes=extension_attributes,
-        )
+                                           extension_attributes=extension_attributes)
         self.attribute = attribute or []
 
 
@@ -568,7 +561,8 @@ def attribute_query_type__from_string(xml_string):
 
 
 class AuthzDecisionQueryType_(SubjectQueryAbstractType_):
-    """The urn:oasis:names:tc:SAML:2.0:protocol:AuthzDecisionQueryType element """
+    """The urn:oasis:names:tc:SAML:2.0:protocol:AuthzDecisionQueryType
+    element """
 
     c_tag = 'AuthzDecisionQueryType'
     c_namespace = NAMESPACE
@@ -600,8 +594,7 @@ class AuthzDecisionQueryType_(SubjectQueryAbstractType_):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         SubjectQueryAbstractType_.__init__(self,
                                            subject=subject,
                                            issuer=issuer,
@@ -614,8 +607,7 @@ class AuthzDecisionQueryType_(SubjectQueryAbstractType_):
                                            consent=consent,
                                            text=text,
                                            extension_elements=extension_elements,
-                                           extension_attributes=extension_attributes,
-        )
+                                           extension_attributes=extension_attributes)
         self.action = action or []
         self.evidence = evidence
         self.resource = resource
@@ -681,8 +673,7 @@ class ArtifactResolveType_(RequestAbstractType_):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         RequestAbstractType_.__init__(self,
                                       issuer=issuer,
                                       signature=signature,
@@ -694,8 +685,7 @@ class ArtifactResolveType_(RequestAbstractType_):
                                       consent=consent,
                                       text=text,
                                       extension_elements=extension_elements,
-                                      extension_attributes=extension_attributes,
-        )
+                                      extension_attributes=extension_attributes)
         self.artifact = artifact
 
 
@@ -761,8 +751,7 @@ class LogoutRequestType_(RequestAbstractType_):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         RequestAbstractType_.__init__(self,
                                       issuer=issuer,
                                       signature=signature,
@@ -774,8 +763,7 @@ class LogoutRequestType_(RequestAbstractType_):
                                       consent=consent,
                                       text=text,
                                       extension_elements=extension_elements,
-                                      extension_attributes=extension_attributes,
-        )
+                                      extension_attributes=extension_attributes)
         self.base_id = base_id
         self.name_id = name_id
         self.encrypted_id = encrypted_id
@@ -827,8 +815,7 @@ class NameIDMappingRequestType_(RequestAbstractType_):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         RequestAbstractType_.__init__(self,
                                       issuer=issuer,
                                       signature=signature,
@@ -840,8 +827,7 @@ class NameIDMappingRequestType_(RequestAbstractType_):
                                       consent=consent,
                                       text=text,
                                       extension_elements=extension_elements,
-                                      extension_attributes=extension_attributes,
-        )
+                                      extension_attributes=extension_attributes)
         self.base_id = base_id
         self.name_id = name_id
         self.encrypted_id = encrypted_id
@@ -884,7 +870,9 @@ def subject_query_from_string(xml_string):
 
 
 class RequestedAuthnContext(RequestedAuthnContextType_):
-    """The urn:oasis:names:tc:SAML:2.0:protocol:RequestedAuthnContext element """
+    """
+    The urn:oasis:names:tc:SAML:2.0:protocol:RequestedAuthnContext element
+    """
 
     c_tag = 'RequestedAuthnContext'
     c_namespace = NAMESPACE
@@ -950,13 +938,11 @@ class IDPListType_(SamlBase):
                  get_complete=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         SamlBase.__init__(self,
                           text=text,
                           extension_elements=extension_elements,
-                          extension_attributes=extension_attributes,
-        )
+                          extension_attributes=extension_attributes)
         self.idp_entry = idp_entry or []
         self.get_complete = get_complete
 
@@ -981,7 +967,9 @@ def artifact_resolve_from_string(xml_string):
 
 
 class ManageNameIDRequestType_(RequestAbstractType_):
-    """The urn:oasis:names:tc:SAML:2.0:protocol:ManageNameIDRequestType element """
+    """
+    The urn:oasis:names:tc:SAML:2.0:protocol:ManageNameIDRequestType element
+    """
 
     c_tag = 'ManageNameIDRequestType'
     c_namespace = NAMESPACE
@@ -1026,8 +1014,7 @@ class ManageNameIDRequestType_(RequestAbstractType_):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         RequestAbstractType_.__init__(self,
                                       issuer=issuer,
                                       signature=signature,
@@ -1039,8 +1026,7 @@ class ManageNameIDRequestType_(RequestAbstractType_):
                                       consent=consent,
                                       text=text,
                                       extension_elements=extension_elements,
-                                      extension_attributes=extension_attributes,
-        )
+                                      extension_attributes=extension_attributes)
         self.name_id = name_id
         self.encrypted_id = encrypted_id
         self.new_id = new_id
@@ -1114,22 +1100,21 @@ class AuthnQueryType_(SubjectQueryAbstractType_):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
-        SubjectQueryAbstractType_.__init__(self,
-                                           subject=subject,
-                                           issuer=issuer,
-                                           signature=signature,
-                                           extensions=extensions,
-                                           id=id,
-                                           version=version,
-                                           issue_instant=issue_instant,
-                                           destination=destination,
-                                           consent=consent,
-                                           text=text,
-                                           extension_elements=extension_elements,
-                                           extension_attributes=extension_attributes,
-        )
+                 extension_attributes=None):
+        SubjectQueryAbstractType_.__init__(
+            self,
+            subject=subject,
+            issuer=issuer,
+            signature=signature,
+            extensions=extensions,
+            id=id,
+            version=version,
+            issue_instant=issue_instant,
+            destination=destination,
+            consent=consent,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes)
         self.requested_authn_context = requested_authn_context
         self.session_index = session_index
 
@@ -1207,13 +1192,11 @@ class ScopingType_(SamlBase):
                  proxy_count=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         SamlBase.__init__(self,
                           text=text,
                           extension_elements=extension_elements,
-                          extension_attributes=extension_attributes,
-        )
+                          extension_attributes=extension_attributes)
         self.idp_list = idp_list
         self.requester_id = requester_id or []
         self.proxy_count = proxy_count
@@ -1299,8 +1282,7 @@ class AuthnRequestType_(RequestAbstractType_):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         RequestAbstractType_.__init__(self,
                                       issuer=issuer,
                                       signature=signature,
@@ -1312,8 +1294,7 @@ class AuthnRequestType_(RequestAbstractType_):
                                       consent=consent,
                                       text=text,
                                       extension_elements=extension_elements,
-                                      extension_attributes=extension_attributes,
-        )
+                                      extension_attributes=extension_attributes)
         self.subject = subject
         self.name_id_policy = name_id_policy
         self.conditions = conditions
@@ -1324,7 +1305,8 @@ class AuthnRequestType_(RequestAbstractType_):
         self.protocol_binding = protocol_binding
         self.assertion_consumer_service_index = assertion_consumer_service_index
         self.assertion_consumer_service_url = assertion_consumer_service_url
-        self.attribute_consuming_service_index = attribute_consuming_service_index
+        self.attribute_consuming_service_index = \
+            attribute_consuming_service_index
         self.provider_name = provider_name
 
 
@@ -1347,8 +1329,6 @@ def authn_request_from_string(xml_string):
     return saml2.create_class_from_xml_string(AuthnRequest, xml_string)
 
 
-#..................
-# ['ManageNameIDResponse', 'Status', 'NameIDMappingResponse', 'ArtifactResponseType', 'NameIDMappingResponseType', 'StatusType', 'ArtifactResponse', 'StatusCode', 'StatusCodeType', 'LogoutResponse', 'StatusResponseType', 'Response', 'ResponseType']
 class StatusType_(SamlBase):
     """The urn:oasis:names:tc:SAML:2.0:protocol:StatusType element """
 
@@ -1359,7 +1339,8 @@ class StatusType_(SamlBase):
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
     # Added further down to avoid undefined references
-    #c_children['{urn:oasis:names:tc:SAML:2.0:protocol}StatusCode'] = ('status_code', StatusCode)
+    # c_children['{urn:oasis:names:tc:SAML:2.0:protocol}StatusCode'] = (
+    # 'status_code', StatusCode)
     c_children['{urn:oasis:names:tc:SAML:2.0:protocol}StatusMessage'] = (
         'status_message', StatusMessage)
     c_cardinality['status_message'] = {"min": 0, "max": 1}
@@ -1374,13 +1355,11 @@ class StatusType_(SamlBase):
                  status_detail=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         SamlBase.__init__(self,
                           text=text,
                           extension_elements=extension_elements,
-                          extension_attributes=extension_attributes,
-        )
+                          extension_attributes=extension_attributes)
         self.status_code = status_code
         self.status_message = status_message
         self.status_detail = status_detail
@@ -1446,13 +1425,11 @@ class StatusResponseType_(SamlBase):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         SamlBase.__init__(self,
                           text=text,
                           extension_elements=extension_elements,
-                          extension_attributes=extension_attributes,
-        )
+                          extension_attributes=extension_attributes)
         self.issuer = issuer
         self.signature = signature
         self.extensions = extensions
@@ -1501,8 +1478,7 @@ class ResponseType_(StatusResponseType_):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         StatusResponseType_.__init__(self,
                                      issuer=issuer,
                                      signature=signature,
@@ -1516,8 +1492,7 @@ class ResponseType_(StatusResponseType_):
                                      consent=consent,
                                      text=text,
                                      extension_elements=extension_elements,
-                                     extension_attributes=extension_attributes,
-        )
+                                     extension_attributes=extension_attributes)
         self.assertion = assertion or []
         self.encrypted_assertion = encrypted_assertion or []
 
@@ -1573,7 +1548,9 @@ def logout_response_from_string(xml_string):
 
 
 class NameIDMappingResponseType_(StatusResponseType_):
-    """The urn:oasis:names:tc:SAML:2.0:protocol:NameIDMappingResponseType element """
+    """
+    The urn:oasis:names:tc:SAML:2.0:protocol:NameIDMappingResponseType element
+    """
 
     c_tag = 'NameIDMappingResponseType'
     c_namespace = NAMESPACE
@@ -1604,8 +1581,7 @@ class NameIDMappingResponseType_(StatusResponseType_):
                  consent=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         StatusResponseType_.__init__(self,
                                      issuer=issuer,
                                      signature=signature,
@@ -1619,8 +1595,7 @@ class NameIDMappingResponseType_(StatusResponseType_):
                                      consent=consent,
                                      text=text,
                                      extension_elements=extension_elements,
-                                     extension_attributes=extension_attributes,
-        )
+                                     extension_attributes=extension_attributes)
         self.name_id = name_id
         self.encrypted_id = encrypted_id
 
@@ -1661,7 +1636,8 @@ def artifact_response_from_string(xml_string):
 
 
 class NameIDMappingResponse(NameIDMappingResponseType_):
-    """The urn:oasis:names:tc:SAML:2.0:protocol:NameIDMappingResponse element """
+    """The urn:oasis:names:tc:SAML:2.0:protocol:NameIDMappingResponse element
+    """
 
     c_tag = 'NameIDMappingResponse'
     c_namespace = NAMESPACE
@@ -1675,7 +1651,7 @@ def name_id_mapping_response_from_string(xml_string):
     return saml2.create_class_from_xml_string(NameIDMappingResponse, xml_string)
 
 
-#..................
+# ..................
 # ['StatusCodeType', 'StatusCode']
 class StatusCodeType_(SamlBase):
     """The urn:oasis:names:tc:SAML:2.0:protocol:StatusCodeType element """
@@ -1695,13 +1671,11 @@ class StatusCodeType_(SamlBase):
                  value=None,
                  text=None,
                  extension_elements=None,
-                 extension_attributes=None,
-    ):
+                 extension_attributes=None):
         SamlBase.__init__(self,
                           text=text,
                           extension_elements=extension_elements,
-                          extension_attributes=extension_attributes,
-        )
+                          extension_attributes=extension_attributes)
         self.status_code = status_code
         self.value = value
 
@@ -1755,7 +1729,8 @@ ELEMENT_FROM_STRING = {
     AuthnQueryType_.c_tag: authn_query_type__from_string,
     RequestedAuthnContext.c_tag: requested_authn_context_from_string,
     RequestedAuthnContextType_.c_tag: requested_authn_context_type__from_string,
-    AuthnContextComparisonType_.c_tag: authn_context_comparison_type__from_string,
+    AuthnContextComparisonType_.c_tag:
+        authn_context_comparison_type__from_string,
     AttributeQuery.c_tag: attribute_query_from_string,
     AttributeQueryType_.c_tag: attribute_query_type__from_string,
     AuthzDecisionQuery.c_tag: authz_decision_query_from_string,
@@ -1793,7 +1768,8 @@ ELEMENT_FROM_STRING = {
     NameIDMappingRequest.c_tag: name_id_mapping_request_from_string,
     NameIDMappingRequestType_.c_tag: name_id_mapping_request_type__from_string,
     NameIDMappingResponse.c_tag: name_id_mapping_response_from_string,
-    NameIDMappingResponseType_.c_tag: name_id_mapping_response_type__from_string,
+    NameIDMappingResponseType_.c_tag:
+        name_id_mapping_response_type__from_string,
 }
 
 ELEMENT_BY_TAG = {
