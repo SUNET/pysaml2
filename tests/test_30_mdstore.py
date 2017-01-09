@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 import datetime
 import re
-from six.moves.urllib.parse import quote_plus
-#from future.backports.urllib.parse import quote_plus
+from collections import OrderedDict
+
+from future.backports.urllib.parse import quote_plus
+
 from saml2.config import Config
 from saml2.mdstore import MetadataStore
 from saml2.mdstore import MetaDataMDX
@@ -447,11 +449,23 @@ def test_get_certs_from_metadata_without_keydescriptor():
 
     assert len(certs) == 0
 
+
 def test_metadata_extension_algsupport():
     mds = MetadataStore(ATTRCONV, None)
     mds.imp(METADATACONF["12"])
     mdf = mds.metadata[full_path("uu.xml")]
     assert mds
+
+
+def test_extension():
+    mds = MetadataStore(ATTRCONV, None)
+    # use ordered dict to force expected entity to be last
+    metadata = OrderedDict()
+    metadata["1"] = {"entity1": {}}
+    metadata["2"] = {"entity2": {"idpsso_descriptor": [{"extensions": {"extension_elements": [{"__class__": "test"}]}}]}}
+    mds.metadata = metadata
+    assert mds.extension("entity2", "idpsso_descriptor", "test")
+
 
 if __name__ == "__main__":
     test_metadata_extension_algsupport()

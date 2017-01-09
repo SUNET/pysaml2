@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import shelve
+import six
 from saml2.ident import code, decode
 from saml2 import time_util, SAMLError
 import logging
@@ -95,9 +96,12 @@ class Cache(object):
         """
         cni = code(name_id)
         (timestamp, info) = self._db[cni][entity_id]
+        info = info.copy()
         if check_not_on_or_after and time_util.after(timestamp):
             raise ToOld("past %s" % str(timestamp))
 
+        if 'name_id' in info and isinstance(info['name_id'], six.string_types):
+            info['name_id'] = decode(info['name_id'])
         return info or None
 
     def set(self, name_id, entity_id, info, not_on_or_after=0):
@@ -110,6 +114,11 @@ class Cache(object):
         :param info: The session info, the assertion is part of this
         :param not_on_or_after: A time after which the assertion is not valid.
         """
+        info = dict(info)
+        if 'name_id' in info and not isinstance(info['name_id'], six.string_types):
+            # make friendly to (JSON) serialization
+            info['name_id'] = code(name_id)
+
         cni = code(name_id)
         if cni not in self._db:
             self._db[cni] = {}

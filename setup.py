@@ -10,13 +10,15 @@ install_requires = [
     # core dependencies
     'decorator',
     'requests >= 1.0.0',
+    'future',
     'paste',
     'zope.interface',
     'repoze.who',
-    'pycryptodome',  # 'Crypto'
+    'pycryptodomex',
     'pytz',
     'pyOpenSSL',
     'python-dateutil',
+    'defusedxml',
     'six'
 ]
 

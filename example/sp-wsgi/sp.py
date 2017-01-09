@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import xml.dom.minidom
+from saml2.sigver import SignatureError
 
 import six
 from six.moves.http_cookies import SimpleCookie
@@ -48,7 +49,7 @@ from saml2.samlp import Extensions
 logger = logging.getLogger("")
 hdlr = logging.FileHandler('spx.log')
 base_formatter = logging.Formatter(
-        "%(asctime)s %(name)s:%(levelname)s %(message)s")
+    "%(asctime)s %(name)s:%(levelname)s %(message)s")
 
 hdlr.setFormatter(base_formatter)
 logger.addHandler(hdlr)
@@ -65,10 +66,7 @@ def dict_to_table(ava, lev=0, width=1):
         txt.append("<tr>\n")
         if isinstance(valarr, six.string_types):
             txt.append("<th>%s</th>\n" % str(prop))
-            try:
-                txt.append("<td>%s</td>\n" % valarr.encode("utf8"))
-            except AttributeError:
-                txt.append("<td>%s</td>\n" % valarr)
+            txt.append("<td>%s</td>\n" % valarr)
         elif isinstance(valarr, list):
             i = 0
             n = len(valarr)
@@ -82,10 +80,7 @@ def dict_to_table(ava, lev=0, width=1):
                     txt.extend(dict_to_table(val, lev + 1, width - 1))
                     txt.append("</td>\n")
                 else:
-                    try:
-                        txt.append("<td>%s</td>\n" % val.encode("utf8"))
-                    except AttributeError:
-                        txt.append("<td>%s</td>\n" % val)
+                    txt.append("<td>%s</td>\n" % val)
                 if n > 1:
                     txt.append("</tr>\n")
                 n -= 1
@@ -206,7 +201,7 @@ class Cache(object):
         cookie[self.cookie_name]['path'] = "/"
         cookie[self.cookie_name]["expires"] = _expiration(480)
         logger.debug("Cookie expires: %s", cookie[self.cookie_name]["expires"])
-        return cookie.output().encode("UTF-8").split(": ", 1)
+        return cookie.output().split(": ", 1)
 
 
 # -----------------------------------------------------------------------------
@@ -230,12 +225,9 @@ class Service(object):
             return None
 
     def unpack_post(self):
-        _dict = parse_qs(get_post(self.environ))
+        _dict = parse_qs(get_post(self.environ).decode('utf8'))
         logger.debug("unpack_post:: %s", _dict)
-        try:
-            return dict([(k, v[0]) for k, v in _dict.items()])
-        except Exception:
-            return None
+        return dict([(k, v[0]) for k, v in _dict.items()])
 
     def unpack_soap(self):
         try:
@@ -338,7 +330,8 @@ class User(object):
 
     @property
     def authn_statement(self):
-        xml_doc = xml.dom.minidom.parseString(str(self.response.assertion.authn_statement[0]))
+        xml_doc = xml.dom.minidom.parseString(
+            str(self.response.assertion.authn_statement[0]))
         return xml_doc.toprettyxml()
 
 
@@ -363,8 +356,14 @@ class ACS(Service):
             return resp(self.environ, self.start_response)
 
         try:
+            conv_info = {'remote_addr': self.environ['REMOTE_ADDR'],
+                         'request_uri': self.environ['REQUEST_URI'],
+                         'entity_id': self.sp.config.entityid,
+                         'endpoints': self.sp.config.getattr('endpoints', 'sp')}
+
             self.response = self.sp.parse_authn_request_response(
-                    response, binding, self.outstanding_queries, self.cache.outstanding_certs)
+                response, binding, self.outstanding_queries,
+                self.cache.outstanding_certs, conv_info=conv_info)
         except UnknownPrincipal as excp:
             logger.error("UnknownPrincipal: %s", excp)
             resp = ServiceError("UnknownPrincipal: %s" % (excp,))
@@ -375,6 +374,9 @@ class ACS(Service):
             return resp(self.environ, self.start_response)
         except VerificationError as err:
             resp = ServiceError("Verification error: %s" % (err,))
+            return resp(self.environ, self.start_response)
+        except SignatureError as err:
+            resp = ServiceError("Signature error: %s" % (err,))
             return resp(self.environ, self.start_response)
         except Exception as err:
             resp = ServiceError("Other error: %s" % (err,))
@@ -393,7 +395,7 @@ class ACS(Service):
     def verify_attributes(self, ava):
         logger.info("SP: %s", self.sp.config.entityid)
         rest = POLICY.get_entity_categories(
-                self.sp.config.entityid, self.sp.metadata)
+            self.sp.config.entityid, self.sp.metadata)
 
         akeys = [k.lower() for k in ava.keys()]
 
@@ -478,7 +480,7 @@ class SSO(object):
                     _rstate = rndstr()
                     self.cache.relay_state[_rstate] = geturl(self.environ)
                     _entityid = _cli.config.ecp_endpoint(
-                            self.environ["REMOTE_ADDR"])
+                        self.environ["REMOTE_ADDR"])
 
                     if not _entityid:
                         return -1, ServiceError("No IdP to talk to")
@@ -530,7 +532,7 @@ class SSO(object):
             elif self.discosrv:
                 if query:
                     idp_entity_id = _cli.parse_discovery_service_response(
-                            query=self.environ.get("QUERY_STRING"))
+                        query=self.environ.get("QUERY_STRING"))
                 if not idp_entity_id:
                     sid_ = sid()
                     self.cache.outstanding_queries[sid_] = came_from
@@ -540,11 +542,11 @@ class SSO(object):
                                               "sp")["discovery_response"][0][0]
                     ret += "?sid=%s" % sid_
                     loc = _cli.create_discovery_service_request(
-                            self.discosrv, eid, **{"return": ret})
+                        self.discosrv, eid, **{"return": ret})
                     return -1, SeeOther(loc)
             elif len(idps) == 1:
                 # idps is a dictionary
-                idp_entity_id = idps.keys()[0]
+                idp_entity_id = list(idps.keys())[0]
             elif not len(idps):
                 return -1, ServiceError('Misconfiguration')
             else:
@@ -557,8 +559,8 @@ class SSO(object):
         try:
             # Picks a binding to use for sending the Request to the IDP
             _binding, destination = _cli.pick_binding(
-                    "single_sign_on_service", self.bindings, "idpsso",
-                    entity_id=entity_id)
+                "single_sign_on_service", self.bindings, "idpsso",
+                entity_id=entity_id)
             logger.debug("binding: %s, destination: %s", _binding,
                          destination)
             # Binding here is the response binding that is which binding the
@@ -577,7 +579,7 @@ class SSO(object):
                     "key": req_key_str
                 }
                 spcertenc = SPCertEnc(x509_data=ds.X509Data(
-                        x509_certificate=ds.X509Certificate(text=cert_str)))
+                    x509_certificate=ds.X509Certificate(text=cert_str)))
                 extensions = Extensions(extension_elements=[
                     element_to_extension_element(spcertenc)])
 
@@ -598,7 +600,7 @@ class SSO(object):
         except Exception as exc:
             logger.exception(exc)
             resp = ServiceError(
-                    "Failed to construct the AuthnRequest: %s" % exc)
+                "Failed to construct the AuthnRequest: %s" % exc)
             return resp
 
         # remember the request
@@ -791,7 +793,8 @@ def metadata(environ, start_response):
         if path[-1] != "/":
             path += "/"
         metadata = create_metadata_string(path + "sp_conf.py", None,
-                                          _args.valid, _args.cert, _args.keyfile,
+                                          _args.valid, _args.cert,
+                                          _args.keyfile,
                                           _args.id, _args.name, _args.sign)
         start_response('200 OK', [('Content-Type', "text/xml")])
         return metadata
@@ -860,10 +863,12 @@ if __name__ == '__main__':
     _parser.add_argument("config", help="SAML client config")
     _parser.add_argument('-p', dest='path', help='Path to configuration file.')
     _parser.add_argument('-v', dest='valid', default="4",
-                         help="How long, in days, the metadata is valid from the time of creation")
+                         help="How long, in days, the metadata is valid from "
+                              "the time of creation")
     _parser.add_argument('-c', dest='cert', help='certificate')
     _parser.add_argument('-i', dest='id',
-                         help="The ID of the entities descriptor in the metadata")
+                         help="The ID of the entities descriptor in the "
+                              "metadata")
     _parser.add_argument('-k', dest='keyfile',
                          help="A file with a key to sign the metadata with")
     _parser.add_argument('-n', dest='name')

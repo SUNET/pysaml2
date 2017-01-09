@@ -39,9 +39,10 @@ def get_algorithm_support(xmlsec):
 
     p_out = pof.stdout.read().decode('utf-8')
     p_err = pof.stderr.read().decode('utf-8')
+    pof.wait()
 
     if not p_err:
-        p = p_out.split('\n')
+        p = p_out.splitlines()
         algs = [x.strip('"') for x in p[1].split(',')]
         digest = []
         signing = []

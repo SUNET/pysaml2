@@ -1,6 +1,7 @@
 # coding=utf-8
 import pytest
 
+from saml2.argtree import add_path
 from saml2.authn_context import pword
 from saml2.mdie import to_dict
 from saml2 import md, assertion
@@ -81,14 +82,18 @@ def test_filter_on_attributes_1():
 
 
 def test_filter_on_attributes_without_friendly_name():
-    ava = {"eduPersonTargetedID": "test@example.com", "eduPersonAffiliation": "test",
+    ava = {"eduPersonTargetedID": "test@example.com",
+           "eduPersonAffiliation": "test",
            "extra": "foo"}
     eptid = to_dict(
-            Attribute(name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10", name_format=NAME_FORMAT_URI), ONTS)
+        Attribute(name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10",
+                  name_format=NAME_FORMAT_URI), ONTS)
     ep_affiliation = to_dict(
-            Attribute(name="urn:oid:1.3.6.1.4.1.5923.1.1.1.1", name_format=NAME_FORMAT_URI), ONTS)
+        Attribute(name="urn:oid:1.3.6.1.4.1.5923.1.1.1.1",
+                  name_format=NAME_FORMAT_URI), ONTS)
 
-    restricted_ava = filter_on_attributes(ava, required=[eptid], optional=[ep_affiliation],
+    restricted_ava = filter_on_attributes(ava, required=[eptid],
+                                          optional=[ep_affiliation],
                                           acs=ac_factory())
     assert restricted_ava == {"eduPersonTargetedID": "test@example.com",
                               "eduPersonAffiliation": "test"}
@@ -97,8 +102,9 @@ def test_filter_on_attributes_without_friendly_name():
 def test_filter_on_attributes_with_missing_required_attribute():
     ava = {"extra": "foo"}
     eptid = to_dict(Attribute(
-            friendly_name="eduPersonTargetedID", name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10",
-            name_format=NAME_FORMAT_URI), ONTS)
+        friendly_name="eduPersonTargetedID",
+        name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10",
+        name_format=NAME_FORMAT_URI), ONTS)
     with pytest.raises(MissingValue):
         filter_on_attributes(ava, required=[eptid])
 
@@ -106,8 +112,9 @@ def test_filter_on_attributes_with_missing_required_attribute():
 def test_filter_on_attributes_with_missing_optional_attribute():
     ava = {"extra": "foo"}
     eptid = to_dict(Attribute(
-            friendly_name="eduPersonTargetedID", name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10",
-            name_format=NAME_FORMAT_URI), ONTS)
+        friendly_name="eduPersonTargetedID",
+        name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10",
+        name_format=NAME_FORMAT_URI), ONTS)
     assert filter_on_attributes(ava, optional=[eptid]) == {}
 
 
@@ -456,9 +463,9 @@ def test_filter_values_req_2():
 
 def test_filter_values_req_3():
     a = to_dict(
-            Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
-                      friendly_name="serialNumber",
-                      attribute_value=[AttributeValue(text="12345")]), ONTS)
+        Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
+                  friendly_name="serialNumber",
+                  attribute_value=[AttributeValue(text="12345")]), ONTS)
 
     required = [a]
     ava = {"serialNumber": ["12345"]}
@@ -470,9 +477,9 @@ def test_filter_values_req_3():
 
 def test_filter_values_req_4():
     a = to_dict(
-            Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
-                      friendly_name="serialNumber",
-                      attribute_value=[AttributeValue(text="54321")]), ONTS)
+        Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
+                  friendly_name="serialNumber",
+                  attribute_value=[AttributeValue(text="54321")]), ONTS)
 
     required = [a]
     ava = {"serialNumber": ["12345"]}
@@ -482,9 +489,9 @@ def test_filter_values_req_4():
 
 def test_filter_values_req_5():
     a = to_dict(
-            Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
-                      friendly_name="serialNumber",
-                      attribute_value=[AttributeValue(text="12345")]), ONTS)
+        Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
+                  friendly_name="serialNumber",
+                  attribute_value=[AttributeValue(text="12345")]), ONTS)
 
     required = [a]
     ava = {"serialNumber": ["12345", "54321"]}
@@ -496,9 +503,9 @@ def test_filter_values_req_5():
 
 def test_filter_values_req_6():
     a = to_dict(
-            Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
-                      friendly_name="serialNumber",
-                      attribute_value=[AttributeValue(text="54321")]), ONTS)
+        Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
+                  friendly_name="serialNumber",
+                  attribute_value=[AttributeValue(text="54321")]), ONTS)
 
     required = [a]
     ava = {"serialNumber": ["12345", "54321"]}
@@ -510,13 +517,13 @@ def test_filter_values_req_6():
 
 def test_filter_values_req_opt_0():
     r = to_dict(
-            Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
-                      friendly_name="serialNumber",
-                      attribute_value=[AttributeValue(text="54321")]), ONTS)
+        Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
+                  friendly_name="serialNumber",
+                  attribute_value=[AttributeValue(text="54321")]), ONTS)
     o = to_dict(
-            Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
-                      friendly_name="serialNumber",
-                      attribute_value=[AttributeValue(text="12345")]), ONTS)
+        Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
+                  friendly_name="serialNumber",
+                  attribute_value=[AttributeValue(text="12345")]), ONTS)
 
     ava = {"serialNumber": ["12345", "54321"]}
 
@@ -527,14 +534,14 @@ def test_filter_values_req_opt_0():
 
 def test_filter_values_req_opt_1():
     r = to_dict(
-            Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
-                      friendly_name="serialNumber",
-                      attribute_value=[AttributeValue(text="54321")]), ONTS)
+        Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
+                  friendly_name="serialNumber",
+                  attribute_value=[AttributeValue(text="54321")]), ONTS)
     o = to_dict(
-            Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
-                      friendly_name="serialNumber",
-                      attribute_value=[AttributeValue(text="12345"),
-                                       AttributeValue(text="abcd0")]), ONTS)
+        Attribute(name="urn:oid:2.5.4.5", name_format=NAME_FORMAT_URI,
+                  friendly_name="serialNumber",
+                  attribute_value=[AttributeValue(text="12345"),
+                                   AttributeValue(text="abcd0")]), ONTS)
 
     ava = {"serialNumber": ["12345", "54321"]}
 
@@ -546,30 +553,30 @@ def test_filter_values_req_opt_1():
 def test_filter_values_req_opt_2():
     r = [
         to_dict(
-                Attribute(
-                        friendly_name="surName",
-                        name="urn:oid:2.5.4.4",
-                        name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
-                ONTS),
+            Attribute(
+                friendly_name="surName",
+                name="urn:oid:2.5.4.4",
+                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
+            ONTS),
         to_dict(
-                Attribute(
-                        friendly_name="givenName",
-                        name="urn:oid:2.5.4.42",
-                        name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
-                ONTS),
+            Attribute(
+                friendly_name="givenName",
+                name="urn:oid:2.5.4.42",
+                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
+            ONTS),
         to_dict(
-                Attribute(
-                        friendly_name="mail",
-                        name="urn:oid:0.9.2342.19200300.100.1.3",
-                        name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
-                ONTS)]
+            Attribute(
+                friendly_name="mail",
+                name="urn:oid:0.9.2342.19200300.100.1.3",
+                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
+            ONTS)]
     o = [
         to_dict(
-                Attribute(
-                        friendly_name="title",
-                        name="urn:oid:2.5.4.12",
-                        name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
-                ONTS)]
+            Attribute(
+                friendly_name="title",
+                name="urn:oid:2.5.4.12",
+                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
+            ONTS)]
 
     ava = {"surname": ["Hedberg"], "givenName": ["Roland"],
            "eduPersonAffiliation": ["staff"], "uid": ["rohe0002"]}
@@ -583,18 +590,18 @@ def test_filter_values_req_opt_2():
 def test_filter_values_req_opt_4():
     r = [
         Attribute(
-                friendly_name="surName",
-                name="urn:oid:2.5.4.4",
-                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
+            friendly_name="surName",
+            name="urn:oid:2.5.4.4",
+            name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
         Attribute(
-                friendly_name="givenName",
-                name="urn:oid:2.5.4.42",
-                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
+            friendly_name="givenName",
+            name="urn:oid:2.5.4.42",
+            name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
     o = [
         Attribute(
-                friendly_name="title",
-                name="urn:oid:2.5.4.12",
-                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
+            friendly_name="title",
+            name="urn:oid:2.5.4.12",
+            name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
 
     acs = attribute_converter.ac_factory(full_path("attributemaps"))
 
@@ -615,15 +622,15 @@ def test_filter_values_req_opt_4():
 
 def test_filter_ava_0():
     policy = Policy(
-            {
-                "default": {
-                    "lifetime": {"minutes": 15},
-                    "attribute_restrictions": None  # means all I have
-                },
-                "urn:mace:example.com:saml:roland:sp": {
-                    "lifetime": {"minutes": 5},
-                }
+        {
+            "default": {
+                "lifetime": {"minutes": 15},
+                "attribute_restrictions": None  # means all I have
+            },
+            "urn:mace:example.com:saml:roland:sp": {
+                "lifetime": {"minutes": 5},
             }
+        }
     )
 
     ava = {"givenName": ["Derek"], "surName": ["Jeter"],
@@ -739,30 +746,30 @@ def test_filter_ava_4():
 def test_req_opt():
     req = [
         to_dict(
-                md.RequestedAttribute(
-                        friendly_name="surname", name="urn:oid:2.5.4.4",
-                        name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
-                        is_required="true"), ONTS),
+            md.RequestedAttribute(
+                friendly_name="surname", name="urn:oid:2.5.4.4",
+                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
+                is_required="true"), ONTS),
         to_dict(
-                md.RequestedAttribute(
-                        friendly_name="givenname",
-                        name="urn:oid:2.5.4.42",
-                        name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
-                        is_required="true"), ONTS),
+            md.RequestedAttribute(
+                friendly_name="givenname",
+                name="urn:oid:2.5.4.42",
+                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
+                is_required="true"), ONTS),
         to_dict(
-                md.RequestedAttribute(
-                        friendly_name="edupersonaffiliation",
-                        name="urn:oid:1.3.6.1.4.1.5923.1.1.1.1",
-                        name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
-                        is_required="true"), ONTS)]
+            md.RequestedAttribute(
+                friendly_name="edupersonaffiliation",
+                name="urn:oid:1.3.6.1.4.1.5923.1.1.1.1",
+                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
+                is_required="true"), ONTS)]
 
     opt = [
         to_dict(
-                md.RequestedAttribute(
-                        friendly_name="title",
-                        name="urn:oid:2.5.4.12",
-                        name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
-                        is_required="false"), ONTS)]
+            md.RequestedAttribute(
+                friendly_name="title",
+                name="urn:oid:2.5.4.12",
+                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
+                is_required="false"), ONTS)]
 
     policy = Policy()
     ava = {'givenname': 'Roland', 'surname': 'Hedberg',
@@ -776,18 +783,18 @@ def test_req_opt():
 def test_filter_on_wire_representation_1():
     r = [
         Attribute(
-                friendly_name="surName",
-                name="urn:oid:2.5.4.4",
-                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
+            friendly_name="surName",
+            name="urn:oid:2.5.4.4",
+            name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
         Attribute(
-                friendly_name="givenName",
-                name="urn:oid:2.5.4.42",
-                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
+            friendly_name="givenName",
+            name="urn:oid:2.5.4.42",
+            name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
     o = [
         Attribute(
-                friendly_name="title",
-                name="urn:oid:2.5.4.12",
-                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
+            friendly_name="title",
+            name="urn:oid:2.5.4.12",
+            name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
 
     acs = attribute_converter.ac_factory(full_path("attributemaps"))
 
@@ -801,18 +808,18 @@ def test_filter_on_wire_representation_1():
 def test_filter_on_wire_representation_2():
     r = [
         Attribute(
-                friendly_name="surName",
-                name="urn:oid:2.5.4.4",
-                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
+            friendly_name="surName",
+            name="urn:oid:2.5.4.4",
+            name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
         Attribute(
-                friendly_name="givenName",
-                name="urn:oid:2.5.4.42",
-                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
+            friendly_name="givenName",
+            name="urn:oid:2.5.4.42",
+            name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
     o = [
         Attribute(
-                friendly_name="title",
-                name="urn:oid:2.5.4.12",
-                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
+            friendly_name="title",
+            name="urn:oid:2.5.4.12",
+            name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
 
     acs = attribute_converter.ac_factory(full_path("attributemaps"))
 
@@ -842,10 +849,21 @@ def test_assertion_with_noop_attribute_conv():
     })
     name_id = NameID(format=NAMEID_FORMAT_TRANSIENT, text="foobar")
     issuer = Issuer(text="entityid", format=NAMEID_FORMAT_ENTITY)
-    msg = ast.construct("sp_entity_id", "in_response_to", "consumer_url",
-                        name_id, [AttributeConverterNOOP(NAME_FORMAT_URI)],
-                        policy, issuer=issuer, authn_decl=ACD,
-                        authn_auth="authn_authn")
+
+    farg = add_path(
+        {},
+        ['subject', 'subject_confirmation', 'method', saml.SCM_BEARER])
+    add_path(
+        farg['subject']['subject_confirmation'],
+        ['subject_confirmation_data', 'in_response_to', 'in_response_to'])
+    add_path(
+        farg['subject']['subject_confirmation'],
+        ['subject_confirmation_data', 'recipient', 'consumer_url'])
+
+    msg = ast.construct(
+        "sp_entity_id", [AttributeConverterNOOP(NAME_FORMAT_URI)], policy,
+        issuer=issuer, farg=farg, authn_decl=ACD, name_id=name_id,
+        authn_auth="authn_authn")
 
     print(msg)
     for attr in msg.attribute_statement[0].attribute:
@@ -890,10 +908,20 @@ def test_assertion_with_zero_attributes():
     })
     name_id = NameID(format=NAMEID_FORMAT_TRANSIENT, text="foobar")
     issuer = Issuer(text="entityid", format=NAMEID_FORMAT_ENTITY)
-    msg = ast.construct("sp_entity_id", "in_response_to", "consumer_url",
-                        name_id, [AttributeConverterNOOP(NAME_FORMAT_URI)],
-                        policy, issuer=issuer, authn_decl=ACD,
-                        authn_auth="authn_authn")
+    farg = add_path(
+        {},
+        ['subject', 'subject_confirmation', 'method', saml.SCM_BEARER])
+    add_path(
+        farg['subject']['subject_confirmation'],
+        ['subject_confirmation_data', 'in_response_to', 'in_response_to'])
+    add_path(
+        farg['subject']['subject_confirmation'],
+        ['subject_confirmation_data', 'recipient', 'consumer_url'])
+
+    msg = ast.construct(
+        "sp_entity_id", [AttributeConverterNOOP(NAME_FORMAT_URI)], policy,
+        issuer=issuer, authn_decl=ACD, authn_auth="authn_authn",
+        name_id=name_id, farg=farg)
 
     print(msg)
     assert msg.attribute_statement == []
@@ -911,11 +939,21 @@ def test_assertion_with_authn_instant():
     })
     name_id = NameID(format=NAMEID_FORMAT_TRANSIENT, text="foobar")
     issuer = Issuer(text="entityid", format=NAMEID_FORMAT_ENTITY)
-    msg = ast.construct("sp_entity_id", "in_response_to", "consumer_url",
-                        name_id, [AttributeConverterNOOP(NAME_FORMAT_URI)],
-                        policy, issuer=issuer, authn_decl=ACD,
-                        authn_auth="authn_authn",
-                        authn_instant=1234567890)
+
+    farg = add_path(
+        {},
+        ['subject', 'subject_confirmation', 'method', saml.SCM_BEARER])
+    add_path(
+        farg['subject']['subject_confirmation'],
+        ['subject_confirmation_data', 'in_response_to', 'in_response_to'])
+    add_path(
+        farg['subject']['subject_confirmation'],
+        ['subject_confirmation_data', 'recipient', 'consumer_url'])
+
+    msg = ast.construct(
+        "sp_entity_id", [AttributeConverterNOOP(NAME_FORMAT_URI)], policy,
+        issuer=issuer, authn_decl=ACD, authn_auth="authn_authn",
+        authn_instant=1234567890, name_id=name_id, farg=farg)
 
     print(msg)
     assert msg.authn_statement[0].authn_instant == "2009-02-13T23:31:30Z"

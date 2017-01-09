@@ -101,12 +101,15 @@ def _decode_attribute_value(typ, text):
 
 
 def _verify_value_type(typ, val):
-    #print("verify value type: %s, %s" % (typ, val))
+    #  print("verify value type: %s, %s" % (typ, val))
     if typ == XSD + "string":
         try:
             return str(val)
         except UnicodeEncodeError:
-            return unicode(val)
+            if six.PY2:
+                return unicode(val)
+            else:
+                return val.decode('utf8')
     if typ == XSD + "integer" or typ == XSD + "int":
         return int(val)
     if typ == XSD + "float" or typ == XSD + "double":
@@ -165,6 +168,13 @@ class AttributeValueBase(SamlBase):
             self.extension_attributes[XSI_TYPE] = typ
         except AttributeError:
             self._extatt[XSI_TYPE] = typ
+
+        if typ.startswith('xs:'):
+            try:
+                self.extension_attributes['xmlns:xs'] = XS_NAMESPACE
+            except AttributeError:
+                self._extatt['xmlns:xs'] = XS_NAMESPACE
+
 
     def get_type(self):
         try:

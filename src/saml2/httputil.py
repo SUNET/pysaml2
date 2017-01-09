@@ -8,11 +8,12 @@ import six
 from six.moves.urllib.parse import quote, parse_qs
 from six.moves.http_cookies import SimpleCookie
 
-from saml2 import BINDING_HTTP_ARTIFACT, SAMLError
+from saml2 import BINDING_HTTP_ARTIFACT
 from saml2 import BINDING_HTTP_REDIRECT
 from saml2 import BINDING_HTTP_POST
 from saml2 import BINDING_URI
 from saml2 import BINDING_SOAP
+from saml2 import SAMLError
 from saml2 import time_util
 
 __author__ = 'rohe0002'
@@ -62,8 +63,20 @@ class Response(object):
         else:
             if isinstance(message, six.string_types):
                 return [message]
+            elif isinstance(message, six.binary_type):
+                return [message]
             else:
                 return message
+
+    def add_header(self, ava):
+        """
+        Does *NOT* replace a header of the same type, just adds a new
+        :param ava: (type, value) tuple
+        """
+        self.headers.append(ava)
+
+    def reply(self, **kwargs):
+        return self.response(self.message, **kwargs)
 
 
 class Created(Response):
@@ -240,10 +253,7 @@ def unpack_redirect(environ):
 
 
 def unpack_post(environ):
-    try:
-        return dict([(k, v[0]) for k, v in parse_qs(get_post(environ))])
-    except Exception:
-        return None
+    return dict([(k, v[0]) for k, v in parse_qs(get_post(environ))])
 
 
 def unpack_soap(environ):

@@ -4,7 +4,12 @@
 import base64
 import uuid
 import six
-from six.moves.urllib.parse import parse_qs, urlencode, urlparse
+from future.backports.urllib.parse import parse_qs
+from future.backports.urllib.parse import urlencode
+from future.backports.urllib.parse import urlparse
+from pytest import raises
+
+from saml2.argtree import add_path
 from saml2.cert import OpenSSLWrapper
 from saml2.xmldsig import SIG_RSA_SHA256
 from saml2 import BINDING_HTTP_POST
@@ -21,6 +26,7 @@ from saml2.assertion import Assertion
 from saml2.authn_context import INTERNETPROTOCOLPASSWORD
 from saml2.client import Saml2Client
 from saml2.config import SPConfig
+from saml2.pack import parse_soap_enveloped_saml
 from saml2.response import LogoutResponse
 from saml2.saml import NAMEID_FORMAT_PERSISTENT, EncryptedAssertion, Advice
 from saml2.saml import NAMEID_FORMAT_TRANSIENT
@@ -33,6 +39,8 @@ from saml2.sigver import verify_redirect_signature
 from saml2.s_utils import do_attribute_statement
 from saml2.s_utils import factory
 from saml2.time_util import in_a_while, a_while_ago
+
+from defusedxml.common import EntitiesForbidden
 
 from fakeIDP import FakeIDP
 from fakeIDP import unpack_form
@@ -70,8 +78,8 @@ def add_subelement(xmldoc, node_name, subelem):
     s = xmldoc.find(node_name)
     if s > 0:
         x = xmldoc.rindex("<", 0, s)
-        tag = xmldoc[x+1:s-1]
-        c = s+len(node_name)
+        tag = xmldoc[x + 1:s - 1]
+        c = s + len(node_name)
         spaces = ""
         while xmldoc[c] == " ":
             spaces += " "
@@ -86,6 +94,7 @@ def add_subelement(xmldoc, node_name, subelem):
                                      node_name))
 
     return xmldoc
+
 
 def for_me(condition, me):
     for restriction in condition.audience_restriction:
@@ -107,6 +116,7 @@ def ava(attribute_statement):
 
 def _leq(l1, l2):
     return set(l1) == set(l2)
+
 
 # def test_parse_3():
 #     xml_response = open(XML_RESPONSE_FILE3).read()
@@ -296,7 +306,7 @@ class TestClient:
         assert nid_policy.sp_name_qualifier == "urn:mace:example.com:it:tek"
 
     def test_sign_auth_request_0(self):
-        #print(self.client.config)
+        # print(self.client.config)
 
         req_id, areq = self.client.create_authn_request(
             "http://www.example.com/sso", sign=True, message_id="id1")
@@ -308,7 +318,7 @@ class TestClient:
         assert ar.signature
         assert ar.signature.signature_value
         signed_info = ar.signature.signed_info
-        #print(signed_info)
+        # print(signed_info)
         assert len(signed_info.reference) == 1
         assert signed_info.reference[0].uri == "#id1"
         assert signed_info.reference[0].digest_value
@@ -419,7 +429,7 @@ class TestClient:
 
         cert_str, cert_key_str = generate_cert()
 
-        cert =\
+        cert = \
             {
                 "cert": cert_str,
                 "key": cert_key_str
@@ -536,7 +546,7 @@ class TestClient:
 
         cert_str, cert_key_str = generate_cert()
 
-        cert =\
+        cert = \
             {
                 "cert": cert_str,
                 "key": cert_key_str
@@ -580,7 +590,7 @@ class TestClient:
 
         cert_assertion_str, cert_key_assertion_str = generate_cert()
 
-        cert_assertion =\
+        cert_assertion = \
             {
                 "cert": cert_assertion_str,
                 "key": cert_key_assertion_str
@@ -588,7 +598,7 @@ class TestClient:
 
         cert_advice_str, cert_key_advice_str = generate_cert()
 
-        cert_advice =\
+        cert_advice = \
             {
                 "cert": cert_advice_str,
                 "key": cert_key_advice_str
@@ -617,7 +627,8 @@ class TestClient:
 
         authn_response = _client.parse_authn_request_response(
             resp_str, BINDING_HTTP_POST,
-            {"id1": "http://foo.example.com/service"}, {"id1": [cert_assertion, cert_advice]})
+            {"id1": "http://foo.example.com/service"},
+            {"id1": [cert_assertion, cert_advice]})
 
         self.verify_authn_response(idp, authn_response, _client, ava_verify)
 
@@ -668,7 +679,7 @@ class TestClient:
 
         cert_str, cert_key_str = generate_cert()
 
-        cert =\
+        cert = \
             {
                 "cert": cert_str,
                 "key": cert_key_str
@@ -701,11 +712,13 @@ class TestClient:
 
     def setup_verify_authn_response(self):
         idp = "urn:mace:example.com:saml:roland:idp"
-        ava = {"givenName": ["Derek"], "surName": ["Jeter"], "mail": ["derek@nyy.mlb.com"], "title": ["The man"]}
-        ava_verify = {'mail': ['derek@nyy.mlb.com'], 'givenName': ['Derek'], 'sn': ['Jeter'], 'title': ["The man"]}
-        nameid_policy = samlp.NameIDPolicy(allow_create="false", format=saml.NAMEID_FORMAT_PERSISTENT)
+        ava = {"givenName": ["Derek"], "surName": ["Jeter"],
+               "mail": ["derek@nyy.mlb.com"], "title": ["The man"]}
+        ava_verify = {'mail': ['derek@nyy.mlb.com'], 'givenName': ['Derek'],
+                      'sn': ['Jeter'], 'title': ["The man"]}
+        nameid_policy = samlp.NameIDPolicy(allow_create="false",
+                                           format=saml.NAMEID_FORMAT_PERSISTENT)
         return idp, ava, ava_verify, nameid_policy
-
 
     def verify_authn_response(self, idp, authn_response, _client, ava_verify):
         assert authn_response is not None
@@ -724,7 +737,6 @@ class TestClient:
         subject_id = _client.users.subjects()[0]
         # The information I have about the subject comes from one source
         assert _client.users.issuers_of_info(subject_id) == [idp]
-
 
     def test_init_values(self):
         entityid = self.client.config.entityid
@@ -773,7 +785,9 @@ class TestClient:
             assertion=_ass
         )
 
-        enctext = _sec.crypto.encrypt_assertion(response, self.client.sec.encryption_keypairs[0]["cert_file"],
+        enctext = _sec.crypto.encrypt_assertion(response,
+                                                self.client.sec.encryption_keypairs[
+                                                    0]["cert_file"],
                                                 pre_encryption_part())
 
         seresp = samlp.response_from_string(enctext)
@@ -793,13 +807,14 @@ class TestClient:
                     if ass.signature:
                         if not _csec.verify_signature("%s" % ass,
                                                       sign_cert_file,
-                                                      node_name=class_name(ass)):
+                                                      node_name=class_name(
+                                                          ass)):
                             continue
                     resp_ass.append(ass)
 
             seresp.assertion = resp_ass
             seresp.encrypted_assertion = None
-            #print(_sresp)
+            # print(_sresp)
 
         assert seresp.assertion
 
@@ -811,15 +826,29 @@ class TestClient:
                                            format=saml.NAMEID_FORMAT_PERSISTENT)
 
         asser = Assertion({"givenName": "Derek", "surName": "Jeter"})
+        farg = add_path(
+            {},
+            ['assertion', 'subject', 'subject_confirmation', 'method',
+             saml.SCM_BEARER])
+        add_path(
+            farg['assertion']['subject']['subject_confirmation'],
+            ['subject_confirmation_data', 'in_response_to',
+             '_012345'])
+        add_path(
+            farg['assertion']['subject']['subject_confirmation'],
+            ['subject_confirmation_data', 'recipient',
+             "http://lingon.catalogix.se:8087/"])
+
         assertion = asser.construct(
-            self.client.config.entityid, "_012345",
-            "http://lingon.catalogix.se:8087/",
-            factory(saml.NameID, format=saml.NAMEID_FORMAT_TRANSIENT),
-            policy=self.server.config.getattr("policy", "idp"),
+            self.client.config.entityid,
+            self.server.config.attribute_converters,
+            self.server.config.getattr("policy", "idp"),
+            name_id=factory(saml.NameID, format=saml.NAMEID_FORMAT_TRANSIENT),
             issuer=self.server._issuer(),
-            attrconvs=self.server.config.attribute_converters,
             authn_class=INTERNETPROTOCOLPASSWORD,
-            authn_auth="http://www.example.com/login")
+            authn_auth="http://www.example.com/login",
+            farg=farg['assertion']
+        )
 
         assertion.signature = sigver.pre_signature_part(
             assertion.id, _sec.my_cert, 1)
@@ -843,10 +872,12 @@ class TestClient:
         # or as part of a bunch of tests.
         xmldoc = add_subelement(xmldoc, "EncryptedAssertion", sigass)
 
-        enctext = _sec.crypto.encrypt_assertion(xmldoc, self.client.sec.encryption_keypairs[1]["cert_file"],
+        enctext = _sec.crypto.encrypt_assertion(xmldoc,
+                                                self.client.sec.encryption_keypairs[
+                                                    1]["cert_file"],
                                                 pre_encryption_part())
 
-        #seresp = samlp.response_from_string(enctext)
+        # seresp = samlp.response_from_string(enctext)
 
         resp_str = base64.encodestring(enctext.encode('utf-8'))
         # Now over to the client side
@@ -854,7 +885,7 @@ class TestClient:
             resp_str, BINDING_HTTP_POST,
             {"_012345": "http://foo.example.com/service"})
 
-        #assert resp.encrypted_assertion == []
+        # assert resp.encrypted_assertion == []
         assert resp.assertion
         assert resp.ava == {'givenName': ['Derek'], 'sn': ['Jeter']}
 
@@ -866,26 +897,47 @@ class TestClient:
                                            format=saml.NAMEID_FORMAT_PERSISTENT)
 
         asser = Assertion({"givenName": "Derek", "surName": "Jeter"})
+
+        subject_confirmation_specs = {
+            'recipient': "http://lingon.catalogix.se:8087/",
+            'in_response_to': "_012345",
+            'subject_confirmation_method': saml.SCM_BEARER
+        }
+        name_id = factory(saml.NameID, format=saml.NAMEID_FORMAT_TRANSIENT)
+
+        farg = add_path(
+            {},
+            ['assertion', 'subject', 'subject_confirmation', 'method',
+             saml.SCM_BEARER])
+        add_path(
+            farg['assertion']['subject']['subject_confirmation'],
+            ['subject_confirmation_data', 'in_response_to',
+             '_012345'])
+        add_path(
+            farg['assertion']['subject']['subject_confirmation'],
+            ['subject_confirmation_data', 'recipient',
+             "http://lingon.catalogix.se:8087/"])
+
         assertion = asser.construct(
-            self.client.config.entityid, "_012345",
-            "http://lingon.catalogix.se:8087/",
-            factory(saml.NameID, format=saml.NAMEID_FORMAT_TRANSIENT),
-            policy=self.server.config.getattr("policy", "idp"),
+            self.client.config.entityid,
+            self.server.config.attribute_converters,
+            self.server.config.getattr("policy", "idp"),
             issuer=self.server._issuer(),
-            attrconvs=self.server.config.attribute_converters,
+            name_id=name_id,
             authn_class=INTERNETPROTOCOLPASSWORD,
-            authn_auth="http://www.example.com/login")
+            authn_auth="http://www.example.com/login",
+            farg=farg['assertion'])
 
         a_asser = Assertion({"uid": "test01", "email": "test.testsson@test.se"})
         a_assertion = a_asser.construct(
-            self.client.config.entityid, "_012345",
-            "http://lingon.catalogix.se:8087/",
-            factory(saml.NameID, format=saml.NAMEID_FORMAT_TRANSIENT),
-            policy=self.server.config.getattr("policy", "idp"),
+            self.client.config.entityid,
+            self.server.config.attribute_converters,
+            self.server.config.getattr("policy", "idp"),
             issuer=self.server._issuer(),
-            attrconvs=self.server.config.attribute_converters,
             authn_class=INTERNETPROTOCOLPASSWORD,
-            authn_auth="http://www.example.com/login")
+            authn_auth="http://www.example.com/login",
+            name_id=name_id,
+            farg=farg['assertion'])
 
         a_assertion.signature = sigver.pre_signature_part(
             a_assertion.id, _sec.my_cert, 1)
@@ -895,7 +947,8 @@ class TestClient:
         assertion.advice.encrypted_assertion = []
         assertion.advice.encrypted_assertion.append(EncryptedAssertion())
 
-        assertion.advice.encrypted_assertion[0].add_extension_element(a_assertion)
+        assertion.advice.encrypted_assertion[0].add_extension_element(
+            a_assertion)
 
         response = sigver.response_factory(
             in_response_to="_012345",
@@ -907,21 +960,25 @@ class TestClient:
         response.assertion.append(assertion)
 
         response = _sec.sign_statement("%s" % response, class_name(a_assertion),
-                                     key_file=self.client.sec.key_file,
-                                     node_id=a_assertion.id)
+                                       key_file=self.client.sec.key_file,
+                                       node_id=a_assertion.id)
 
-        #xmldoc = "%s" % response
+        # xmldoc = "%s" % response
         # strangely enough I get different tags if I run this test separately
         # or as part of a bunch of tests.
-        #xmldoc = add_subelement(xmldoc, "EncryptedAssertion", sigass)
+        # xmldoc = add_subelement(xmldoc, "EncryptedAssertion", sigass)
 
         node_xpath = ''.join(["/*[local-name()=\"%s\"]" % v for v in
-                                ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]])
+                              ["Response", "Assertion", "Advice",
+                               "EncryptedAssertion", "Assertion"]])
 
-        enctext = _sec.crypto.encrypt_assertion(response, self.client.sec.encryption_keypairs[0]["cert_file"],
-                                                pre_encryption_part(), node_xpath=node_xpath)
+        enctext = _sec.crypto.encrypt_assertion(response,
+                                                self.client.sec.encryption_keypairs[
+                                                    0]["cert_file"],
+                                                pre_encryption_part(),
+                                                node_xpath=node_xpath)
 
-        #seresp = samlp.response_from_string(enctext)
+        # seresp = samlp.response_from_string(enctext)
 
         resp_str = base64.encodestring(enctext.encode('utf-8'))
         # Now over to the client side
@@ -929,12 +986,13 @@ class TestClient:
             resp_str, BINDING_HTTP_POST,
             {"_012345": "http://foo.example.com/service"})
 
-        #assert resp.encrypted_assertion == []
+        # assert resp.encrypted_assertion == []
         assert resp.assertion
         assert resp.assertion.advice
         assert resp.assertion.advice.assertion
         assert resp.ava == \
-               {'sn': ['Jeter'], 'givenName': ['Derek'], 'uid': ['test01'], 'email': ['test.testsson@test.se']}
+               {'sn': ['Jeter'], 'givenName': ['Derek'], 'uid': ['test01'],
+                'email': ['test.testsson@test.se']}
 
     def test_sign_then_encrypt_assertion_advice_2(self):
         # Begin with the IdPs side
@@ -944,70 +1002,86 @@ class TestClient:
                                            format=saml.NAMEID_FORMAT_PERSISTENT)
 
         asser_1 = Assertion({"givenName": "Derek"})
+
+        farg = add_path(
+            {},
+            ['assertion', 'subject', 'subject_confirmation', 'method',
+             saml.SCM_BEARER])
+        add_path(
+            farg['assertion']['subject']['subject_confirmation'],
+            ['subject_confirmation_data', 'in_response_to',
+             '_012345'])
+        add_path(
+            farg['assertion']['subject']['subject_confirmation'],
+            ['subject_confirmation_data', 'recipient',
+             "http://lingon.catalogix.se:8087/"])
+        name_id = factory(saml.NameID, format=saml.NAMEID_FORMAT_TRANSIENT)
+
         assertion_1 = asser_1.construct(
-            self.client.config.entityid, "_012345",
-            "http://lingon.catalogix.se:8087/",
-            factory(saml.NameID, format=saml.NAMEID_FORMAT_TRANSIENT),
-            policy=self.server.config.getattr("policy", "idp"),
+            self.client.config.entityid,
+            self.server.config.attribute_converters,
+            self.server.config.getattr("policy", "idp"),
             issuer=self.server._issuer(),
-            attrconvs=self.server.config.attribute_converters,
             authn_class=INTERNETPROTOCOLPASSWORD,
-            authn_auth="http://www.example.com/login")
+            authn_auth="http://www.example.com/login",
+            name_id=name_id,
+            farg=farg['assertion'])
 
         asser_2 = Assertion({"surName": "Jeter"})
+
         assertion_2 = asser_2.construct(
-            self.client.config.entityid, "_012345",
-            "http://lingon.catalogix.se:8087/",
-            factory(saml.NameID, format=saml.NAMEID_FORMAT_TRANSIENT),
-            policy=self.server.config.getattr("policy", "idp"),
+            self.client.config.entityid,
+            self.server.config.attribute_converters,
+            self.server.config.getattr("policy", "idp"),
             issuer=self.server._issuer(),
-            attrconvs=self.server.config.attribute_converters,
             authn_class=INTERNETPROTOCOLPASSWORD,
-            authn_auth="http://www.example.com/login")
+            authn_auth="http://www.example.com/login",
+            name_id=name_id,
+            farg=farg['assertion'])
 
         a_asser_1 = Assertion({"uid": "test01"})
         a_assertion_1 = a_asser_1.construct(
-            self.client.config.entityid, "_012345",
-            "http://lingon.catalogix.se:8087/",
-            factory(saml.NameID, format=saml.NAMEID_FORMAT_TRANSIENT),
-            policy=self.server.config.getattr("policy", "idp"),
+            self.client.config.entityid,
+            self.server.config.attribute_converters,
+            self.server.config.getattr("policy", "idp"),
             issuer=self.server._issuer(),
-            attrconvs=self.server.config.attribute_converters,
             authn_class=INTERNETPROTOCOLPASSWORD,
-            authn_auth="http://www.example.com/login")
+            authn_auth="http://www.example.com/login",
+            name_id=name_id,
+            farg=farg['assertion'])
 
         a_asser_2 = Assertion({"email": "test.testsson@test.se"})
         a_assertion_2 = a_asser_2.construct(
-            self.client.config.entityid, "_012345",
-            "http://lingon.catalogix.se:8087/",
-            factory(saml.NameID, format=saml.NAMEID_FORMAT_TRANSIENT),
-            policy=self.server.config.getattr("policy", "idp"),
+            self.client.config.entityid,
+            self.server.config.attribute_converters,
+            self.server.config.getattr("policy", "idp"),
             issuer=self.server._issuer(),
-            attrconvs=self.server.config.attribute_converters,
             authn_class=INTERNETPROTOCOLPASSWORD,
-            authn_auth="http://www.example.com/login")
+            authn_auth="http://www.example.com/login",
+            name_id=name_id,
+            farg=farg['assertion'])
 
         a_asser_3 = Assertion({"street": "street"})
         a_assertion_3 = a_asser_3.construct(
-            self.client.config.entityid, "_012345",
-            "http://lingon.catalogix.se:8087/",
-            factory(saml.NameID, format=saml.NAMEID_FORMAT_TRANSIENT),
-            policy=self.server.config.getattr("policy", "idp"),
+            self.client.config.entityid,
+            self.server.config.attribute_converters,
+            self.server.config.getattr("policy", "idp"),
             issuer=self.server._issuer(),
-            attrconvs=self.server.config.attribute_converters,
             authn_class=INTERNETPROTOCOLPASSWORD,
-            authn_auth="http://www.example.com/login")
+            authn_auth="http://www.example.com/login",
+            name_id=name_id,
+            farg=farg['assertion'])
 
         a_asser_4 = Assertion({"title": "title"})
         a_assertion_4 = a_asser_4.construct(
-            self.client.config.entityid, "_012345",
-            "http://lingon.catalogix.se:8087/",
-            factory(saml.NameID, format=saml.NAMEID_FORMAT_TRANSIENT),
-            policy=self.server.config.getattr("policy", "idp"),
+            self.client.config.entityid,
+            self.server.config.attribute_converters,
+            self.server.config.getattr("policy", "idp"),
             issuer=self.server._issuer(),
-            attrconvs=self.server.config.attribute_converters,
             authn_class=INTERNETPROTOCOLPASSWORD,
-            authn_auth="http://www.example.com/login")
+            authn_auth="http://www.example.com/login",
+            name_id=name_id,
+            farg=farg['assertion'])
 
         a_assertion_1.signature = sigver.pre_signature_part(
             a_assertion_1.id, _sec.my_cert, 1)
@@ -1021,9 +1095,11 @@ class TestClient:
         a_assertion_4.signature = sigver.pre_signature_part(
             a_assertion_4.id, _sec.my_cert, 1)
 
-        assertion_1.signature = sigver.pre_signature_part(assertion_1.id, _sec.my_cert, 1)
+        assertion_1.signature = sigver.pre_signature_part(assertion_1.id,
+                                                          _sec.my_cert, 1)
 
-        assertion_2.signature = sigver.pre_signature_part(assertion_2.id, _sec.my_cert, 1)
+        assertion_2.signature = sigver.pre_signature_part(assertion_2.id,
+                                                          _sec.my_cert, 1)
 
         response = sigver.response_factory(
             in_response_to="_012345",
@@ -1037,9 +1113,11 @@ class TestClient:
         response.assertion.advice = Advice()
 
         response.assertion.advice.encrypted_assertion = []
-        response.assertion.advice.encrypted_assertion.append(EncryptedAssertion())
+        response.assertion.advice.encrypted_assertion.append(
+            EncryptedAssertion())
 
-        response.assertion.advice.encrypted_assertion[0].add_extension_element(a_assertion_1)
+        response.assertion.advice.encrypted_assertion[0].add_extension_element(
+            a_assertion_1)
 
         advice_tag = response.assertion.advice._to_element_tree().tag
         assertion_tag = a_assertion_1._to_element_tree().tag
@@ -1047,22 +1125,29 @@ class TestClient:
             response.get_xml_string_with_self_contained_assertion_within_advice_encrypted_assertion(
                 assertion_tag, advice_tag)
 
-        response = _sec.sign_statement("%s" % response, class_name(a_assertion_1),
+        response = _sec.sign_statement("%s" % response,
+                                       class_name(a_assertion_1),
                                        key_file=self.server.sec.key_file,
                                        node_id=a_assertion_1.id)
 
         node_xpath = ''.join(["/*[local-name()=\"%s\"]" % v for v in
-                                ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]])
+                              ["Response", "Assertion", "Advice",
+                               "EncryptedAssertion", "Assertion"]])
 
-        enctext = _sec.crypto.encrypt_assertion(response, self.client.sec.encryption_keypairs[1]["cert_file"],
-                                                pre_encryption_part(), node_xpath=node_xpath)
+        enctext = _sec.crypto.encrypt_assertion(response,
+                                                self.client.sec.encryption_keypairs[
+                                                    1]["cert_file"],
+                                                pre_encryption_part(),
+                                                node_xpath=node_xpath)
 
         response = samlp.response_from_string(enctext)
 
         response.assertion = response.assertion[0]
 
-        response.assertion.advice.encrypted_assertion.append(EncryptedAssertion())
-        response.assertion.advice.encrypted_assertion[1].add_extension_element(a_assertion_2)
+        response.assertion.advice.encrypted_assertion.append(
+            EncryptedAssertion())
+        response.assertion.advice.encrypted_assertion[1].add_extension_element(
+            a_assertion_2)
 
         advice_tag = response.assertion.advice._to_element_tree().tag
         assertion_tag = a_assertion_2._to_element_tree().tag
@@ -1070,15 +1155,20 @@ class TestClient:
             response.get_xml_string_with_self_contained_assertion_within_advice_encrypted_assertion(
                 assertion_tag, advice_tag)
 
-        response = _sec.sign_statement("%s" % response, class_name(a_assertion_2),
+        response = _sec.sign_statement("%s" % response,
+                                       class_name(a_assertion_2),
                                        key_file=self.server.sec.key_file,
                                        node_id=a_assertion_2.id)
 
         node_xpath = ''.join(["/*[local-name()=\"%s\"]" % v for v in
-                        ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]])
+                              ["Response", "Assertion", "Advice",
+                               "EncryptedAssertion", "Assertion"]])
 
-        enctext = _sec.crypto.encrypt_assertion(response, self.client.sec.encryption_keypairs[0]["cert_file"],
-                                                pre_encryption_part(), node_xpath=node_xpath)
+        enctext = _sec.crypto.encrypt_assertion(response,
+                                                self.client.sec.encryption_keypairs[
+                                                    0]["cert_file"],
+                                                pre_encryption_part(),
+                                                node_xpath=node_xpath)
 
         response = samlp.response_from_string(enctext)
 
@@ -1086,14 +1176,17 @@ class TestClient:
 
         assertion_tag = response.assertion._to_element_tree().tag
         response = pre_encrypt_assertion(response)
-        response = response.get_xml_string_with_self_contained_assertion_within_encrypted_assertion(
+        response = \
+            response.get_xml_string_with_self_contained_assertion_within_encrypted_assertion(
             assertion_tag)
 
         response = _sec.sign_statement("%s" % response, class_name(assertion_1),
                                        key_file=self.server.sec.key_file,
                                        node_id=assertion_1.id)
 
-        enctext = _sec.crypto.encrypt_assertion(response, self.client.sec.encryption_keypairs[1]["cert_file"],
+        enctext = _sec.crypto.encrypt_assertion(response,
+                                                self.client.sec.encryption_keypairs[
+                                                    1]["cert_file"],
                                                 pre_encryption_part())
 
         response = samlp.response_from_string(enctext)
@@ -1103,9 +1196,11 @@ class TestClient:
         response.assertion.advice = Advice()
 
         response.assertion.advice.encrypted_assertion = []
-        response.assertion.advice.encrypted_assertion.append(EncryptedAssertion())
+        response.assertion.advice.encrypted_assertion.append(
+            EncryptedAssertion())
 
-        response.assertion.advice.encrypted_assertion[0].add_extension_element(a_assertion_3)
+        response.assertion.advice.encrypted_assertion[0].add_extension_element(
+            a_assertion_3)
 
         advice_tag = response.assertion.advice._to_element_tree().tag
         assertion_tag = a_assertion_3._to_element_tree().tag
@@ -1113,23 +1208,30 @@ class TestClient:
             response.get_xml_string_with_self_contained_assertion_within_advice_encrypted_assertion(
                 assertion_tag, advice_tag)
 
-        response = _sec.sign_statement("%s" % response, class_name(a_assertion_3),
+        response = _sec.sign_statement("%s" % response,
+                                       class_name(a_assertion_3),
                                        key_file=self.server.sec.key_file,
                                        node_id=a_assertion_3.id)
 
         node_xpath = ''.join(["/*[local-name()=\"%s\"]" % v for v in
-                                ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]])
+                              ["Response", "Assertion", "Advice",
+                               "EncryptedAssertion", "Assertion"]])
 
-        enctext = _sec.crypto.encrypt_assertion(response, self.client.sec.encryption_keypairs[0]["cert_file"],
-                                                pre_encryption_part(), node_xpath=node_xpath)
+        enctext = _sec.crypto.encrypt_assertion(response,
+                                                self.client.sec.encryption_keypairs[
+                                                    0]["cert_file"],
+                                                pre_encryption_part(),
+                                                node_xpath=node_xpath)
 
         response = samlp.response_from_string(enctext)
 
         response.assertion = response.assertion[0]
 
-        response.assertion.advice.encrypted_assertion.append(EncryptedAssertion())
+        response.assertion.advice.encrypted_assertion.append(
+            EncryptedAssertion())
 
-        response.assertion.advice.encrypted_assertion[1].add_extension_element(a_assertion_4)
+        response.assertion.advice.encrypted_assertion[1].add_extension_element(
+            a_assertion_4)
 
         advice_tag = response.assertion.advice._to_element_tree().tag
         assertion_tag = a_assertion_4._to_element_tree().tag
@@ -1137,25 +1239,31 @@ class TestClient:
             response.get_xml_string_with_self_contained_assertion_within_advice_encrypted_assertion(
                 assertion_tag, advice_tag)
 
-        response = _sec.sign_statement("%s" % response, class_name(a_assertion_4),
+        response = _sec.sign_statement("%s" % response,
+                                       class_name(a_assertion_4),
                                        key_file=self.server.sec.key_file,
                                        node_id=a_assertion_4.id)
 
         node_xpath = ''.join(["/*[local-name()=\"%s\"]" % v for v in
-                                ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]])
+                              ["Response", "Assertion", "Advice",
+                               "EncryptedAssertion", "Assertion"]])
 
-        enctext = _sec.crypto.encrypt_assertion(response, self.client.sec.encryption_keypairs[1]["cert_file"],
-                                                pre_encryption_part(), node_xpath=node_xpath)
+        enctext = _sec.crypto.encrypt_assertion(response,
+                                                self.client.sec.encryption_keypairs[
+                                                    1]["cert_file"],
+                                                pre_encryption_part(),
+                                                node_xpath=node_xpath)
 
         response = samlp.response_from_string(enctext)
 
-        response = _sec.sign_statement("%s" % response, class_name(response.assertion[0]),
+        response = _sec.sign_statement("%s" % response,
+                                       class_name(response.assertion[0]),
                                        key_file=self.server.sec.key_file,
                                        node_id=response.assertion[0].id)
 
         response = samlp.response_from_string(response)
 
-        #seresp = samlp.response_from_string(enctext)
+        # seresp = samlp.response_from_string(enctext)
 
         resp_str = base64.encodestring(str(response).encode('utf-8'))
         # Now over to the client side
@@ -1163,13 +1271,14 @@ class TestClient:
             resp_str, BINDING_HTTP_POST,
             {"_012345": "http://foo.example.com/service"})
 
-        #assert resp.encrypted_assertion == []
+        # assert resp.encrypted_assertion == []
         assert resp.assertion
         assert resp.assertion.advice
         assert resp.assertion.advice.assertion
         assert resp.ava == \
-               {'street': ['street'], 'uid': ['test01'], 'title': ['title'], 'givenName': ['Derek'], 'email':
-                   ['test.testsson@test.se'], 'sn': ['Jeter']}
+               {'street': ['street'], 'uid': ['test01'], 'title': ['title'],
+                'givenName': ['Derek'], 'email':
+                    ['test.testsson@test.se'], 'sn': ['Jeter']}
 
     def test_signed_redirect(self):
 
@@ -1213,7 +1322,8 @@ class TestClient:
         assert entity_ids == ["urn:mace:example.com:saml:roland:idp"]
 
         resp = client.do_logout(nid, entity_ids, "Tired", in_a_while(minutes=5),
-                                sign=True, expected_binding=BINDING_HTTP_REDIRECT)
+                                sign=True,
+                                expected_binding=BINDING_HTTP_REDIRECT)
 
         assert list(resp.keys()) == entity_ids
         binding, info = resp[entity_ids[0]]
@@ -1329,7 +1439,8 @@ class TestClientWithDummy():
     def test_do_negotiated_authn(self):
         binding = BINDING_HTTP_REDIRECT
         response_binding = BINDING_HTTP_POST
-        sid, auth_binding, http_args = self.client.prepare_for_negotiated_authenticate(
+        sid, auth_binding, http_args = \
+            self.client.prepare_for_negotiated_authenticate(
             IDP, "http://www.example.com/relay_state",
             binding=binding, response_binding=response_binding)
 
@@ -1407,7 +1518,7 @@ class TestClientWithDummy():
                                                         {sid: "/"})
         ac = resp.assertion.authn_statement[0].authn_context
         assert ac.authenticating_authority[0].text == \
-            'http://www.example.com/login'
+               'http://www.example.com/login'
         assert ac.authn_context_class_ref.text == INTERNETPROTOCOLPASSWORD
 
     def test_negotiated_post_sso(self):
@@ -1442,9 +1553,20 @@ class TestClientWithDummy():
                                                         {sid: "/"})
         ac = resp.assertion.authn_statement[0].authn_context
         assert ac.authenticating_authority[0].text == \
-            'http://www.example.com/login'
+               'http://www.example.com/login'
         assert ac.authn_context_class_ref.text == INTERNETPROTOCOLPASSWORD
 
+def test_parse_soap_enveloped_saml_xxe():
+    xml = """<?xml version="1.0"?>
+    <!DOCTYPE lolz [
+    <!ENTITY lol "lol">
+    <!ELEMENT lolz (#PCDATA)>
+    <!ENTITY lol1 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+    ]>
+    <lolz>&lol1;</lolz>
+    """
+    with raises(EntitiesForbidden):
+        parse_soap_enveloped_saml(xml, None)
 
 # if __name__ == "__main__":
 #     tc = TestClient()

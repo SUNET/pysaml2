@@ -1,17 +1,14 @@
 #!/usr/bin/env python
-from saml2.saml import NAME_FORMAT_URI
-
-__author__ = 'rolandh'
 
 import copy
-import sys
-import os
-import re
+import importlib
 import logging
 import logging.handlers
-import six
+import os
+import re
+import sys
 
-from importlib import import_module
+import six
 
 from saml2 import root_logger, BINDING_URI, SAMLError
 from saml2 import BINDING_SOAP
@@ -22,9 +19,12 @@ from saml2 import BINDING_HTTP_ARTIFACT
 from saml2.attribute_converter import ac_factory
 from saml2.assertion import Policy
 from saml2.mdstore import MetadataStore
+from saml2.saml import NAME_FORMAT_URI
 from saml2.virtual_org import VirtualOrg
 
 logger = logging.getLogger(__name__)
+
+__author__ = 'rolandh'
 
 
 COMMON_ARGS = [
@@ -39,7 +39,7 @@ COMMON_ARGS = [
     "logger",
     "only_use_keys_in_metadata",
     "disable_ssl_certificate_validation",
-    "referred_binding",
+    "preferred_binding",
     "session_storage",
     "entity_category",
     "xmlsec_path",
@@ -360,7 +360,7 @@ class Config(object):
         else:
             sys.path.insert(0, head)
 
-        return import_module(tail)
+        return importlib.import_module(tail)
 
     def load_file(self, config_file, metadata_construction=False):
         if config_file.endswith(".py"):
@@ -492,6 +492,22 @@ class Config(object):
     def do_extensions(self, extensions):
         for key, val in extensions.items():
             self.extensions[key] = val
+
+    def service_per_endpoint(self, context=None):
+        """
+        List all endpoint this entity publishes and which service and binding
+        that are behind the endpoint
+
+        :param context: Type of entity
+        :return: Dictionary with endpoint url as key and a tuple of
+            service and binding as value
+        """
+        endps = self.getattr("endpoints", context)
+        res = {}
+        for service, specs in endps.items():
+            for endp, binding in specs:
+                res[endp] = (service, binding)
+        return res
 
 
 class SPConfig(Config):

@@ -12,21 +12,32 @@ import hashlib
 import logging
 import os
 import ssl
-from six.moves.urllib.parse import urlencode
+import six
 
 from time import mktime
 from binascii import hexlify
-import six
 
-from Crypto.PublicKey.RSA import importKey
-from Crypto.Signature import PKCS1_v1_5
-from Crypto.Util.asn1 import DerSequence
-from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA
-from Crypto.Hash import SHA224
-from Crypto.Hash import SHA256
-from Crypto.Hash import SHA384
-from Crypto.Hash import SHA512
+from future.backports.urllib.parse import urlencode
+
+# from Crypto.PublicKey.RSA import importKey
+# from Crypto.Signature import PKCS1_v1_5
+# from Crypto.Util.asn1 import DerSequence
+# from Crypto.PublicKey import RSA
+# from Crypto.Hash import SHA
+# from Crypto.Hash import SHA224
+# from Crypto.Hash import SHA256
+# from Crypto.Hash import SHA384
+# from Crypto.Hash import SHA512
+
+from Cryptodome.PublicKey.RSA import importKey
+from Cryptodome.Signature import PKCS1_v1_5
+from Cryptodome.Util.asn1 import DerSequence
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Hash import SHA
+from Cryptodome.Hash import SHA224
+from Cryptodome.Hash import SHA256
+from Cryptodome.Hash import SHA384
+from Cryptodome.Hash import SHA512
 
 from tempfile import NamedTemporaryFile
 from subprocess import Popen
@@ -143,6 +154,12 @@ def rm_xmltag(statement):
 
 
 def signed(item):
+    """
+    Is any part of the document signed ?
+
+    :param item: A Samlbase instance
+    :return: True if some part of it is signed
+    """
     if SIG in item.c_children.keys() and item.signature:
         return True
     else:
@@ -569,7 +586,7 @@ def parse_xmlsec_output(output):
     :param output: The output from Popen
     :return: A boolean; True if the command was a success otherwise False
     """
-    for line in output.split("\n"):
+    for line in output.splitlines():
         if line == "OK":
             return True
         elif line == "FAIL":
@@ -797,6 +814,7 @@ class CryptoBackendXmlSec1(CryptoBackend):
         com_list = [self.xmlsec, "--version"]
         pof = Popen(com_list, stderr=PIPE, stdout=PIPE)
         content = pof.stdout.read().decode('ascii')
+        pof.wait()
         try:
             return content.split(" ")[1]
         except IndexError:
@@ -990,6 +1008,7 @@ class CryptoBackendXmlSec1(CryptoBackend):
 
         p_out = pof.stdout.read().decode('utf-8')
         p_err = pof.stderr.read().decode('utf-8')
+        pof.wait()
 
         if pof.returncode is not None and pof.returncode < 0:
             logger.error(LOG_LINE, p_out, p_err)
@@ -1372,7 +1391,7 @@ class SecurityContext(object):
 
         if not template:
             this_dir, this_filename = os.path.split(__file__)
-            self.template = os.path.join(this_dir, "xml", "template.xml")
+            self.template = os.path.join(this_dir, "xml_template", "template.xml")
         else:
             self.template = template
 

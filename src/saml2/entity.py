@@ -1,12 +1,15 @@
 import base64
-# from binascii import hexlify
-from binascii import hexlify
 import copy
 import logging
-from hashlib import sha1
-from Crypto.PublicKey import RSA
 import requests
 import six
+
+from binascii import hexlify
+from hashlib import sha1
+
+# from Crypto.PublicKey import RSA
+from Cryptodome.PublicKey import RSA
+
 from saml2.metadata import ENDPOINTS
 from saml2.profile import paos, ecp
 from saml2.soap import parse_soap_enveloped_saml_artifact_resolve
@@ -394,7 +397,7 @@ class Entity(HTTPBase):
                 else:
                     xmlstr = txt
             except Exception:
-                raise UnravelError()
+                raise UnravelError("Unravelling binding '%s' failed" % binding)
 
         return xmlstr
 
@@ -601,7 +604,7 @@ class Entity(HTTPBase):
 
         :param in_response_to: The session identifier of the request
         :param consumer_url: The URL which should receive the response
-        :param status: The status of the response
+        :param status: An instance of samlp.Status
         :param issuer: The issuer of the response
         :param sign: Whether the response should be signed or not
         :param to_sign: If there are other parts to sign

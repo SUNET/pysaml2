@@ -5,9 +5,11 @@ from saml2 import attribute_converter, saml
 from attribute_statement_data import *
 
 from pathutils import full_path
-from saml2.attribute_converter import AttributeConverterNOOP, AttributeConverter
+from saml2.attribute_converter import AttributeConverterNOOP, from_local
+from saml2.attribute_converter import AttributeConverter
 from saml2.attribute_converter import to_local
-from saml2.saml import attribute_from_string
+from saml2.saml import attribute_from_string, name_id_from_string, NameID, NAMEID_FORMAT_PERSISTENT
+from saml2.saml import attribute_statement_from_string
 
 
 def _eq(l1, l2):
@@ -118,44 +120,42 @@ class TestAC():
 
         attr = [
             saml.Attribute(
-                    friendly_name="surName",
-                    name="urn:oid:2.5.4.4",
-                    name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
+                friendly_name="surName",
+                name="urn:oid:2.5.4.4",
+                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
             saml.Attribute(
-                    friendly_name="efternamn",
-                    name="urn:oid:2.5.4.42",
-                    name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
+                friendly_name="efternamn",
+                name="urn:oid:2.5.4.42",
+                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
             saml.Attribute(
-                    friendly_name="titel",
-                    name="urn:oid:2.5.4.12",
-                    name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
+                friendly_name="titel",
+                name="urn:oid:2.5.4.12",
+                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
 
         lan = [attribute_converter.to_local_name(self.acs, a) for a in attr]
 
         assert _eq(lan, ['sn', 'givenName', 'title'])
 
-    # def test_ava_fro_1(self):
-    #
-    #     attr = [saml.Attribute(friendly_name="surName",
-    #             name="urn:oid:2.5.4.4",
-    #             name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
-    #         saml.Attribute(friendly_name="efternamn",
-    #             name="urn:oid:2.5.4.42",
-    #             name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"),
-    #         saml.Attribute(friendly_name="titel",
-    #             name="urn:oid:2.5.4.12",
-    #             name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:uri")]
-    #
-    #     result = attribute_converter.ava_fro(self.acs, attr)
-    #
-    #     print(result)
-    #     assert result == {'givenName': [], 'sn': [], 'title': []}
+    def test_to_local_name_from_unspecified(self):
+        _xml = """<?xml version='1.0' encoding='UTF-8'?>
+        <ns0:AttributeStatement xmlns:ns0="urn:oasis:names:tc:SAML:2.0:assertion">
+<ns0:Attribute
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    Name="EmailAddress"
+    NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified">
+    <ns0:AttributeValue xsi:type="xs:string">foo@bar.com</ns0:AttributeValue>
+</ns0:Attribute></ns0:AttributeStatement>"""
+
+        attr = attribute_statement_from_string(_xml)
+        ava = attribute_converter.to_local(self.acs, attr)
+
+        assert _eq(list(ava.keys()), ['EmailAddress'])
 
     def test_to_local_name_from_basic(self):
         attr = [
             saml.Attribute(
-                    name="urn:mace:dir:attribute-def:eduPersonPrimaryOrgUnitDN",
-                    name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:basic")
+                name="urn:mace:dir:attribute-def:eduPersonPrimaryOrgUnitDN",
+                name_format="urn:oasis:names:tc:SAML:2.0:attrname-format:basic")
         ]
 
         lan = [attribute_converter.to_local_name(self.acs, a) for a in attr]
@@ -210,6 +210,14 @@ class TestAC():
         attr_conv.adjust()
         assert attr_conv._fro is None and attr_conv._to is None
 
+    def test_from_local_nest_eduPersonTargetedID_in_NameID(self):
+        ava = {"edupersontargetedid": ["test value1", "test value2"]}
+        attributes = from_local(self.acs, ava, URI_NF)
+        assert len(attributes) == 1
+        assert len(attributes[0].attribute_value) == 2
+        assert attributes[0].attribute_value[0].extension_elements[0].text == "test value1"
+        assert attributes[0].attribute_value[1].extension_elements[0].text == "test value2"
+
 
 def test_noop_attribute_conversion():
     ava = {"urn:oid:2.5.4.4": "Roland", "urn:oid:2.5.4.42": "Hedberg"}
@@ -229,7 +237,14 @@ def test_noop_attribute_conversion():
 
 
 ava = """<?xml version='1.0' encoding='UTF-8'?>
-<ns0:Attribute xmlns:ns0="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" FriendlyName="schacHomeOrganization" Name="urn:oid:1.3.6.1.4.1.25178.1.2.9" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"><ns0:AttributeValue xsi:nil="true" xsi:type="xs:string">uu.se</ns0:AttributeValue></ns0:Attribute>"""
+<ns0:Attribute xmlns:ns0="urn:oasis:names:tc:SAML:2.0:assertion"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   FriendlyName="schacHomeOrganization" Name="urn:oid:1.3.6.1.4.1.25178.1.2.9"
+   NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+   <ns0:AttributeValue xsi:nil="true" xsi:type="xs:string">
+     uu.se
+   </ns0:AttributeValue>
+</ns0:Attribute>"""
 
 
 def test_schac():
@@ -246,5 +261,4 @@ def test_schac():
 if __name__ == "__main__":
     t = TestAC()
     t.setup_class()
-    t.test_to_attrstat_1()
-    # test_schac()
+    t.test_to_local_name_from_unspecified()

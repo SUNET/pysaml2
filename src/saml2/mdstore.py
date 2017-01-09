@@ -1,14 +1,17 @@
 from __future__ import print_function
 import hashlib
+import importlib
+import json
 import logging
 import os
 import sys
-import json
-import requests
-import six
+
 from hashlib import sha1
 from os.path import isfile
 from os.path import join
+
+import requests
+import six
 
 from saml2 import md
 from saml2 import saml
@@ -32,7 +35,6 @@ from saml2.validate import valid_instance
 from saml2.time_util import valid
 from saml2.validate import NotValid
 from saml2.sigver import security_context
-from importlib import import_module
 
 __author__ = 'rolandh'
 
@@ -225,7 +227,7 @@ class MetaData(object):
         '''
         raise NotImplementedError
 
-    def load(self):
+    def load(self, *args, **kwargs):
         '''
         Loads the metadata
         '''
@@ -267,7 +269,7 @@ class MetaData(object):
         """
         Return any entity that matches the specification
 
-        :param typ:
+        :param typ: Type of entity
         :param service:
         :param binding:
         :return:
@@ -278,6 +280,37 @@ class MetaData(object):
             if bind:
                 res[ent] = bind
 
+        return res
+
+    def any2(self, typ, service, binding=None):
+        """
+
+        :param type:
+        :param service:
+        :param binding:
+        :return:
+        """
+        res = {}
+        for entid, item in self.items():
+            hit = False
+            try:
+                descr = item['{}sso_descriptor'.format(typ)]
+            except KeyError:
+                continue
+            else:
+                for desc in descr:
+                    try:
+                        srvs = desc[service]
+                    except KeyError:
+                        continue
+                    else:
+                        for srv in srvs:
+                            if srv['binding'] == binding:
+                                res[entid] = item
+                                hit = True
+                                break
+                    if hit:
+                        break
         return res
 
     def bindings(self, entity_id, typ, service):
@@ -303,7 +336,7 @@ class MetaData(object):
         raise NotImplementedError
 
     def dumps(self):
-        return json.dumps(self.items(), indent=2)
+        return json.dumps(list(self.items()), indent=2)
 
     def with_descriptor(self, descriptor):
         '''
@@ -634,7 +667,7 @@ class MetaDataFile(InMemoryMetaData):
     def get_metadata_content(self):
         return open(self.filename, 'rb').read()
 
-    def load(self):
+    def load(self, *args, **kwargs):
         _txt = self.get_metadata_content()
         return self.parse_and_check_signature(_txt)
 
@@ -655,13 +688,13 @@ class MetaDataLoader(MetaDataFile):
 
     @staticmethod
     def get_metadata_loader(func):
-        if callable(func):
+        if hasattr(func, '__call__'):
             return func
 
         i = func.rfind('.')
         module, attr = func[:i], func[i + 1:]
         try:
-            mod = import_module(module)
+            mod = importlib.import_module(module)
         except Exception as e:
             raise RuntimeError(
                 'Cannot find metadata provider function %s: "%s"' % (func, e))
@@ -673,7 +706,7 @@ class MetaDataLoader(MetaDataFile):
                 'Module "%s" does not define a "%s" metadata loader' % (
                     module, attr))
 
-        if not callable(metadata_loader):
+        if not hasattr(metadata_loader, '__call__'):
             raise RuntimeError(
                 'Metadata loader %s.%s must be callable' % (module, attr))
 
@@ -710,7 +743,7 @@ class MetaDataExtern(InMemoryMetaData):
         self.security = security
         self.http = http
 
-    def load(self):
+    def load(self, *args, **kwargs):
         """ Imports metadata by the use of HTTP GET.
         If the fingerprint is known the file will be checked for
         compliance before it is imported.
@@ -734,7 +767,7 @@ class MetaDataMD(InMemoryMetaData):
         super(MetaDataMD, self).__init__(attrc, **kwargs)
         self.filename = filename
 
-    def load(self):
+    def load(self, *args, **kwargs):
         for key, item in json.loads(open(self.filename).read()):
             self.entity[key] = item
 
@@ -760,7 +793,7 @@ class MetaDataMDX(InMemoryMetaData):
         concatenated with the request URL sent to the MDX server. Defaults to
         sha1 transformation.
         """
-        super(MetaDataMDX, self).__init__(None, None)
+        super(MetaDataMDX, self).__init__(None, '')
         self.url = url
 
         if entity_transform:
@@ -769,7 +802,7 @@ class MetaDataMDX(InMemoryMetaData):
 
             self.entity_transform = MetaDataMDX.sha1_entity_transform
 
-    def load(self):
+    def load(self, *args, **kwargs):
         # Do nothing
         pass
 
@@ -807,7 +840,7 @@ class MetadataStore(MetaData):
         :params ca_certs:
         :params disable_ssl_certificate_validation:
         """
-        self.attrc = attrc
+        MetaData.__init__(self, attrc, check_validity=check_validity)
 
         if disable_ssl_certificate_validation:
             self.http = HTTPBase(verify=False, ca_bundle=ca_certs)
@@ -821,14 +854,15 @@ class MetadataStore(MetaData):
         self.filter = filter
         self.to_old = {}
 
-    def load(self, typ, *args, **kwargs):
+    def load(self, *args, **kwargs):
         if self.filter:
             _args = {"filter": self.filter}
         else:
             _args = {}
 
+        typ = args[0]
         if typ == "local":
-            key = args[0]
+            key = args[1]
             # if library read every file in the library
             if os.path.isdir(key):
                 files = [f for f in os.listdir(key) if isfile(join(key, f))]
@@ -845,8 +879,10 @@ class MetadataStore(MetaData):
             self.ii += 1
             key = self.ii
             kwargs.update(_args)
-            _md = InMemoryMetaData(self.attrc, args[0])
+            _md = InMemoryMetaData(self.attrc, args[1])
         elif typ == "remote":
+            if "url" not in kwargs:
+                raise ValueError("Remote metadata must be structured as a dict containing the key 'url'")
             key = kwargs["url"]
             for _key in ["node_name", "check_validity"]:
                 try:
@@ -861,11 +897,14 @@ class MetadataStore(MetaData):
                                  kwargs["url"], self.security,
                                  kwargs["cert"], self.http, **_args)
         elif typ == "mdfile":
-            key = args[0]
-            _md = MetaDataMD(self.attrc, args[0], **_args)
+            key = args[1]
+            _md = MetaDataMD(self.attrc, args[1], **_args)
         elif typ == "loader":
-            key = args[0]
-            _md = MetaDataLoader(self.attrc, args[0], **_args)
+            key = args[1]
+            _md = MetaDataLoader(self.attrc, args[1], **_args)
+        elif typ == "mdq":
+            key = args[1]
+            _md = MetaDataMDX(args[1])
         else:
             raise SAMLError("Unknown metadata type '%s'" % typ)
         _md.load()
@@ -891,7 +930,7 @@ class MetadataStore(MetaData):
                     raise SAMLError("Misconfiguration in metadata %s" % item)
                 mod, clas = key.rsplit('.', 1)
                 try:
-                    mod = import_module(mod)
+                    mod = importlib.import_module(mod)
                     MDloader = getattr(mod, clas)
                 except (ImportError, AttributeError):
                     raise SAMLError("Unknown metadata loader %s" % key)
@@ -956,10 +995,7 @@ class MetadataStore(MetaData):
             try:
                 srvs = _md[entity_id][typ]
             except KeyError:
-                return None
-
-            if not srvs:
-                return srvs
+                continue
 
             res = []
             for srv in srvs:
@@ -968,6 +1004,8 @@ class MetadataStore(MetaData):
                         if elem["__class__"] == service:
                             res.append(elem)
             return res
+
+        return None
 
     def ext_service(self, entity_id, typ, service, binding=None):
         known_entity = False
