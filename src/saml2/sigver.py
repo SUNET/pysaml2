@@ -1066,7 +1066,7 @@ class CryptoBackendXMLSecurity(CryptoBackend):
         import lxml.etree
 
         xml = xmlsec.parse_xml(statement)
-        signed = xmlsec.sign(xml, self.keyspec)
+        signed = xmlsec.sign(xml, self.keyspec, raw_sign=True)
         return lxml.etree.tostring(signed, xml_declaration=True)
 
     def validate_signature(self, signedtext, cert_file, cert_type, node_name,
