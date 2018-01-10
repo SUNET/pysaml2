@@ -64,7 +64,7 @@ def test_filter_on_attributes_0():
     required = [a]
     ava = {"serialNumber": ["12345"]}
 
-    ava = filter_on_attributes(ava, required)
+    ava = filter_on_attributes(ava, required, acs=ac_factory())
     assert list(ava.keys()) == ["serialNumber"]
     assert ava["serialNumber"] == ["12345"]
 
@@ -76,9 +76,21 @@ def test_filter_on_attributes_1():
     required = [a]
     ava = {"serialNumber": ["12345"], "givenName": ["Lars"]}
 
-    ava = filter_on_attributes(ava, required)
+    ava = filter_on_attributes(ava, required, acs=ac_factory())
     assert list(ava.keys()) == ["serialNumber"]
     assert ava["serialNumber"] == ["12345"]
+
+
+def test_filter_on_attributes_2():
+    
+    a = to_dict(Attribute(friendly_name="surName",name="urn:oid:2.5.4.4",
+                          name_format=NAME_FORMAT_URI), ONTS)
+    required = [a]
+    ava = {"sn":["kakavas"]}
+
+    ava = filter_on_attributes(ava,required,acs=ac_factory())
+    assert list(ava.keys()) == ['sn']
+    assert ava["sn"] == ["kakavas"]
 
 
 def test_filter_on_attributes_without_friendly_name():
@@ -106,7 +118,7 @@ def test_filter_on_attributes_with_missing_required_attribute():
         name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10",
         name_format=NAME_FORMAT_URI), ONTS)
     with pytest.raises(MissingValue):
-        filter_on_attributes(ava, required=[eptid])
+        filter_on_attributes(ava, required=[eptid], acs=ac_factory())
 
 
 def test_filter_on_attributes_with_missing_optional_attribute():
@@ -115,7 +127,18 @@ def test_filter_on_attributes_with_missing_optional_attribute():
         friendly_name="eduPersonTargetedID",
         name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10",
         name_format=NAME_FORMAT_URI), ONTS)
-    assert filter_on_attributes(ava, optional=[eptid]) == {}
+    assert filter_on_attributes(ava, optional=[eptid], acs=ac_factory()) == {}
+
+
+def test_filter_on_attributes_with_missing_name_format():
+    ava = {"eduPersonTargetedID": "test@example.com",
+           "eduPersonAffiliation": "test",
+           "extra": "foo"}
+    eptid = to_dict(Attribute(friendly_name="eduPersonTargetedID",
+                              name="urn:myown:eptid",
+                              name_format=''), ONTS)
+    ava = filter_on_attributes(ava, optional=[eptid], acs=ac_factory())
+    assert ava['eduPersonTargetedID'] == "test@example.com"
 
 
 # ----------------------------------------------------------------------
@@ -136,6 +159,7 @@ def test_lifetime_1():
         }}
 
     r = Policy(conf)
+
     assert r is not None
 
     assert r.get_lifetime("urn:mace:umu.se:saml:roland:sp") == {"minutes": 5}
@@ -203,25 +227,22 @@ def test_ava_filter_2():
             "lifetime": {"minutes": 5},
             "attribute_restrictions": {
                 "givenName": None,
-                "surName": None,
+                "sn": None,
                 "mail": [".*@.*\.umu\.se"],
             }
         }}
 
     policy = Policy(conf)
 
-    ava = {"givenName": "Derek",
-           "surName": "Jeter",
-           "mail": "derek@example.com"}
+    ava = {"givenName": "Derek", "sn": "Jeter", "mail": "derek@example.com"}
 
     # mail removed because it doesn't match the regular expression
     _ava = policy.filter(ava, 'urn:mace:umu.se:saml:roland:sp', None, [mail],
                          [gn, sn])
 
-    assert _eq(sorted(list(_ava.keys())), ["givenName", "surName"])
+    assert _eq(sorted(list(_ava.keys())), ["givenName", 'sn'])
 
-    ava = {"givenName": "Derek",
-           "surName": "Jeter"}
+    ava = {"givenName": "Derek", "sn": "Jeter"}
 
     # it wasn't there to begin with
     try:
@@ -458,7 +479,7 @@ def test_filter_values_req_2():
     required = [a1, a2]
     ava = {"serialNumber": ["12345"], "givenName": ["Lars"]}
 
-    raises(MissingValue, filter_on_attributes, ava, required)
+    raises(MissingValue, filter_on_attributes, ava, required, acs=ac_factory())
 
 
 def test_filter_values_req_3():
@@ -470,7 +491,7 @@ def test_filter_values_req_3():
     required = [a]
     ava = {"serialNumber": ["12345"]}
 
-    ava = filter_on_attributes(ava, required)
+    ava = filter_on_attributes(ava, required, acs=ac_factory())
     assert list(ava.keys()) == ["serialNumber"]
     assert ava["serialNumber"] == ["12345"]
 
@@ -484,7 +505,7 @@ def test_filter_values_req_4():
     required = [a]
     ava = {"serialNumber": ["12345"]}
 
-    raises(MissingValue, filter_on_attributes, ava, required)
+    raises(MissingValue, filter_on_attributes, ava, required, acs=ac_factory())
 
 
 def test_filter_values_req_5():
@@ -496,7 +517,7 @@ def test_filter_values_req_5():
     required = [a]
     ava = {"serialNumber": ["12345", "54321"]}
 
-    ava = filter_on_attributes(ava, required)
+    ava = filter_on_attributes(ava, required, acs=ac_factory())
     assert list(ava.keys()) == ["serialNumber"]
     assert ava["serialNumber"] == ["12345"]
 
@@ -510,7 +531,7 @@ def test_filter_values_req_6():
     required = [a]
     ava = {"serialNumber": ["12345", "54321"]}
 
-    ava = filter_on_attributes(ava, required)
+    ava = filter_on_attributes(ava, required, acs=ac_factory())
     assert list(ava.keys()) == ["serialNumber"]
     assert ava["serialNumber"] == ["54321"]
 
@@ -527,7 +548,7 @@ def test_filter_values_req_opt_0():
 
     ava = {"serialNumber": ["12345", "54321"]}
 
-    ava = filter_on_attributes(ava, [r], [o])
+    ava = filter_on_attributes(ava, [r], [o], acs=ac_factory())
     assert list(ava.keys()) == ["serialNumber"]
     assert _eq(ava["serialNumber"], ["12345", "54321"])
 
@@ -545,7 +566,7 @@ def test_filter_values_req_opt_1():
 
     ava = {"serialNumber": ["12345", "54321"]}
 
-    ava = filter_on_attributes(ava, [r], [o])
+    ava = filter_on_attributes(ava, [r], [o], acs=ac_factory())
     assert list(ava.keys()) == ["serialNumber"]
     assert _eq(ava["serialNumber"], ["12345", "54321"])
 
@@ -581,7 +602,7 @@ def test_filter_values_req_opt_2():
     ava = {"surname": ["Hedberg"], "givenName": ["Roland"],
            "eduPersonAffiliation": ["staff"], "uid": ["rohe0002"]}
 
-    raises(MissingValue, "filter_on_attributes(ava, r, o)")
+    raises(MissingValue, "filter_on_attributes(ava, r, o, acs=ac_factory())")
 
 
 # ---------------------------------------------------------------------------
@@ -772,7 +793,7 @@ def test_req_opt():
                 is_required="false"), ONTS)]
 
     policy = Policy()
-    ava = {'givenname': 'Roland', 'surname': 'Hedberg',
+    ava = {'givenname': 'Roland', 'sn': 'Hedberg',
            'uid': 'rohe0002', 'edupersonaffiliation': 'staff'}
 
     sp_entity_id = "urn:mace:example.com:saml:curt:sp"
@@ -961,3 +982,4 @@ def test_assertion_with_authn_instant():
 
 if __name__ == "__main__":
     test_assertion_2()
+

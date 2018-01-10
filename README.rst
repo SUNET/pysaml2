@@ -3,7 +3,8 @@ PySAML2 - SAML2 in Python
 *************************
 
 :Author: Roland Hedberg
-:Version: 4.4.0
+:Version: 4.5.0
+:Documentation: https://pysaml2.readthedocs.io/
 
 .. image:: https://api.travis-ci.org/rohe/pysaml2.png?branch=master
     :target: https://travis-ci.org/rohe/pysaml2
@@ -30,7 +31,7 @@ allow you to use it with other frameworks.
 Testing
 =======
 PySAML2 uses the `pytest <http://doc.pytest.org/en/latest/>`_ framework for
-testing. To run the tests on your system's version of python 
+testing. To run the tests on your system's version of python
 
 1. Create and activate a `virtualenv <https://virtualenv.pypa.io/en/stable/>`_.
 2. Inside the virtualenv, install the dependencies needed for testing :code:`pip install -r tests/test_requirements.txt`
@@ -38,3 +39,15 @@ testing. To run the tests on your system's version of python
 
 To run tests in multiple python environments, you can use
 `pyenv <https://github.com/yyuu/pyenv>`_ with `tox <https://tox.readthedocs.io/en/latest/>`_.
+
+
+Please contribute!
+==================
+
+To help out, you could:
+
+1. Test and report any bugs or other difficulties.
+2. Implement missing features.
+3. Write more unit tests.
+
+**If you have the time and inclination I'm looking for Collaborators**

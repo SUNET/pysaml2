@@ -28,7 +28,7 @@ def get_msg(hinfo, binding):
     if binding == BINDING_SOAP:
         xmlstr = hinfo["data"]
     elif binding == BINDING_HTTP_POST:
-        _inp = hinfo["data"][3]
+        _inp = hinfo["data"]
         i = _inp.find(TAG1)
         i += len(TAG1) + 1
         j = _inp.find('"', i)
@@ -92,6 +92,8 @@ def test_flow():
         # ------- @SP ----------
 
         xmlstr = get_msg(hinfo, binding)
+        # Explicitly allow unsigned responses for this test
+        sp.want_response_signed = False
         aresp = sp.parse_authn_request_response(xmlstr, binding,
                                                 {resp.in_response_to: "/"})
 

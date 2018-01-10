@@ -8,19 +8,23 @@ from setuptools.command.test import test as TestCommand
 
 install_requires = [
     # core dependencies
-    'decorator',
     'requests >= 1.0.0',
     'future',
-    'paste',
-    'zope.interface',
-    'repoze.who',
-    'pycryptodomex',
+    'cryptography',
     'pytz',
     'pyOpenSSL',
     'python-dateutil',
     'defusedxml',
     'six'
 ]
+
+extras_require = {
+    's2repoze': [
+        'paste',
+        'zope.interface',
+        'repoze.who'
+    ]
+}
 
 version = ''
 with open('src/saml2/__init__.py', 'r') as fd:
@@ -56,5 +60,6 @@ setup(
     scripts=["tools/parse_xsd2.py", "tools/make_metadata.py",
              "tools/mdexport.py", "tools/merge_metadata.py"],
     install_requires=install_requires,
+    extras_require=extras_require,
     zip_safe=False,
 )
