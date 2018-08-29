@@ -1050,7 +1050,7 @@ def security_context(conf):
                 sec_backend = RSACrypto(rsa_key)
     elif conf.crypto_backend == 'XMLSecurity':
         # new and somewhat untested pyXMLSecurity crypto backend.
-        crypto = CryptoBackendXMLSecurity(conf.getattr("key_file", ""), debug=debug)
+        crypto = CryptoBackendXMLSecurity(conf.getattr("key_file", ""))
     else:
         err_msg = 'Unknown crypto_backend {backend}'
         err_msg = err_msg.format(backend=conf.crypto_backend)
