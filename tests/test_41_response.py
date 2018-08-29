@@ -16,7 +16,7 @@ from pathutils import full_path
 
 FALSE_ASSERT_SIGNED = full_path("saml_false_signed.xml")
 
-TIMESLACK = 62000000  # Roughly +- 24 month
+TIMESLACK = 93000000  # Roughly +- 36 months
 
 
 def _eq(l1, l2):
