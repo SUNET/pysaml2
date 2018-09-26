@@ -96,7 +96,7 @@ class TestServer1():
         self.client = client.Saml2Client(conf)
         self.name_id = self.server.ident.transient_nameid(
             "urn:mace:example.com:saml:roland:sp", "id12")
-        self.ava = {"givenName": ["Derek"], "sn": ["Jeter"],
+        self.ava = {"givenName": ["Derek"], "sn": ["Göransson"],
                "mail": ["derek@nyy.mlb.com"], "title": "The man"}
 
     def teardown_class(self):
