@@ -23,9 +23,34 @@ OPENOSI_OID = 'urn:oid:1.3.6.1.4.1.27630.2.1.1.'
 EIDAS_NATURALPERSON = 'http://eidas.europa.eu/attributes/naturalperson/'
 EIDAS_LEGALPERSON = 'http://eidas.europa.eu/attributes/legalperson/'
 
+PKIX_OID = 'urn:oid:1.3.6.1.5.5.7.9.'
+
+INERA_OID = 'urn:oid:1.2.752.29.4.'
+DIGG_OID = 'urn:oid:1.2.752.201.3.'
+
+
 MAP = {
     'identifier': 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri',
     'fro': {
+        DIGG_OID+'1': 'orgAffiliation',
+        DIGG_OID+'2': 'transactionIdentifier',
+        DIGG_OID+'3': 'authContextParams',
+        DIGG_OID+'4': 'prid',
+        DIGG_OID+'5': 'pridPersistence',
+        DIGG_OID+'6': 'personalIdentityNumberBinding',
+        DIGG_OID+'7': 'eidasPersonIdentifier',
+        DIGG_OID+'8': 'birthName',
+        DIGG_OID+'9': 'eidasNaturalPersonAddress',
+        DIGG_OID+'10': 'userCertificate',
+        DIGG_OID+'11': 'userSignature',
+        DIGG_OID+'12': 'sad',
+        DIGG_OID+'13': 'authServerSignature',
+        INERA_OID+'13': 'personalIdentityNumber',
+        PKIX_OID+'1': 'dateOfBirth',
+        PKIX_OID+'2': 'placeOfBirth',
+        PKIX_OID+'3': 'gender',
+        PKIX_OID+'4': 'countryOfCitizenship',
+        PKIX_OID+'5': 'countryOfResidence',
         EIDAS_LEGALPERSON+'LegalPersonIdentifier': 'LegalPersonIdentifier',
         EIDAS_LEGALPERSON+'LegalAddress': 'LegalAddress',
         EIDAS_LEGALPERSON+'LegalName': 'LegalName',
@@ -189,6 +214,25 @@ MAP = {
         X500ATTR_OID+'65': 'pseudonym',
     },
     'to': {
+        'orgAffiliation': DIGG_OID+'1',
+        'transactionIdentifier': DIGG_OID+'2',
+        'authContextParams': DIGG_OID+'3',
+        'prid': DIGG_OID+'4',
+        'pridPersistence': DIGG_OID+'5',
+        'personalIdentityNumberBinding': DIGG_OID+'6',
+        'eidasPersonIdentifier': DIGG_OID+'7',
+        'birthName': DIGG_OID+'8',
+        'eidasNaturalPersonAddress': DIGG_OID+'9',
+#        'userCertificate': DIGG_OID+'10',
+        'userSignature': DIGG_OID+'11',
+        'sad': DIGG_OID+'12',
+        'authServerSignature': DIGG_OID+'13',
+        'personalIdentityNumber': INERA_OID+'13',
+        'dateOfBirth': PKIX_OID+'1',
+        'placeOfBirth': PKIX_OID+'2',
+        'gender': PKIX_OID+'3',
+        'countryOfCitizenship': PKIX_OID+'4',
+        'countryOfResidence': PKIX_OID+'5',
         'LegalPersonIdentifier': EIDAS_LEGALPERSON+'LegalPersonIdentifier',
         'LegalAddress': EIDAS_LEGALPERSON+'LegalAddress',
         'LegalName': EIDAS_LEGALPERSON+'LegalName',
