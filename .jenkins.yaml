@@ -1,5 +1,7 @@
 triggers:
   cron: "@weekly"
+git:
+  branch: fix_xmlsec_sign_statement
 environment_variables:
   TOXENV: "py27"
 pre_build_script:
