@@ -959,7 +959,10 @@ class CryptoBackendXMLSecurity(CryptoBackend):
 
         xml = xmlsec.parse_xml(statement)
         signed = xmlsec.sign(xml, self.keyspec)
-        return lxml.etree.tostring(signed, xml_declaration=True)
+        if six.PY2:
+            return lxml.etree.tostring(signed, xml_declaration=True, encoding='UTF-8')
+        else:
+            return lxml.etree.tostring(signed, encoding='unicode')
 
     def validate_signature(self, signedtext, cert_file, cert_type, node_name, node_id, id_attr):
         """
