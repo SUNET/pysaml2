@@ -704,11 +704,6 @@ def main(environ, start_response, sp):
     )
     body.append("<br><a href='/logout'>logout</a>")
 
-    body = [
-        item if not isinstance(item, six.binary_type) else item.encode("utf-8")
-        for item in body
-    ]
-
     resp = Response(body)
     return resp(environ, start_response)
 
@@ -829,7 +824,7 @@ def metadata(environ, start_response):
             _args.sign,
         )
         start_response("200 OK", [("Content-Type", "text/xml")])
-        return metadata
+        return [metadata]
     except Exception as ex:
         logger.error("An error occured while creating metadata: %s", ex.message)
         return not_found(environ, start_response)
@@ -878,6 +873,28 @@ def application(environ, start_response):
         print(err, file=sys.stderr)
         resp = ServiceError("%s" % err)
         return resp(environ, start_response)
+
+
+class ToBytesMiddleware(object):
+    """Converts a message to bytes to be sent by WSGI server."""
+
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        data = self.app(environ, start_response)
+
+        if isinstance(data, list):
+            return (
+                d
+                if isinstance(d, bytes)
+                else d.encode("utf-8")
+                for d in data
+            )
+        elif isinstance(data, str):
+            return data.encode("utf-8")
+
+        return data
 
 
 if __name__ == "__main__":
@@ -964,7 +981,7 @@ if __name__ == "__main__":
         pass
     ds.DefaultSignature(sign_alg, digest_alg)
 
-    SRV = WSGIServer((HOST, PORT), application)
+    SRV = WSGIServer((HOST, PORT), ToBytesMiddleware(application))
 
     _https = ""
     if service_conf.HTTPS:
