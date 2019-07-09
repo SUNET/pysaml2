@@ -5,10 +5,7 @@ When releasing a new version, the following steps should be taken:
 
 1. Make sure all automated tests pass.
 
-2. Fill in the release date in ``CHANGES``. Make sure the changelog is
-   complete. Commit this change.
-
-3. Make sure the package metadata in ``setup.py`` is up-to-date. You can
+2. Make sure the package metadata in ``setup.py`` is up-to-date. You can
    verify the information by re-generating the egg info::
 
     python setup.py egg_info
@@ -22,10 +19,16 @@ When releasing a new version, the following steps should be taken:
    If this will produce warning or errors, PyPI will be unable to render
    the long description nicely. It will treat it as plain text instead.
 
-4. Update the version in the VERSION_ file and report the changes in
-   CHANGELOG.rst_ and commit the changes.::
+3. Update the version in the VERSION_ file and report the changes in
+   CHANGELOG.md_ and commit the changes.::
 
+    git add CHANGELOG.md
+    git add VERSION
     git commit -v -s -m "Release version X.Y.Z"
+
+4. Create a release branch_::
+
+    git branch vX.Y.Z
 
 5. Create a release tag_::
 
@@ -34,6 +37,7 @@ When releasing a new version, the following steps should be taken:
 6. Push these changes to Github::
 
     git push --follow-tags origin vX.Y.Z
+    git push --follow-tags origin vX.Y.Z:vX.Y.Z
 
 7. Create a source and wheel distribution and upload it to PyPI::
 
@@ -69,11 +73,8 @@ release ("brown bag release"). In such a case it should simply be superseded
 immediately by a new, improved release.
 
 
-This document is based on zope release-software_ guidelines.
-
-
 .. _VERSION: https://github.com/IdentityPython/pysaml2/blob/master/VERSION
-.. _CHANGELOG.rst: https://github.com/IdentityPython/pysaml2/blob/master/CHANGELOG.rst
+.. _CHANGELOG.md: https://github.com/IdentityPython/pysaml2/blob/master/CHANGELOG.md
 .. _docutils: http://docutils.sourceforge.net/
+.. _branch: https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell
 .. _tag: https://git-scm.com/book/en/v2/Git-Basics-Tagging#_annotated_tags
-.. _release-software: https://zopetoolkit.readthedocs.io/en/latest/process/releasing-software.html

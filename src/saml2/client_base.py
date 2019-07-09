@@ -371,14 +371,6 @@ class Base(Entity):
         except KeyError:
             nsprefix = None
 
-        try:
-            force_authn = kwargs['force_authn']
-        except KeyError:
-            force_authn = self.config.getattr('force_authn', 'sp')
-        finally:
-            if force_authn:
-                args['force_authn'] = 'true'
-
         conf_sp_type = self.config.getattr('sp_type', 'sp')
         conf_sp_type_in_md = self.config.getattr('sp_type_in_metadata', 'sp')
         if conf_sp_type and conf_sp_type_in_md is False:
@@ -440,15 +432,20 @@ class Base(Entity):
                 extension_elements=items)
             extensions.add_extension_element(item)
 
+        force_authn = str(
+            kwargs.pop("force_authn", None)
+            or self.config.getattr("force_authn", "sp")
+        ).lower() in ["true", "1"]
+        if force_authn:
+            kwargs["force_authn"] = "true"
+
         if kwargs:
-            _args, extensions = self._filter_args(AuthnRequest(), extensions,
-                                                  **kwargs)
+            _args, extensions = self._filter_args(
+                AuthnRequest(), extensions, **kwargs
+            )
             args.update(_args)
 
-        try:
-            del args["id"]
-        except KeyError:
-            pass
+        args.pop("id", None)
 
         if sign is None:
             sign = self.authn_requests_signed
@@ -913,28 +910,21 @@ class Base(Entity):
         :return: A URL
         """
 
-        args = {"entityID": entity_id}
-        for key in ["policy", "returnIDParam"]:
-            try:
-                args[key] = kwargs[key]
-            except KeyError:
-                pass
+        args = {
+            "entityID": entity_id,
+            "policy": kwargs.get("policy"),
+            "returnIDParam": kwargs.get("returnIDParam"),
+            "return": kwargs.get("return_url") or kwargs.get("return"),
+            "isPassive": (
+                None
+                if "isPassive" not in kwargs.keys()
+                else "true"
+                if kwargs.get("isPassive")
+                else "false"
+            ),
+        }
 
-        try:
-            args["return"] = kwargs["return_url"]
-        except KeyError:
-            try:
-                args["return"] = kwargs["return"]
-            except KeyError:
-                pass
-
-        if "isPassive" in kwargs:
-            if kwargs["isPassive"]:
-                args["isPassive"] = "true"
-            else:
-                args["isPassive"] = "false"
-
-        params = urlencode(args)
+        params = urlencode({k: v for k, v in args.items() if v})
         return "%s?%s" % (url, params)
 
     @staticmethod
