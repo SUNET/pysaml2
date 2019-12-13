@@ -66,6 +66,7 @@ classnames = {
 
 ENTITY_CATEGORY = "http://macedir.org/entity-category"
 ENTITY_CATEGORY_SUPPORT = "http://macedir.org/entity-category-support"
+ASSURANCE_CERTIFICATION = "urn:oasis:names:tc:SAML:attribute:assurance-certification"
 
 REQ2SRV = {
     # IDP
@@ -1243,6 +1244,15 @@ class MetadataStore(MetaData):
         attributes = self.entity_attributes(entity_id)
         return attributes.get(ENTITY_CATEGORY_SUPPORT, [])
 
+    def assurance_certifications(self, entity_id):
+        assurance_certifications = (
+            certification
+            for name, values in self.entity_attributes(entity_id).items()
+            if name == ASSURANCE_CERTIFICATION
+            for certification in values
+        )
+        return assurance_certifications
+
     def entity_attributes(self, entity_id):
         """
         Get all entity attributes for an entry in the metadata.
@@ -1378,6 +1388,30 @@ class MetadataStore(MetaData):
             if height is None or element.get("height") == height
         )
         return values
+
+    def contact_person_data(self, entity_id, contact_type=None):
+        try:
+            data = self[entity_id]
+        except KeyError:
+            data = {}
+
+        contacts = (
+            {
+                "contact_type": _contact_type,
+                "given_name": contact.get("given_name", {}).get("text", ""),
+                "email_address": [
+                    address
+                    for email in contact.get("email_address", {})
+                    for address in [email.get("text")]
+                    if address
+                ],
+            }
+            for contact in data.get("contact_person", [])
+            for _contact_type in [contact.get("contact_type", "")]
+            if contact_type is None or contact_type == _contact_type
+        )
+
+        return contacts
 
     def bindings(self, entity_id, typ, service):
         for _md in self.metadata.values():
