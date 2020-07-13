@@ -67,7 +67,7 @@ General directives
 additional_cert_files
 ^^^^^^^^^^^^^^^^^^^^^
 
-Format::
+Example::
 
     additional_cert_files: ["other-cert.pem", "another-cert.pem"]
 
@@ -79,29 +79,30 @@ Each entry in *additional_cert_files* must be a PEM formatted file with a single
 assurance_certification
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Format::
+Example::
 
     "assurance_specification": [
         "https://refeds.org/sirtfi",
     ]
 
-Generates an `Attribute` element with name-format
-`urn:oasis:names:tc:SAML:2.0:attrname-format:uri` and name
-`urn:oasis:names:tc:SAML:attribute:assurance-certification` that contains
-`AttributeValue` elements with the given values from the list.
-The element is added under the generated metadata `EntityDescriptor` as an
-`Extension` element under the `EntityAttributes` element.
+Generates an ``Attribute`` element with name-format
+``urn:oasis:names:tc:SAML:2.0:attrname-format:uri`` and name
+``urn:oasis:names:tc:SAML:attribute:assurance-certification`` that contains
+``AttributeValue`` elements with the given values from the list.
+The element is added under the generated metadata ``EntityDescriptor`` as an
+``Extension`` element under the ``EntityAttributes`` element.
 
 Read more about `representing assurance information at the specification <https://wiki.oasis-open.org/security/SAML2IDAssuranceProfile>`_.
 
 attribute_map_dir
 ^^^^^^^^^^^^^^^^^
 
-Format::
+Points to a directory which has the attribute maps in Python modules.
+
+Example::
 
     "attribute_map_dir": "attribute-maps"
 
-Points to a directory which has the attribute maps in Python modules.
 A typical map file will look like this::
 
     MAP = {
@@ -138,7 +139,7 @@ automatically create the other.
 cert_file
 ^^^^^^^^^
 
-Format::
+Example::
 
     cert_file: "cert.pem"
 
@@ -175,7 +176,7 @@ and **other**.::
 debug
 ^^^^^
 
-Format::
+Example::
 
     debug: 1
 
@@ -184,7 +185,7 @@ Whether debug information should be sent to the log file.
 entityid
 ^^^^^^^^
 
-Format::
+Example::
 
     entityid: "http://saml.example.com/sp"
 
@@ -196,7 +197,7 @@ The globally unique identifier of the entity.
 key_file
 ^^^^^^^^
 
-Format::
+Example::
 
     key_file: "key.pem"
 
@@ -536,16 +537,50 @@ Example::
     }
 
 
+name_id_policy_format
+"""""""""""""""""""""
+
+A string value that will be used to set the ``Format`` attribute of the
+``<NameIDPolicy>`` element of an ``<AuthnRequest>``.
+
+Example::
+
+    "service": {
+        "sp": {
+            "name_id_policy_format": "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
+        }
+    }
+
+
 name_id_format_allow_create
 """""""""""""""""""""""""""
 
-Enable AllowCreate in NameIDPolicy.
+A boolean value (``True`` or ``False``) that will be used to set the ``AllowCreate``
+attribute of the ``<NameIDPolicy>`` element of an ``<AuthnRequest>``.
 
 Example::
 
     "service": {
         "sp": {
             "name_id_format_allow_create": True,
+        }
+    }
+
+
+name_id_format
+""""""""""""""
+
+A list of string values that will be used to set the ``<NameIDFormat>`` element of the
+metadata of an entity.
+
+Example::
+
+    "service": {
+        "idp": {
+            "name_id_format": [
+                "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
+                "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
+            ]
         }
     }
 
