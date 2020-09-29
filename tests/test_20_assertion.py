@@ -1,8 +1,11 @@
 # coding=utf-8
+import copy
+
 from saml2.argtree import add_path
 from saml2.authn_context import pword
 from saml2.mdie import to_dict
-from saml2 import md, assertion
+from saml2 import md, assertion, config
+from saml2.mdstore import MetadataStore
 from saml2.saml import Attribute
 from saml2.saml import Issuer
 from saml2.saml import NAMEID_FORMAT_ENTITY
@@ -32,6 +35,15 @@ from saml2 import xmlenc
 from pathutils import full_path
 
 ONTS = [saml, mdui, mdattr, dri, idpdisc, md, xmldsig, xmlenc]
+ATTRCONV = ac_factory(full_path("attributemaps"))
+sec_config = config.Config()
+
+METADATACONF = {
+    "1": [{
+        "class": "saml2.mdstore.MetaDataFile",
+        "metadata": [(full_path("swamid-2.0.xml"),)],
+    }],
+}
 
 
 def _eq(l1, l2):
@@ -288,44 +300,6 @@ def test_ava_filter_dont_fail():
 
     assert _ava
 
-
-def test_ava_filter_dont_fail():
-    conf = {
-        "default": {
-            "lifetime": {"minutes": 15},
-            "attribute_restrictions": None,  # means all I have
-        },
-        "urn:mace:umu.se:saml:roland:sp": {
-            "lifetime": {"minutes": 5},
-            "attribute_restrictions": {
-                "givenName": None,
-                "surName": None,
-                "mail": [".*@.*\.umu\.se"],
-            },
-            "fail_on_missing_requested": False
-        }}
-
-    policy = Policy(conf)
-
-    ava = {"givenName": "Derek",
-           "surName": "Jeter",
-           "mail": "derek@example.com"}
-
-    # mail removed because it doesn't match the regular expression
-    # So it should fail if the 'fail_on_ ...' flag wasn't set
-    _ava = policy.filter(ava,'urn:mace:umu.se:saml:roland:sp', None,
-                         [mail], [gn, sn])
-
-    assert _ava
-
-    ava = {"givenName": "Derek",
-           "surName": "Jeter"}
-
-    # it wasn't there to begin with
-    _ava = policy.filter(ava, 'urn:mace:umu.se:saml:roland:sp',
-                         None, [gn, sn, mail])
-
-    assert _ava
 
 def test_filter_attribute_value_assertions_0(AVA):
     p = Policy({
@@ -896,25 +870,66 @@ def test_assertion_with_noop_attribute_conv():
             assert attr.attribute_value[0].text == "Roland"
 
 
-# THis test doesn't work without a MetadataStore instance
-# def test_filter_ava_5():
-#    policy = Policy({
-#        "default": {
-#            "lifetime": {"minutes": 15},
-#            #"attribute_restrictions": None  # means all I have
-#            "entity_categories": ["swamid", "edugain"]
-#        }
-#    })
-#
-#    ava = {"givenName": ["Derek"], "surName": ["Jeter"],
-#           "mail": ["derek@nyy.mlb.com", "dj@example.com"]}
-#
-#    ava = policy.filter(ava, "urn:mace:example.com:saml:curt:sp", None, [], [])
-#
-#    # using entity_categories means there *always* are restrictions
-#    # in this case the only allowed attribute is eduPersonTargetedID
-#    # which isn't available in the ava hence zip is returned.
-#    assert ava == {}
+def test_filter_ava_5():
+    mds = MetadataStore(ATTRCONV, sec_config,
+                        disable_ssl_certificate_validation=True)
+    mds.imp(METADATACONF["1"])
+
+    policy = Policy({
+        "default": {
+            "lifetime": {"minutes": 15},
+            "attribute_restrictions": None,  # means all I have
+            "entity_categories": ["swamid", "edugain"]
+        }
+    })
+
+    ava = {"givenName": ["Derek"], "surName": ["Jeter"],
+           "mail": ["derek@nyy.mlb.com", "dj@example.com"]}
+
+    ava = policy.filter(ava, "urn:mace:example.com:saml:curt:sp", mdstore=mds, required=[], optional=[])
+
+    # using entity_categories means there *always* are restrictions
+    # in this case the only allowed attribute is eduPersonTargetedID
+    # which isn't available in the ava hence zip is returned.
+    assert ava == {}
+
+
+def test_filter_ava_registration_authority_1():
+    mds = MetadataStore(ATTRCONV, sec_config,
+                        disable_ssl_certificate_validation=True)
+    mds.imp(METADATACONF["1"])
+    config.metadata = mds
+
+    policy = Policy({
+        "default": {
+            "lifetime": {"minutes": 15},
+            "attribute_restrictions": None,
+        },
+        "registration_authorities": {
+            "http://rr.aai.switch.ch/": {
+                "attribute_restrictions": {
+                    "givenName": None,
+                    "surName": None,
+                }
+            }
+        }
+    }, config=config)
+
+    attributes = {"givenName": ["Derek"], "surName": ["Jeter"],
+                  "mail": ["derek@nyy.mlb.com", "dj@example.com"]}
+
+    # SP registered with http://rr.aai.switch.ch/
+    ava = policy.filter(attributes, "https://aai-idp.unibe.ch/idp/shibboleth", mdstore=mds, required=[], optional=[])
+    assert _eq(sorted(list(ava.keys())), ["givenName", "surName"])
+    assert ava["givenName"] == ["Derek"]
+    assert ava["surName"] == ["Jeter"]
+
+    # SP not registered with http://rr.aai.switch.ch/
+    ava = policy.filter(attributes, "https://alpha.kib.ki.se/shibboleth", mdstore=mds, required=[], optional=[])
+    assert _eq(sorted(list(ava.keys())), ["givenName", "mail", "surName"])
+    assert ava["givenName"] == ["Derek"]
+    assert ava["surName"] == ["Jeter"]
+    assert ava["mail"] == ["derek@nyy.mlb.com", "dj@example.com"]
 
 
 def test_assertion_with_zero_attributes():
