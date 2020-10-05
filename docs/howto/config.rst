@@ -64,6 +64,55 @@ Configuration directives
 General directives
 ------------------
 
+logging
+^^^^^^^
+
+The logging configuration format is the python logging format.
+The configuration is passed to the python logging dictionary configuration handler,
+directly.
+
+Example::
+
+    "logging": {
+        "version": 1,
+        "formatters": {
+            "simple": {
+                "format": "[%(asctime)s] [%(levelname)s] [%(name)s.%(funcName)s] %(message)s",
+            },
+        },
+        "handlers": {
+            "stdout": {
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stdout",
+                "level": "DEBUG",
+                "formatter": "simple",
+            },
+        },
+        "loggers": {
+            "saml2": {
+                "level": "DEBUG"
+            },
+        },
+        "root": {
+            "level": "DEBUG",
+            "handlers": [
+                "stdout",
+            ],
+        },
+    },
+
+The exapmle configuration above will enable DEBUG logging to stdout.
+
+
+debug
+^^^^^
+
+Example::
+
+    debug: 1
+
+Whether debug information should be sent to the log file.
+
 additional_cert_files
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -75,6 +124,29 @@ Additional public certs that will be listed.  Useful during cert/key rotation or
 if you need to include a certificate chain.
 
 Each entry in *additional_cert_files* must be a PEM formatted file with a single certificate.
+
+entity_attributes
+^^^^^^^^^^^^^^^^^
+
+Generates an ``Attribute`` element with the given NameFormat, Name, FriendlyName and
+values, each as an ``AttributeValue`` element.
+
+The element is added under the generated metadata ``EntityDescriptor`` as an
+``Extension`` element under the ``EntityAttributes`` element.
+
+And omit
+
+Example::
+
+    "entity_attributes": [
+      {
+        "name_format": "urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
+        "name": "urn:oasis:names:tc:SAML:profiles:subject-id:req",
+        # "friendly_name" is not set
+        "values": ["any"],
+      },
+    ]
+
 
 assurance_certification
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -136,16 +208,6 @@ Since *to* in most cases is the inverse of the *fro* file, the
 software allows you only to specify one of them, and it will
 automatically create the other.
 
-cert_file
-^^^^^^^^^
-
-Example::
-
-    cert_file: "cert.pem"
-
-This is the public part of the service private/public key pair.
-*cert_file* must be a PEM formatted file with a single certificate.
-
 contact_person
 ^^^^^^^^^^^^^^
 
@@ -173,15 +235,6 @@ and **other**.::
         },
     ]
 
-debug
-^^^^^
-
-Example::
-
-    debug: 1
-
-Whether debug information should be sent to the log file.
-
 entityid
 ^^^^^^^^
 
@@ -204,6 +257,30 @@ Example::
 *key_file* is the name of a PEM formatted file that contains the private key
 of the service. This is currently used both to encrypt/sign assertions and as
 the client key in an HTTPS session.
+
+cert_file
+^^^^^^^^^
+
+Example::
+
+    cert_file: "cert.pem"
+
+This is the public part of the service private/public key pair.
+*cert_file* must be a PEM formatted file with a single certificate.
+
+
+encryption_keypairs
+^^^^^^^^^^^^^^^^^^^
+
+Indicates which certificates will be used for encryption capabilities::
+
+    # Encryption
+    'encryption_keypairs': [
+        {
+            'key_file': BASE_DIR + '/certificates/private.key',
+            'cert_file': BASE_DIR + '/certificates/public.cert',
+        },
+    ],
 
 metadata
 ^^^^^^^^
@@ -235,6 +312,11 @@ For example::
                 "cert": "ukfederation-mdq.pem",
                 "freshness_period": "P0Y0M0DT2H0M0S",
             },
+            {
+                "url": "https://mdq.thaturl.org/",
+                "disable_ssl_certificate_validation": True,
+                "check_validity": False,
+            },
         ],
     },
 
@@ -245,6 +327,12 @@ downloaded from the remote server and the MDQ server local copies of the
 metadata signing certificates should be used.  These public keys must be
 acquired by some secure out-of-band method before being placed on the local
 file system.
+
+When the parameter *check_validity* is set to False metadata that have expired
+will be accepted as valid.
+
+When the paramenter *disable_ssl_certificate_validation* is set to True the
+validity of ssl certificate will be skipped.
 
 When using MDQ, the `freshness_period` option can be set to define a period for
 which the metadata fetched from the the MDQ server are considered fresh. After
@@ -359,6 +447,13 @@ difference you are prepared to accept.
 .. note:: This will indiscriminately affect all time comparisons.
     Hence your server may accept a statement that in fact is too old.
 
+allow_unknown_attributes
+""""""""""""""""""""""""
+
+Indicates that attributes that are not recognized (they are not configured in
+attribute-mapping), will not be discarded.
+Default to False.
+
 xmlsec_binary
 ^^^^^^^^^^^^^
 
@@ -412,6 +507,11 @@ sign_response
 Specifies if the IdP should sign the authentication response or not. Can be
 True or False. Default is False.
 
+want_authn_requests_only_with_valid_cert
+""""""""""""""""""""""""""""""""""""""""
+
+When verifying a signed AuthnRequest ignore the signature and verify the
+certificate.
 
 policy
 """"""
@@ -576,7 +676,7 @@ metadata of an entity.
 Example::
 
     "service": {
-        "idp": {
+        "sp": {
             "name_id_format": [
                 "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
                 "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
@@ -598,7 +698,6 @@ Example::
             "allow_unsolicited": True,
         }
     }
-
 
 hide_assertion_consumer_service
 """""""""""""""""""""""""""""""
@@ -858,6 +957,19 @@ Example::
         },
     },
 
+only_use_keys_in_metadata
+"""""""""""""""""""""""""
+
+If set to False, the certificate contained in a SAML message will be used for
+signature verification.
+Default True.
+
+validate_certificate
+""""""""""""""""""""
+
+Indicates that the certificate used in sign SAML messages must be valid.
+Default to False.
+
 logout_requests_signed
 """"""""""""""""""""""
 
@@ -1022,4 +1134,55 @@ Other considerations
 
 Entity Categories
 -----------------
-Entity categories and their attributes are defined in src/saml2/entity_category/<registrar of entcat>.py
+
+Entity categories and their attributes are defined in
+src/saml2/entity_category/<registrar-of-entity-category>.py.
+We can configure Entity Categories in pysaml2 in two ways:
+
+1. Using the configuration options *entity_category_support* or
+   *entity_category*, to generate the appropriate EntityAttribute metadata
+   elements.
+2. Using the configuration option *entity_categories* as part of the policy
+   configuration, to make the entity category work as a filter on the
+   attributes that will be released.
+
+If the entity categories are configured as metadata, as follow::
+
+    'debug' : True,
+    'xmlsec_binary': get_xmlsec_binary([/usr/bin/xmlsec1']),
+    'entityid': '%s/metadata' % BASE_URL,
+
+    # or entity_category: [ ... ]
+    'entity_category_support': [
+        edugain.COCO, # "http://www.geant.net/uri/dataprotection-code-of-conduct/v1"
+        refeds.RESEARCH_AND_SCHOLARSHIP,
+    ],
+
+    'attribute_map_dir': 'data/attribute-maps',
+    'description': 'SAML2 IDP',
+
+    'service': {
+        'idp': {
+    ...
+
+In the metadata we'll then have::
+
+    <md:Extensions>
+      <mdattr:EntityAttributes>
+        <saml:Attribute Name="http://macedir.org/entity-category-support" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+          <saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">http://www.geant.net/uri/dataprotection-code-of-conduct/v1</saml:AttributeValue>
+          <saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">http://refeds.org/category/research-and-scholarship</saml:AttributeValue>
+        </saml:Attribute>
+      </mdattr:EntityAttributes>
+
+If the entity categories are configurated in the policy section, they will act
+as filters on the released attributes.
+
+Example::
+
+    "policy": {
+      "default": {
+        "lifetime": {"minutes": 15},
+        # if the SP is not conform to entity_categories
+        # the attributes will not be released
+        "entity_categories": ["refeds",],

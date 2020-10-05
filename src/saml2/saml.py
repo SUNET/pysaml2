@@ -116,8 +116,14 @@ class AttributeValueBase(SamlBase):
 
     def verify(self):
         if not self.text:
-            assert self.extension_attributes
-            assert self.extension_attributes[XSI_NIL] == "true"
+            if not self.extension_attributes:
+                raise Exception(
+                    "Attribute value base should not have extension attributes"
+                )
+            if self.extension_attributes[XSI_NIL] != "true":
+                raise Exception(
+                    "Attribute value base should not have extension attributes"
+                )
             return True
         else:
             SamlBase.verify(self)
@@ -1029,12 +1035,11 @@ class AuthnContextType_(SamlBase):
         self.authenticating_authority = authenticating_authority or []
 
     def verify(self):
-        # either <AuthnContextDecl> or <AuthnContextDeclRef> not both
-        if self.authn_context_decl:
-            assert self.authn_context_decl_ref is None
-        elif self.authn_context_decl_ref:
-            assert self.authn_context_decl is None
-
+        if self.authn_context_decl and self.authn_context_decl_ref:
+            raise Exception(
+                "Invalid Response: "
+                "Cannot have both <AuthnContextDecl> and <AuthnContextDeclRef>"
+            )
         return SamlBase.verify(self)
 
 
@@ -1092,6 +1097,11 @@ class AttributeType_(SamlBase):
         self.name = name
         self.name_format = name_format
         self.friendly_name = friendly_name
+
+    # when consuming such elements, default to NAME_FORMAT_UNSPECIFIED as NameFormat
+    def harvest_element_tree(self, tree):
+        tree.attrib.setdefault('NameFormat', NAME_FORMAT_UNSPECIFIED)
+        SamlBase.harvest_element_tree(self, tree)
 
 
 def attribute_type__from_string(xml_string):
@@ -1264,9 +1274,11 @@ class ConditionsType_(SamlBase):
 
     def verify(self):
         if self.one_time_use:
-            assert len(self.one_time_use) == 1
+            if len(self.one_time_use) != 1:
+                raise Exception("Cannot be used more than once")
         if self.proxy_restriction:
-            assert len(self.proxy_restriction) == 1
+            if len(self.proxy_restriction) != 1:
+                raise Exception("Cannot be used more than once")
 
         return SamlBase.verify(self)
 

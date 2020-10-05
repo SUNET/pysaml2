@@ -848,7 +848,7 @@ class Entity(HTTPBase):
         _log_debug("Loaded request")
 
         if _request:
-            _request = _request.verify()
+            _request.verify()
             _log_debug("Verified request")
 
         if not _request:
@@ -1192,14 +1192,14 @@ class Entity(HTTPBase):
             response.require_signature = True
             # Verify that the assertion is syntactically correct and the
             # signature on the assertion is correct if present.
-            response = response.verify(keys)
+            response.verify(keys)
         except SignatureError as err:
             if require_signature:
                 logger.error("Signature Error: %s", err)
                 raise
             else:
                 response.require_signature = require_signature
-                response = response.verify(keys)
+                response.verify(keys)
         else:
             assertions_are_signed = True
         finally:
@@ -1260,7 +1260,13 @@ class Entity(HTTPBase):
 
         _art = base64.b64decode(artifact)
 
-        assert _art[:2] == ARTIFACT_TYPECODE
+        typecode = _art[:2]
+        if typecode != ARTIFACT_TYPECODE:
+            raise ValueError(
+                "Invalid artifact typecode '{invalid}' should be {valid}".format(
+                    invalid=typecode, valid=ARTIFACT_TYPECODE
+                )
+            )
 
         try:
             endpoint_index = str(int(_art[2:4]))
@@ -1277,11 +1283,12 @@ class Entity(HTTPBase):
 
         return destination
 
-    def artifact2message(self, artifact, descriptor):
+    def artifact2message(self, artifact, descriptor, sign=False):
         """
 
         :param artifact: The Base64 encoded SAML artifact as sent over the net
         :param descriptor: The type of entity on the other side
+        :param sign: Whether ArtifactResolve should be signed or not
         :return: A SAML message (request/response)
         """
 
@@ -1291,7 +1298,12 @@ class Entity(HTTPBase):
             raise SAMLError("Missing endpoint location")
 
         _sid = sid()
-        mid, msg = self.create_artifact_resolve(artifact, destination, _sid)
+        mid, msg = self.create_artifact_resolve(
+            artifact,
+            destination,
+            _sid,
+            sign=sign,
+        )
         return self.send_using_soap(msg, destination)
 
     def parse_artifact_resolve(self, txt, **kwargs):
