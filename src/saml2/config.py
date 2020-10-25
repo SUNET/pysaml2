@@ -269,12 +269,10 @@ class Config(object):
             policy_conf = spec.get("policy")
             self.setattr(srv, "policy", Policy(policy_conf, self.metadata))
 
-    def load(self, cnf, metadata_construction=False):
+    def load(self, cnf):
         """ The base load method, loads the configuration
 
         :param cnf: The configuration as a dictionary
-        :param metadata_construction: Is this only to be able to construct
-            metadata. If so some things can be left out.
         :return: The Configuration instance
         """
 
@@ -333,12 +331,12 @@ class Config(object):
 
         return importlib.import_module(tail)
 
-    def load_file(self, config_filename, metadata_construction=False):
+    def load_file(self, config_filename):
         if config_filename.endswith(".py"):
             config_filename = config_filename[:-3]
 
         mod = self._load(config_filename)
-        return self.load(copy.deepcopy(mod.CONFIG), metadata_construction)
+        return self.load(copy.deepcopy(mod.CONFIG))
 
     def load_metadata(self, metadata_conf):
         """ Loads metadata into an internal structure """
