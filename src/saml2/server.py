@@ -524,8 +524,7 @@ class Server(Entity):
 
         if not name_id and userid:
             try:
-                name_id = self.ident.construct_nameid(userid, policy,
-                                                      sp_entity_id)
+                name_id = self.ident.construct_nameid(userid, policy, sp_entity_id)
                 logger.warning("Unspecified NameID format")
             except Exception:
                 pass

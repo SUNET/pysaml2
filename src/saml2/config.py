@@ -6,6 +6,7 @@ import os
 import re
 import sys
 from logging.config import dictConfig as configure_logging_by_dict
+from warnings import warn as _warn
 
 import six
 
@@ -94,6 +95,7 @@ SP_ARGS = [
     "name_id_policy_format",
     "name_id_format_allow_create",
     "logout_requests_signed",
+    "logout_responses_signed",
     "requested_attribute_name_format",
     "hide_assertion_consumer_service",
     "force_authn",
@@ -191,6 +193,7 @@ class Config(object):
         self.virtual_organization = None
         self.only_use_keys_in_metadata = True
         self.logout_requests_signed = None
+        self.logout_responses_signed = None
         self.disable_ssl_certificate_validation = None
         self.context = ""
         self.attribute_converters = None
@@ -269,12 +272,21 @@ class Config(object):
             policy_conf = spec.get("policy")
             self.setattr(srv, "policy", Policy(policy_conf, self.metadata))
 
-    def load(self, cnf):
+    def load(self, cnf, metadata_construction=None):
         """ The base load method, loads the configuration
 
         :param cnf: The configuration as a dictionary
         :return: The Configuration instance
         """
+
+        if metadata_construction is not None:
+            warn_msg = (
+                "The metadata_construction parameter for saml2.config.Config.load "
+                "is deprecated and ignored; "
+                "instead, initialize the Policy object setting the mds param."
+            )
+            logger.warning(warn_msg)
+            _warn(warn_msg, DeprecationWarning)
 
         for arg in COMMON_ARGS:
             if arg == "virtual_organization":
@@ -300,10 +312,12 @@ class Config(object):
             configure_logging_by_dict(self.logging)
 
         if not self.delete_tmpfiles:
-            logger.warning(
-                "delete_tmpfiles is set to False; "
-                "temporary files will not be deleted."
+            warn_msg = (
+                "Configuration option `delete_tmpfiles` is set to False; "
+                "consider setting this to True to have temporary files deleted."
             )
+            logger.warning(warn_msg)
+            _warn(warn_msg)
 
         if "service" in cnf:
             for typ in ["aa", "idp", "sp", "pdp", "aq"]:
@@ -331,7 +345,16 @@ class Config(object):
 
         return importlib.import_module(tail)
 
-    def load_file(self, config_filename):
+    def load_file(self, config_filename, metadata_construction=None):
+        if metadata_construction is not None:
+            warn_msg = (
+                "The metadata_construction parameter for saml2.config.Config.load_file "
+                "is deprecated and ignored; "
+                "instead, initialize the Policy object setting the mds param."
+            )
+            logger.warning(warn_msg)
+            _warn(warn_msg, DeprecationWarning)
+
         if config_filename.endswith(".py"):
             config_filename = config_filename[:-3]
 

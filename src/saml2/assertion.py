@@ -5,6 +5,7 @@ import importlib
 import logging
 import re
 import six
+from warnings import warn as _warn
 
 from saml2 import saml
 from saml2 import xmlenc
@@ -432,13 +433,22 @@ class Policy(object):
 
         return self.get("sign", sp_entity_id, default=[])
 
-    def get_entity_categories(self, sp_entity_id, required):
+    def get_entity_categories(self, sp_entity_id, mds=None, required=None):
         """
 
         :param sp_entity_id:
         :param required: required attributes
         :return: A dictionary with restrictions
         """
+
+        if mds is not None:
+            warn_msg = (
+                "The mds parameter for saml2.assertion.Policy.get_entity_categories "
+                "is deprecated; "
+                "instead, initialize the Policy object setting the mds param."
+            )
+            logger.warning(warn_msg)
+            _warn(warn_msg, DeprecationWarning)
 
         def post_entity_categories(maps, sp_entity_id=None, mds=None, required=None):
             restrictions = {}
@@ -480,7 +490,7 @@ class Policy(object):
         result2 = post_entity_categories(
             result1,
             sp_entity_id=sp_entity_id,
-            mds=self.metadata_store,
+            mds=(mds or self.metadata_store),
             required=required,
         )
         return result2
@@ -495,7 +505,7 @@ class Policy(object):
 
         return in_a_while(**self.get_lifetime(sp_entity_id))
 
-    def filter(self, ava, sp_entity_id, required=None, optional=None):
+    def filter(self, ava, sp_entity_id, mdstore=None, required=None, optional=None):
         """ What attribute and attribute values returns depends on what
         the SP or the registration authority has said it wants in the request
         or in the metadata file and what the IdP/AA wants to release.
@@ -510,6 +520,15 @@ class Policy(object):
         :return: A possibly modified AVA
         """
 
+        if mdstore is not None:
+            warn_msg = (
+                "The mdstore parameter for saml2.assertion.Policy.filter "
+                "is deprecated; "
+                "instead, initialize the Policy object setting the mds param."
+            )
+            logger.warning(warn_msg)
+            _warn(warn_msg, DeprecationWarning)
+
         # acs MUST have a value, fall back to default.
         if not self.acs:
             self.acs = ac_factory()
@@ -517,7 +536,7 @@ class Policy(object):
         subject_ava = ava.copy()
 
         # entity category restrictions
-        _ent_rest = self.get_entity_categories(sp_entity_id, required)
+        _ent_rest = self.get_entity_categories(sp_entity_id, mds=mdstore, required=required)
         if _ent_rest:
             subject_ava = filter_attribute_value_assertions(subject_ava, _ent_rest)
         elif required or optional:
@@ -536,20 +555,33 @@ class Policy(object):
 
         return subject_ava or {}
 
-    def restrict(self, ava, sp_entity_id):
+    def restrict(self, ava, sp_entity_id, metadata=None):
         """ Identity attribute names are expected to be expressed as FriendlyNames
 
         :return: A filtered ava according to the IdPs/AAs rules and
             the list of required/optional attributes according to the SP.
             If the requirements can't be met an exception is raised.
         """
+        if metadata is not None:
+            warn_msg = (
+                "The metadata parameter for saml2.assertion.Policy.restrict "
+                "is deprecated and ignored; "
+                "instead, initialize the Policy object setting the mds param."
+            )
+            logger.warning(warn_msg)
+            _warn(warn_msg, DeprecationWarning)
+
+        metadata_store = metadata or self.metadata_store
         spec = (
-            self.metadata_store.attribute_requirement(sp_entity_id) or {}
-            if self.metadata_store
+            metadata_store.attribute_requirement(sp_entity_id) or {}
+            if metadata_store
             else {}
         )
         return self.filter(
-            ava, sp_entity_id, spec.get("required"), spec.get("optional")
+            ava,
+            sp_entity_id,
+            required=spec.get("required"),
+            optional=spec.get("optional"),
         )
 
     def conditions(self, sp_entity_id):

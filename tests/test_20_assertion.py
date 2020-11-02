@@ -247,7 +247,7 @@ def test_ava_filter_2():
     ava = {"givenName": "Derek", "sn": "Jeter", "mail": "derek@example.com"}
 
     # mail removed because it doesn't match the regular expression
-    _ava = policy.filter(ava, 'urn:mace:umu.se:saml:roland:sp', [mail], [gn, sn])
+    _ava = policy.filter(ava, 'urn:mace:umu.se:saml:roland:sp', required=[mail], optional=[gn, sn])
 
     assert _eq(sorted(list(_ava.keys())), ["givenName", 'sn'])
 
@@ -255,7 +255,7 @@ def test_ava_filter_2():
 
     # it wasn't there to begin with
     try:
-        policy.filter(ava, 'urn:mace:umu.se:saml:roland:sp', [gn, sn, mail])
+        policy.filter(ava, 'urn:mace:umu.se:saml:roland:sp', required=[gn, sn, mail])
     except MissingValue:
         pass
 
@@ -285,7 +285,7 @@ def test_ava_filter_dont_fail():
 
     # mail removed because it doesn't match the regular expression
     # So it should fail if the 'fail_on_ ...' flag wasn't set
-    _ava = policy.filter(ava, 'urn:mace:umu.se:saml:roland:sp', [mail], [gn, sn])
+    _ava = policy.filter(ava, 'urn:mace:umu.se:saml:roland:sp', required=[mail], optional=[gn, sn])
 
     assert _ava
 
@@ -293,7 +293,7 @@ def test_ava_filter_dont_fail():
            "surName": "Jeter"}
 
     # it wasn't there to begin with
-    _ava = policy.filter(ava, 'urn:mace:umu.se:saml:roland:sp', [gn, sn, mail])
+    _ava = policy.filter(ava, 'urn:mace:umu.se:saml:roland:sp', required=[gn, sn, mail])
 
     assert _ava
 
@@ -768,7 +768,7 @@ def test_req_opt():
            'uid': 'rohe0002', 'edupersonaffiliation': 'staff'}
 
     sp_entity_id = "urn:mace:example.com:saml:curt:sp"
-    fava = policy.filter(ava, sp_entity_id, req, opt)
+    fava = policy.filter(ava, sp_entity_id, required=req, optional=opt)
     assert fava
 
 

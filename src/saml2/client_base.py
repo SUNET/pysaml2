@@ -9,10 +9,11 @@ import threading
 import six
 import time
 import logging
+from warnings import warn as _warn
 
 from saml2.entity import Entity
 
-from saml2.mdstore import destinations
+from saml2.mdstore import locations
 from saml2.profile import paos, ecp
 from saml2.saml import NAMEID_FORMAT_PERSISTENT
 from saml2.saml import NAMEID_FORMAT_TRANSIENT
@@ -162,6 +163,7 @@ class Base(Entity):
 
         attribute_defaults = {
             "logout_requests_signed": False,
+            "logout_responses_signed": False,
             "allow_unsolicited": False,
             "authn_requests_signed": False,
             "want_assertions_signed": False,
@@ -188,10 +190,15 @@ class Base(Entity):
                 self.want_assertions_or_response_signed,
             ]
         ):
-            logger.warning(
-                "The SAML service provider accepts unsigned SAML Responses "
-                "and Assertions. This configuration is insecure."
+            warn_msg = (
+                "The SAML service provider accepts "
+                "unsigned SAML Responses and Assertions. "
+                "This configuration is insecure. "
+                "Consider setting want_assertions_signed, want_response_signed "
+                "or want_assertions_or_response_signed configuration options."
             )
+            logger.warning(warn_msg)
+            _warn(warn_msg)
 
         self.artifact2response = {}
 
@@ -212,7 +219,7 @@ class Base(Entity):
             # verify that it's in the metadata
             srvs = self.metadata.single_sign_on_service(entityid, binding)
             if srvs:
-                return destinations(srvs)[0]
+                return next(locations(srvs), None)
             else:
                 logger.info("_sso_location: %s, %s", entityid, binding)
                 raise IdpUnspecified("No IdP to send to given the premises")
@@ -224,9 +231,8 @@ class Base(Entity):
             raise IdpUnspecified("Too many IdPs to choose from: %s" % eids)
 
         try:
-            srvs = self.metadata.single_sign_on_service(list(eids.keys())[0],
-                                                        binding)
-            return destinations(srvs)[0]
+            srvs = self.metadata.single_sign_on_service(list(eids.keys())[0], binding)
+            return next(locations(srvs), None)
         except IndexError:
             raise IdpUnspecified("No IdP to send to given the premises")
 
