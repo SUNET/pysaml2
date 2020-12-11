@@ -130,7 +130,9 @@ def test_filter_ava4():
     }
 
     ava = policy.filter(ava, "urn:mace:example.com:saml:roland:sp")
-    assert _eq(list(ava.keys()), ["givenName", "c", "mail", "sn"])
+    assert _eq(
+        list(ava.keys()), ["givenName", "c", "mail", "sn"]
+    )
 
 
 def test_filter_ava5():
