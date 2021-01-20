@@ -1,7 +1,6 @@
 """ Functions connected to signing and verifying.
 Based on the use of xmlsec1 binaries and not the python xmlsec module.
 """
-from OpenSSL import crypto
 
 import base64
 import hashlib
@@ -10,19 +9,22 @@ import logging
 import os
 import six
 from uuid import uuid4 as gen_random_key
-
 from time import mktime
+from tempfile import NamedTemporaryFile
+from subprocess import Popen
+from subprocess import PIPE
+from importlib_resources import path as _resource_path
+
+from OpenSSL import crypto
+
 import pytz
 
 from six.moves.urllib import parse
 
 import saml2.cryptography.asymmetric
 import saml2.cryptography.pki
-
-from tempfile import NamedTemporaryFile
-from subprocess import Popen
-from subprocess import PIPE
-
+import saml2.xmldsig as ds
+import saml2.data.templates as _data_template
 from saml2 import samlp
 from saml2 import SamlBase
 from saml2 import SAMLError
@@ -31,20 +33,14 @@ from saml2 import class_name
 from saml2 import saml
 from saml2 import ExtensionElement
 from saml2 import VERSION
-
 from saml2.cert import OpenSSLWrapper
 from saml2.extension import pefim
 from saml2.extension.pefim import SPCertEnc
 from saml2.saml import EncryptedAssertion
-
-import saml2.xmldsig as ds
-
 from saml2.s_utils import sid
 from saml2.s_utils import Unsupported
-
 from saml2.time_util import instant
 from saml2.time_util import str_to_time
-
 from saml2.xmldsig import SIG_RSA_SHA1
 from saml2.xmldsig import SIG_RSA_SHA224
 from saml2.xmldsig import SIG_RSA_SHA256
@@ -55,6 +51,8 @@ from saml2.xmlenc import EncryptedKey
 from saml2.xmlenc import CipherData
 from saml2.xmlenc import CipherValue
 from saml2.xmlenc import EncryptedData
+from saml2.xml.schema import node_to_schema
+from saml2.xml.schema import XMLSchemaError
 
 
 logger = logging.getLogger(__name__)
@@ -873,6 +871,7 @@ class CryptoBackendXmlSec1(CryptoBackend):
             self.xmlsec,
             '--verify',
             '--enabled-reference-uris', 'empty,same-doc',
+            '--enabled-key-data', 'raw-x509-cert',
             '--pubkey-cert-{type}'.format(type=cert_type), cert_file,
             '--id-attr:ID', node_name,
         ]
@@ -1295,8 +1294,8 @@ class SecurityContext(object):
         self.only_use_keys_in_metadata = only_use_keys_in_metadata
 
         if not template:
-            this_dir, this_filename = os.path.split(__file__)
-            self.template = os.path.join(this_dir, 'xml_template', 'template.xml')
+            with _resource_path(_data_template, "template_enc.xml") as fp:
+                self.template = str(fp)
         else:
             self.template = template
 
@@ -1466,9 +1465,33 @@ class SecurityContext(object):
         if not certs:
             raise MissingKey(_issuer)
 
+        # validate XML with the appropriate schema
+        try:
+            _schema = node_to_schema[node_name]
+        except KeyError as e:
+            error_context = {
+                "message": "Signature verification failed. Unknown node type.",
+                "issuer": _issuer,
+                "type": node_name,
+                "document": decoded_xml,
+            }
+            raise SignatureError(error_context) from e
+
+        try:
+            _schema.validate(str(item))
+        except XMLSchemaError as e:
+            error_context = {
+                "message": "Signature verification failed. Invalid document format.",
+                "ID": item.id,
+                "issuer": _issuer,
+                "type": node_name,
+                "document": decoded_xml,
+            }
+            raise SignatureError(error_context) from e
+
         # saml-core section "5.4 XML Signature Profile" defines constrains on the
         # xmldsig-core facilities. It explicitly dictates that enveloped signatures
-        # are the only signatures allowed. This mean that:
+        # are the only signatures allowed. This means that:
         # * Assertion/RequestType/ResponseType elements must have an ID attribute
         # * signatures must have a single Reference element
         # * the Reference element must have a URI attribute
