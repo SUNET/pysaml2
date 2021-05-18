@@ -251,6 +251,11 @@ class Saml2Client(Base):
         not_done = entity_ids[:]
         responses = {}
 
+        if expected_binding is None:
+            expected_binding = next(
+                iter(self.config.preferred_binding["single_logout_service"]),
+                None,
+            )
         for entity_id in entity_ids:
             logger.debug("Logout from '%s'", entity_id)
             # for all where I can use the SOAP binding, do those first
@@ -280,8 +285,11 @@ class Saml2Client(Base):
                 except KeyError:
                     session_indexes = None
 
-                sign_post = False if binding == BINDING_HTTP_REDIRECT else sign
-                sign_redirect = False if binding == BINDING_HTTP_POST and sign else sign
+                sign = sign if sign is not None else self.logout_requests_signed
+                sign_post = sign and (
+                    binding == BINDING_HTTP_POST or binding == BINDING_SOAP
+                )
+                sign_redirect = sign and binding == BINDING_HTTP_REDIRECT
 
                 req_id, request = self.create_logout_request(
                     destination,

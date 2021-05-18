@@ -3,9 +3,12 @@
 import datetime
 import os
 import re
+from re import compile as regex_compile
 from collections import OrderedDict
 from unittest.mock import Mock
 from unittest.mock import patch
+
+from pytest import raises
 
 import responses
 
@@ -19,6 +22,7 @@ from saml2.mdstore import locations
 from saml2.mdstore import name
 from saml2 import sigver
 from saml2.httpbase import HTTPBase
+from saml2 import SAMLError
 from saml2 import BINDING_SOAP
 from saml2 import BINDING_HTTP_REDIRECT
 from saml2 import BINDING_HTTP_POST
@@ -156,6 +160,14 @@ METADATACONF = {
         "class": "saml2.mdstore.MetaDataFile",
         "metadata": [(full_path("swamid-2.0.xml"),)],
     }],
+    "14": [{
+        "class": "saml2.mdstore.MetaDataFile",
+        "metadata": [(full_path("invalid_metadata_file.xml"),)],
+    }],
+    "15": [{
+        "class": "saml2.mdstore.MetaDataFile",
+        "metadata": [(full_path("idp_uiinfo.xml"),)],
+    }],
 }
 
 
@@ -168,6 +180,12 @@ def _fix_valid_until(xmlstring):
     new_date = new_date.strftime("%Y-%m-%dT%H:%M:%SZ")
     return re.sub(r' validUntil=".*?"', ' validUntil="%s"' % new_date,
                   xmlstring)
+
+
+def test_invalid_metadata():
+    mds = MetadataStore(ATTRCONV, sec_config, disable_ssl_certificate_validation=True)
+    with raises(SAMLError):
+        mds.imp(METADATACONF["14"])
 
 
 def test_swami_1():
@@ -593,6 +611,51 @@ def test_extension():
     metadata["2"] = {"entity2": {"idpsso_descriptor": [{"extensions": {"extension_elements": [{"__class__": "test"}]}}]}}
     mds.metadata = metadata
     assert mds.extension("entity2", "idpsso_descriptor", "test")
+
+
+def test_shibmd_scope_no_regex_no_descriptor_type():
+    mds = MetadataStore(ATTRCONV, sec_config, disable_ssl_certificate_validation=True)
+    mds.imp(METADATACONF["15"])
+
+    scopes = mds.sbibmd_scopes(entity_id='http://example.com/saml2/idp.xml')
+    all_scopes = list(scopes)
+
+    expected = [
+        {
+            "regexp": False,
+            "text": "descriptor-example.org",
+        },
+        {
+            "regexp": True,
+            "text": regex_compile("descriptor-example[^0-9]*\.org"),
+        },
+    ]
+    assert len(all_scopes) == 2
+    assert all_scopes == expected
+
+
+def test_shibmd_scope_no_regex_all_descriptors():
+    mds = MetadataStore(ATTRCONV, sec_config, disable_ssl_certificate_validation=True)
+    mds.imp(METADATACONF["15"])
+
+    scopes = mds.sbibmd_scopes(entity_id='http://example.com/saml2/idp.xml', typ="idpsso_descriptor")
+    all_scopes = list(scopes)
+    expected = [
+        {
+            "regexp": False,
+            "text": "descriptor-example.org",
+        },
+        {
+            "regexp": True,
+            "text": regex_compile("descriptor-example[^0-9]*\.org"),
+        },
+        {
+            "regexp": False,
+            "text": "idpssodescriptor-example.org",
+        },
+    ]
+    assert len(all_scopes) == 3
+    assert all_scopes == expected
 
 
 if __name__ == "__main__":
