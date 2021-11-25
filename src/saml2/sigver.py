@@ -9,12 +9,19 @@ import logging
 import os
 import re
 import six
+import sys
 from uuid import uuid4 as gen_random_key
 from time import mktime
 from tempfile import NamedTemporaryFile
 from subprocess import Popen
 from subprocess import PIPE
-from importlib_resources import path as _resource_path
+
+# importlib.resources was introduced in python 3.7
+# files API from importlib.resources introduced in python 3.9
+if sys.version_info[:2] >= (3, 9):
+    from importlib.resources import files as _resource_files
+else:
+    from importlib_resources import files as _resource_files
 
 from OpenSSL import crypto
 
@@ -33,15 +40,16 @@ from saml2 import extension_elements_to_elements
 from saml2 import class_name
 from saml2 import saml
 from saml2 import ExtensionElement
-from saml2 import VERSION
 from saml2.cert import OpenSSLWrapper
 from saml2.extension import pefim
 from saml2.extension.pefim import SPCertEnc
 from saml2.saml import EncryptedAssertion
-from saml2.s_utils import sid
 from saml2.s_utils import Unsupported
-from saml2.time_util import instant
 from saml2.time_util import str_to_time
+from saml2.xmldsig import ALLOWED_CANONICALIZATIONS
+from saml2.xmldsig import ALLOWED_TRANSFORMS
+from saml2.xmldsig import TRANSFORM_C14N
+from saml2.xmldsig import TRANSFORM_ENVELOPED
 from saml2.xmldsig import SIG_RSA_SHA1
 from saml2.xmldsig import SIG_RSA_SHA224
 from saml2.xmldsig import SIG_RSA_SHA256
@@ -1302,8 +1310,8 @@ class SecurityContext(object):
         self.only_use_keys_in_metadata = only_use_keys_in_metadata
 
         if not template:
-            with _resource_path(_data_template, "template_enc.xml") as fp:
-                self.template = str(fp)
+            fp = str(_resource_files(_data_template).joinpath("template_enc.xml"))
+            self.template = str(fp)
         else:
             self.template = template
 
@@ -1445,7 +1453,7 @@ class SecurityContext(object):
                 _certs = []
             certs = []
 
-            for cert in _certs:
+            for cert_name, cert in _certs:
                 if isinstance(cert, six.string_types):
                     content = pem_format(cert)
                     tmp = make_temp(content,
@@ -1490,6 +1498,7 @@ class SecurityContext(object):
         except XMLSchemaError as e:
             error_context = {
                 "message": "Signature verification failed. Invalid document format.",
+                "reason": str(e),
                 "ID": item.id,
                 "issuer": _issuer,
                 "type": node_name,
@@ -1505,7 +1514,8 @@ class SecurityContext(object):
         # * the Reference element must have a URI attribute
         # * the URI attribute contains an anchor
         # * the anchor points to the enclosing element's ID attribute
-        references = item.signature.signed_info.reference
+        signed_info = item.signature.signed_info
+        references = signed_info.reference
         signatures_must_have_a_single_reference_element = len(references) == 1
         the_Reference_element_must_have_a_URI_attribute = (
             signatures_must_have_a_single_reference_element
@@ -1520,6 +1530,46 @@ class SecurityContext(object):
             the_URI_attribute_contains_an_anchor
             and references[0].uri == "#{id}".format(id=item.id)
         )
+
+        # SAML implementations SHOULD use Exclusive Canonicalization,
+        # with or without comments
+        canonicalization_method_is_c14n = (
+            signed_info.canonicalization_method.algorithm in ALLOWED_CANONICALIZATIONS
+        )
+
+        # Signatures in SAML messages SHOULD NOT contain transforms other than the
+        # - enveloped signature transform
+        #   (with the identifier http://www.w3.org/2000/09/xmldsig#enveloped-signature)
+        # - or the exclusive canonicalization transforms
+        #   (with the identifier http://www.w3.org/2001/10/xml-exc-c14n#
+        #   or http://www.w3.org/2001/10/xml-exc-c14n#WithComments).
+        transform_algos = [
+            transform.algorithm
+            for transform in references[0].transforms.transform
+        ]
+        tranform_algos_valid = ALLOWED_TRANSFORMS.intersection(transform_algos)
+        transform_algos_n = len(transform_algos)
+        tranform_algos_valid_n = len(tranform_algos_valid)
+
+        the_number_of_transforms_is_one_or_two = (
+            signatures_must_have_a_single_reference_element
+            and 1 <= transform_algos_n <= 2
+        )
+        all_transform_algs_are_allowed = (
+            the_number_of_transforms_is_one_or_two
+            and transform_algos_n == tranform_algos_valid_n
+        )
+        the_enveloped_signature_transform_is_defined = (
+            the_number_of_transforms_is_one_or_two
+            and TRANSFORM_ENVELOPED in transform_algos
+        )
+
+        # The <ds:Object> element is not defined for use with SAML signatures,
+        # and SHOULD NOT be present.
+        # Since it can be used in service of an attacker by carrying unsigned data,
+        # verifiers SHOULD reject signatures that contain a <ds:Object> element.
+        object_element_is_not_present = not item.signature.object
+
         validators = {
             "signatures must have a single reference element": (
                 signatures_must_have_a_single_reference_element
@@ -1533,6 +1583,15 @@ class SecurityContext(object):
             "the anchor points to the enclosing element ID attribute": (
                 the_anchor_points_to_the_enclosing_element_ID_attribute
             ),
+            "canonicalization method is c14n": canonicalization_method_is_c14n,
+            "the number of transforms is one or two": (
+                the_number_of_transforms_is_one_or_two
+            ),
+            "all transform algs are allowed": all_transform_algs_are_allowed,
+            "the enveloped signature transform is defined": (
+                the_enveloped_signature_transform_is_defined
+            ),
+            "object element is not present": object_element_is_not_present,
         }
         if not all(validators.values()):
             error_context = {
@@ -1820,10 +1879,9 @@ def pre_signature_part(
         sign_alg = ds.DefaultSignature().get_sign_alg()
 
     signature_method = ds.SignatureMethod(algorithm=sign_alg)
-    canonicalization_method = ds.CanonicalizationMethod(
-        algorithm=ds.ALG_EXC_C14N)
-    trans0 = ds.Transform(algorithm=ds.TRANSFORM_ENVELOPED)
-    trans1 = ds.Transform(algorithm=ds.ALG_EXC_C14N)
+    canonicalization_method = ds.CanonicalizationMethod(algorithm=TRANSFORM_C14N)
+    trans0 = ds.Transform(algorithm=TRANSFORM_ENVELOPED)
+    trans1 = ds.Transform(algorithm=TRANSFORM_C14N)
     transforms = ds.Transforms(transform=[trans0, trans1])
     digest_method = ds.DigestMethod(algorithm=digest_alg)
 
@@ -1887,7 +1945,7 @@ def pre_encryption_part(
     *,
     msg_enc=TRIPLE_DES_CBC,
     key_enc=RSA_OAEP_MGF1P,
-    key_name='my-rsa-key',
+    key_name=None,
     encrypted_key_id=None,
     encrypted_data_id=None,
     encrypt_cert=None,
@@ -1902,9 +1960,11 @@ def pre_encryption_part(
         if encrypt_cert
         else None
     )
-    key_info = ds.KeyInfo(
-        key_name=ds.KeyName(text=key_name),
-        x509_data=x509_data,
+    key_name = ds.KeyName(text=key_name) if key_name else None
+    key_info = (
+        ds.KeyInfo(key_name=key_name, x509_data=x509_data)
+        if key_name or x509_data
+        else None
     )
 
     encrypted_key = EncryptedKey(

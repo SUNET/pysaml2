@@ -490,20 +490,16 @@ class MetaData(object):
         def extract_certs(srvs):
             res = []
             for srv in srvs:
-                if "key_descriptor" in srv:
-                    for key in srv["key_descriptor"]:
-                        if "use" in key and key["use"] == use:
-                            for dat in key["key_info"]["x509_data"]:
-                                cert = repack_cert(
-                                    dat["x509_certificate"]["text"])
-                                if cert not in res:
-                                    res.append(cert)
-                        elif not "use" in key:
-                            for dat in key["key_info"]["x509_data"]:
-                                cert = repack_cert(
-                                    dat["x509_certificate"]["text"])
-                                if cert not in res:
-                                    res.append(cert)
+                for key in srv.get("key_descriptor", []):
+                    key_use = key.get("use")
+                    key_info = key.get("key_info") or {}
+                    key_name = (key_info.get("key_name") or [{"text": None}])[0]
+                    key_name_txt = key_name.get("text")
+                    if "use" not in key or key_use == use:
+                        for dat in key_info["x509_data"]:
+                            cert = repack_cert(dat["x509_certificate"]["text"])
+                            if cert not in res:
+                                res.append((key_name_txt, cert))
 
             return res
 
@@ -618,7 +614,14 @@ class InMemoryMetaData(MetaData):
         try:
             self.entities_descr = md.entities_descriptor_from_string(xmlstr)
         except Exception as e:
-            raise SAMLError(f'Failed to parse metadata file: {self.filename}') from e
+            _md_desc = (
+                f'metadata file: {self.filename}'
+                if isinstance(self,MetaDataFile)
+                else f'remote metadata: {self.url}'
+                if isinstance(self, MetaDataExtern)
+                else 'metadata'
+            )
+            raise SAMLError(f'Failed to parse {_md_desc}') from e
 
         if not self.entities_descr:
             self.entity_descr = md.entity_descriptor_from_string(xmlstr)
@@ -1693,4 +1696,5 @@ class MetadataStore(MetaData):
 
             return "%s" % res
         elif format == "md":
-            return json.dumps(self.items(), indent=2)
+            # self.items() returns dictitems(), convert that back into a dict
+            return json.dumps(dict(self.items()), indent=2)
