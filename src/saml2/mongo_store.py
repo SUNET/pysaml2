@@ -2,10 +2,7 @@ import datetime
 from hashlib import sha1
 import logging
 
-from pymongo import MongoClient
-from pymongo.mongo_replica_set_client import MongoReplicaSetClient
-import pymongo.uri_parser
-import pymongo.errors
+import pymongo
 from saml2.saml import NAMEID_FORMAT_PERSISTENT
 
 from saml2.eptid import Eptid
@@ -277,7 +274,7 @@ def _mdb_get_database(uri, **kwargs):
         # default, but not forced
         kwargs["tz_aware"] = True
 
-    connection_factory = MongoClient
+    connection_factory = pymongo.MongoClient
     _parsed_uri = {}
 
     try:
@@ -285,11 +282,11 @@ def _mdb_get_database(uri, **kwargs):
     except pymongo.errors.InvalidURI:
         # assume URI to be just the database name
         db_name = uri
-        _conn = MongoClient()
+        _conn = pymongo.MongoClient()
         pass
     else:
         if "replicaset" in _parsed_uri["options"]:
-            connection_factory = MongoReplicaSetClient
+            connection_factory = pymongo.MongoReplicaSetClient
         db_name = _parsed_uri.get("database", "pysaml2")
         _conn = connection_factory(uri, **kwargs)
 
