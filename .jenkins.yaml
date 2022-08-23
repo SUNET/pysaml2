@@ -7,7 +7,7 @@ pre_build_script:
 script:
   - "python3.8 -m venv venv"
   - ". venv/bin/activate"
-  - "pip install tox"
+  - "pip install tox wheel"
   - "tox"
   - "python setup.py sdist bdist_wheel"
 publish_over_ssh:
