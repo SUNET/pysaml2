@@ -2,6 +2,7 @@
 from saml2.algsupport import algorithm_support_in_metadata
 from saml2.md import AttributeProfile
 from saml2.sigver import security_context
+from saml2.cert import read_cert_from_file
 from saml2.config import Config
 from saml2.validate import valid_instance
 from saml2.time_util import in_a_while
@@ -76,8 +77,18 @@ def metadata_tostring_fix(desc, nspair, xmlstring=""):
     return xmlstring
 
 
-def create_metadata_string(configfile, config=None, valid=None, cert=None,
-                           keyfile=None, mid=None, name=None, sign=None):
+def create_metadata_string(
+    configfile,
+    config=None,
+    valid=None,
+    cert=None,
+    keyfile=None,
+    mid=None,
+    name=None,
+    sign=None,
+    sign_alg=None,
+    digest_alg=None,
+):
     valid_for = 0
     nspair = {"xs": "http://www.w3.org/2001/XMLSchema"}
     # paths = [".", "/opt/local/bin"]
@@ -95,17 +106,19 @@ def create_metadata_string(configfile, config=None, valid=None, cert=None,
     conf = Config()
     conf.key_file = config.key_file or keyfile
     conf.cert_file = config.cert_file or cert
-    conf.debug = 1
     conf.xmlsec_binary = config.xmlsec_binary
     secc = security_context(conf)
 
+    sign_alg = sign_alg or config.signing_algorithm
+    digest_alg = digest_alg or config.digest_algorithm
     if mid:
-        eid, xmldoc = entities_descriptor(eds, valid_for, name, mid,
-                                          sign, secc)
+        eid, xmldoc = entities_descriptor(
+            eds, valid_for, name, mid, sign, secc, sign_alg, digest_alg
+        )
     else:
         eid = eds[0]
         if sign:
-            eid, xmldoc = sign_entity_descriptor(eid, mid, secc)
+            eid, xmldoc = sign_entity_descriptor(eid, mid, secc, sign_alg, digest_alg)
         else:
             xmldoc = None
 
@@ -688,14 +701,14 @@ def entity_descriptor(confd):
     enc_cert = None
     if confd.cert_file is not None:
         mycert = []
-        mycert.append("".join(read_cert(confd.cert_file)))
+        mycert.append(read_cert_from_file(confd.cert_file))
         if confd.additional_cert_files is not None:
             for _cert_file in confd.additional_cert_files:
-                mycert.append("".join(read_cert(_cert_file)))
+                mycert.append(read_cert_from_file(_cert_file))
     if confd.encryption_keypairs is not None:
         enc_cert = []
         for _encryption in confd.encryption_keypairs:
-            enc_cert.append("".join(read_cert(_encryption["cert_file"])))
+            enc_cert.append(read_cert_from_file(_encryption["cert_file"]))
 
     entd = md.EntityDescriptor()
     entd.entity_id = confd.entityid
@@ -793,8 +806,9 @@ def entity_descriptor(confd):
     return entd
 
 
-def entities_descriptor(eds, valid_for, name, ident, sign, secc, sign_alg=None,
-                        digest_alg=None):
+def entities_descriptor(
+    eds, valid_for, name, ident, sign, secc, sign_alg=None, digest_alg=None
+):
     entities = md.EntitiesDescriptor(entity_descriptor=eds)
     if valid_for:
         entities.valid_until = in_a_while(hours=valid_for)
@@ -844,9 +858,3 @@ def sign_entity_descriptor(edesc, ident, secc, sign_alg=None, digest_alg=None):
     xmldoc = secc.sign_statement("%s" % edesc, class_name(edesc))
     edesc = md.entity_descriptor_from_string(xmldoc)
     return edesc, xmldoc
-
-
-def read_cert(path):
-    with open(path) as fp:
-        lines = fp.readlines()
-    return lines[1:-1]

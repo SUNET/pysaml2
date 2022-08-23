@@ -167,6 +167,10 @@ METADATACONF = {
         "class": "saml2.mdstore.MetaDataFile",
         "metadata": [(full_path("idp_uiinfo.xml"),)],
     }],
+    "16": [{
+        "class": "saml2.mdstore.MetaDataFile",
+        "metadata": [(full_path("empty_metadata_file.xml"),)],
+    }],
 }
 
 
@@ -183,8 +187,14 @@ def _fix_valid_until(xmlstring):
 
 def test_invalid_metadata():
     mds = MetadataStore(ATTRCONV, sec_config, disable_ssl_certificate_validation=True)
+    mds.imp(METADATACONF["14"])
+    assert mds.entities() == 0
+
+
+def test_empty_metadata():
+    mds = MetadataStore(ATTRCONV, sec_config, disable_ssl_certificate_validation=True)
     with raises(SAMLError):
-        mds.imp(METADATACONF["14"])
+        mds.imp(METADATACONF["16"])
 
 
 def test_swami_1():
@@ -345,6 +355,16 @@ def test_mdx_service():
     assert len(certs) == 1
 
 
+@patch('saml2.httpbase.requests.get')
+def test_mdx_service_request_timeout(mock_request):
+    entity_id = "http://xenosmilus.umdc.umu.se/simplesaml/saml2/idp/metadata.php"
+    url = "http://mdx.example.com/entities/{}".format(MetaDataMDX.sha1_entity_transform(entity_id))
+
+    mdx = MetaDataMDX("http://mdx.example.com", http_client_timeout=10)
+    mdx.service(entity_id, "idpsso_descriptor", "single_sign_on_service")
+    mock_request.assert_called_with(url, headers={'Accept': 'application/samlmetadata+xml'}, timeout=10)
+
+
 @responses.activate
 def test_mdx_single_sign_on_service():
     entity_id = "http://xenosmilus.umdc.umu.se/simplesaml/saml2/idp/metadata.php"
@@ -462,12 +482,14 @@ def test_load_extern_incommon(mock_request):
 
     sec_config.xmlsec_binary = sigver.get_xmlsec_binary(["/opt/local/bin"])
     mds = MetadataStore(ATTRCONV, sec_config,
-                        disable_ssl_certificate_validation=True)
+                        disable_ssl_certificate_validation=True,
+                        http_client_timeout=10)
 
     mds.imp(METADATACONF["10"])
     print(mds)
     assert mds
     assert len(mds.keys())
+    mock_request.assert_called_with('GET', 'http://md.incommon.org/InCommon/InCommon-metadata-export.xml', allow_redirects=False, verify=False, timeout=10)
 
 
 def test_load_local():
@@ -495,9 +517,12 @@ def test_load_remote_encoding(mock_request):
 
     crypto = sigver._get_xmlsec_cryptobackend()
     sc = sigver.SecurityContext(crypto, key_type="", cert_type="")
-    httpc = HTTPBase()
-    mds = MetaDataExtern(ATTRCONV, 'http://metadata.aai.switch.ch/metadata.aaitest.xml', sc, full_path('SWITCHaaiRootCA.crt.pem'), httpc)
+    url = 'http://metadata.aai.switch.ch/metadata.aaitest.xml'
+    httpc = HTTPBase(http_client_timeout=10)
+    mds = MetaDataExtern(ATTRCONV, url, sc, full_path('SWITCHaaiRootCA.crt.pem'), httpc)
     mds.load()
+
+    mock_request.assert_called_with('GET', url, allow_redirects=False, verify=True, timeout=10)
 
 
 def test_load_string():
@@ -651,7 +676,7 @@ def test_shibmd_scope_no_regex_no_descriptor_type():
     mds = MetadataStore(ATTRCONV, sec_config, disable_ssl_certificate_validation=True)
     mds.imp(METADATACONF["15"])
 
-    scopes = mds.sbibmd_scopes(entity_id='http://example.com/saml2/idp.xml')
+    scopes = mds.shibmd_scopes(entity_id='http://example.com/saml2/idp.xml')
     all_scopes = list(scopes)
 
     expected = [
@@ -661,7 +686,7 @@ def test_shibmd_scope_no_regex_no_descriptor_type():
         },
         {
             "regexp": True,
-            "text": regex_compile("descriptor-example[^0-9]*\.org"),
+            "text": regex_compile(r"descriptor-example[^0-9]*\.org"),
         },
     ]
     assert len(all_scopes) == 2
@@ -672,7 +697,7 @@ def test_shibmd_scope_no_regex_all_descriptors():
     mds = MetadataStore(ATTRCONV, sec_config, disable_ssl_certificate_validation=True)
     mds.imp(METADATACONF["15"])
 
-    scopes = mds.sbibmd_scopes(entity_id='http://example.com/saml2/idp.xml', typ="idpsso_descriptor")
+    scopes = mds.shibmd_scopes(entity_id='http://example.com/saml2/idp.xml', typ="idpsso_descriptor")
     all_scopes = list(scopes)
     expected = [
         {
@@ -681,7 +706,7 @@ def test_shibmd_scope_no_regex_all_descriptors():
         },
         {
             "regexp": True,
-            "text": regex_compile("descriptor-example[^0-9]*\.org"),
+            "text": regex_compile(r"descriptor-example[^0-9]*\.org"),
         },
         {
             "regexp": False,

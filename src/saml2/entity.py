@@ -165,7 +165,7 @@ class Entity(HTTPBase):
                 continue
 
             if _val.startswith("http"):
-                r = requests.request("GET", _val)
+                r = requests.request("GET", _val, timeout=self.config.http_client_timeout)
                 if r.status_code == 200:
                     tmp = make_temp(r.text, ".pem", False, self.config.delete_tmpfiles)
                     setattr(self.config, item, tmp.name)
@@ -175,7 +175,7 @@ class Entity(HTTPBase):
 
         HTTPBase.__init__(self, self.config.verify_ssl_cert,
                           self.config.ca_certs, self.config.key_file,
-                          self.config.cert_file)
+                          self.config.cert_file, self.config.http_client_timeout)
 
         if self.config.vorg:
             for vo in self.config.vorg.values():
@@ -218,19 +218,11 @@ class Entity(HTTPBase):
         """
         logger.debug("Loading new metadata")
         try:
-            new_metadata = self.config.load_metadata(metadata_conf)
+            self.metadata.reload(metadata_conf)
         except Exception as ex:
             logger.error("Loading metadata failed", exc_info=ex)
             return False
 
-        logger.debug("Applying new metadata to main config")
-        ( self.metadata, self.sec.metadata, self.config.metadata ) = [new_metadata]*3
-        policy = getattr(self.config, "_%s_policy" % self.entity_type, None)
-        if policy and policy.metadata_store:
-            logger.debug("Applying new metadata to %s policy", self.entity_type)
-            policy.metadata_store = self.metadata
-
-        logger.debug("Applying new metadata source_id")
         self.sourceid = self.metadata.construct_source_id()
 
         return True
@@ -295,7 +287,6 @@ class Entity(HTTPBase):
         if binding == BINDING_HTTP_POST:
             logger.info("HTTP POST")
             info = http_form_post_message(msg_str, destination, relay_state, typ)
-            (msg_str, destination, relay_state, typ)
             info["url"] = destination
             info["method"] = "POST"
         elif binding == BINDING_HTTP_REDIRECT:

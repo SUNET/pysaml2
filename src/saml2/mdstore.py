@@ -928,7 +928,8 @@ class MetaDataMDX(InMemoryMetaData):
         return transform
 
     def __init__(self, url=None, security=None, cert=None,
-                 entity_transform=None, freshness_period=None, **kwargs):
+                 entity_transform=None, freshness_period=None,
+                 http_client_timeout=None, **kwargs):
         """
         :params url: mdx service url
         :params security: SecurityContext()
@@ -940,6 +941,7 @@ class MetaDataMDX(InMemoryMetaData):
         sha1 transformation.
         :params freshness_period: a duration in the format described at
         https://www.w3.org/TR/xmlschema-2/#duration
+        :params http_client_timeout: timeout of http requests
         """
         super(MetaDataMDX, self).__init__(None, **kwargs)
         if not url:
@@ -956,6 +958,7 @@ class MetaDataMDX(InMemoryMetaData):
         self.security = security
         self.freshness_period = freshness_period or DEFAULT_FRESHNESS_PERIOD
         self.expiration_date = {}
+        self.http_client_timeout = http_client_timeout
 
         # We assume that the MDQ server will return a single entity
         # described by a single <EntityDescriptor> element. The protocol
@@ -976,7 +979,8 @@ class MetaDataMDX(InMemoryMetaData):
             url=self.url, id=self.entity_transform(item)
         )
 
-        response = requests.get(mdx_url, headers={"Accept": SAML_METADATA_CONTENT_TYPE})
+        response = requests.get(mdx_url, headers={"Accept": SAML_METADATA_CONTENT_TYPE},
+                                timeout=self.http_client_timeout)
         if response.status_code != 200:
             error_msg = "Fething {item}: Got response status {status}".format(
                 item=item, status=response.status_code
@@ -1022,7 +1026,7 @@ class MetadataStore(MetaData):
     def __init__(self, attrc, config, ca_certs=None,
                  check_validity=True,
                  disable_ssl_certificate_validation=False,
-                 filter=None):
+                 filter=None, http_client_timeout=None):
         """
         :params attrc:
         :params config: Config()
@@ -1032,9 +1036,9 @@ class MetadataStore(MetaData):
         MetaData.__init__(self, attrc, check_validity=check_validity)
 
         if disable_ssl_certificate_validation:
-            self.http = HTTPBase(verify=False, ca_bundle=ca_certs)
+            self.http = HTTPBase(verify=False, ca_bundle=ca_certs, http_client_timeout=http_client_timeout)
         else:
-            self.http = HTTPBase(verify=True, ca_bundle=ca_certs)
+            self.http = HTTPBase(verify=True, ca_bundle=ca_certs, http_client_timeout=http_client_timeout)
 
         self.security = security_context(config)
         self.ii = 0
@@ -1042,6 +1046,7 @@ class MetadataStore(MetaData):
         self.check_validity = check_validity
         self.filter = filter
         self.to_old = {}
+        self.http_client_timeout = http_client_timeout
 
     def load(self, *args, **kwargs):
         if self.filter:
@@ -1100,15 +1105,28 @@ class MetadataStore(MetaData):
                 security = self.security
                 entity_transform = kwargs.get('entity_transform', None)
                 _md = MetaDataMDX(url, security, cert, entity_transform,
-                                  freshness_period=freshness_period)
+                                  freshness_period=freshness_period,
+                                  http_client_timeout=self.http_client_timeout)
             else:
                 key = args[1]
                 url = args[1]
-                _md = MetaDataMDX(url)
+                _md = MetaDataMDX(url, http_client_timeout=self.http_client_timeout)
         else:
             raise SAMLError("Unknown metadata type '%s'" % typ)
         _md.load()
         self.metadata[key] = _md
+
+    def reload(self, spec):
+        # Save the old set of metadata
+        old_metadata = self.metadata
+        self.metadata = {}
+        try:
+            # Reload the metadata based on the spec
+            self.imp(spec)
+        except Exception as e:
+            # Something went wrong, restore the previous metadata
+            self.metadata = old_metadata
+            raise e
 
     def imp(self, spec):
         # This serves as a backwards compatibility
@@ -1172,8 +1190,7 @@ class MetadataStore(MetaData):
 
     def service(self, entity_id, typ, service, binding=None):
         known_entity = False
-        logger.debug("service(%s, %s, %s, %s)", entity_id, typ, service,
-                     binding)
+        logger.debug("service(%s, %s, %s, %s)", entity_id, typ, service, binding)
         for key, _md in self.metadata.items():
             srvs = _md.service(entity_id, typ, service, binding)
             if srvs:
@@ -1504,6 +1521,29 @@ class MetadataStore(MetaData):
         }
         return res
 
+    def registration_info_typ(self, entity_id, typ):
+        try:
+            md = self.__getitem__(entity_id)
+        except KeyError:
+            md = {}
+
+        services_of_type = md.get(typ) or []
+        typ_reg_info = (
+            {
+                "registration_authority": elem.get("registration_authority"),
+                "registration_instant": elem.get("registration_instant"),
+                "registration_policy": {
+                    policy["lang"]: policy["text"]
+                    for policy in elem.get("registration_policy", [])
+                    if policy.get("__class__") == classnames["mdrpi_registration_policy"]
+                },
+            }
+            for srv in services_of_type
+            for elem in srv.get("extensions", {}).get("extension_elements", [])
+            if elem.get("__class__") == classnames["mdrpi_registration_info"]
+        )
+        return typ_reg_info
+
     def _lookup_elements_by_cls(self, root, cls):
         elements = (
             element
@@ -1525,6 +1565,15 @@ class MetadataStore(MetaData):
         return elements
 
     def sbibmd_scopes(self, entity_id, typ=None):
+        warn_msg = (
+            "`saml2.mdstore.MetadataStore::sbibmd_scopes` method is deprecated; "
+            "instead, use `saml2.mdstore.MetadataStore::shibmd_scopes`."
+        )
+        logger.warning(warn_msg)
+        _warn(warn_msg, DeprecationWarning)
+        return self.shibmd_scopes(entity_id, typ=typ)
+
+    def shibmd_scopes(self, entity_id, typ=None):
         try:
             md = self[entity_id]
         except KeyError:
