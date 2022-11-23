@@ -4,7 +4,7 @@ pre_build_script:
   - apt-get -y install xmlsec1
 script:
   - "export POETRY_HOME=/opt/poetry"
-  - "python3 -m venv $POETRY_HOME"
+  - "python3.9 -m venv $POETRY_HOME"
   - "$POETRY_HOME/bin/pip install -U pip poetry"
   - "$POETRY_HOME/bin/poetry install --with dev,test,coverage,docs --sync"
   - "$POETRY_HOME/bin/poetry run pytest"
