@@ -1,6 +1,7 @@
-__author__ = 'roland'
+__author__ = "roland"
 
-class Filter(object):
+
+class Filter:
     def __init__(self):
         pass
 
@@ -15,7 +16,7 @@ class AllowDescriptor(Filter):
         :param allow: List of allowed descriptors
         :return:
         """
-        super(AllowDescriptor, self).__init__()
+        super().__init__()
         self.allow = allow
 
     def __call__(self, entity_descriptor):
@@ -32,4 +33,4 @@ class AllowDescriptor(Filter):
         if not _all:
             return None
         else:
-            return  entity_descriptor
+            return entity_descriptor

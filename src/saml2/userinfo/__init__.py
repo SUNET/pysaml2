@@ -3,8 +3,8 @@
 import copy
 
 
-class UserInfo(object):
-    """ Read only interface to a user info store """
+class UserInfo:
+    """Read only interface to a user info store"""
 
     def __init__(self):
         pass
@@ -14,7 +14,7 @@ class UserInfo(object):
 
 
 class UserInfoDB(UserInfo):
-    """ Read only interface to a user info store """
+    """Read only interface to a user info store"""
 
     def __init__(self, db=None):
         self.db = db
@@ -52,4 +52,3 @@ class UserInfoDB(UserInfo):
             return self.filter(self.db[userid], user_info_claims)
         except KeyError:
             return {}
-

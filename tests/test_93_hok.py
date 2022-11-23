@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from pathutils import dotname, full_path
-
+from pathutils import dotname
+from pathutils import full_path
 from pytest import raises
 
 from saml2 import xmldsig as ds
@@ -26,9 +25,7 @@ class TestHolderOfKeyResponse:
         actual_hok_certs = [
             ki.x509_data[0].x509_certificate.text.strip()
             for sc in resp.assertion.subject.subject_confirmation
-            for ki in sc.subject_confirmation_data.extensions_as_elements(
-                ds.KeyInfo.c_tag, ds
-            )
+            for ki in sc.subject_confirmation_data.extensions_as_elements(ds.KeyInfo.c_tag, ds)
         ]
         assert actual_hok_certs == self._expected_hok_certs()
 
@@ -81,7 +78,7 @@ class TestHolderOfKeyResponse:
             asynchop=False,
             allow_unsolicited=True,
         )
-        with open(path, "r") as fp:
+        with open(path) as fp:
             authn_response_xml = fp.read()
         resp.loads(authn_response_xml, False)
         return resp

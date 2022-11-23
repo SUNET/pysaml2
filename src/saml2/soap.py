@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 
 """
@@ -7,20 +6,13 @@ Suppport for the client part of the SAML2.0 SOAP binding.
 """
 import logging
 import re
+from xml.etree import ElementTree as ElementTree
+
+import defusedxml.ElementTree
 
 from saml2 import create_class_from_element_tree
 from saml2.samlp import NAMESPACE as SAMLP_NAMESPACE
 from saml2.schema import soapenv
-
-try:
-    from xml.etree import cElementTree as ElementTree
-except ImportError:
-    try:
-        import cElementTree as ElementTree
-    except ImportError:
-        #noinspection PyUnresolvedReferences
-        from elementtree import ElementTree
-import defusedxml.ElementTree
 
 
 logger = logging.getLogger(__name__)
@@ -35,97 +27,94 @@ class WrongMessageType(Exception):
 
 
 def parse_soap_enveloped_saml_response(text):
-    tags = ['{%s}Response' % SAMLP_NAMESPACE,
-            '{%s}LogoutResponse' % SAMLP_NAMESPACE]
+    tags = ["{%s}Response" % SAMLP_NAMESPACE, "{%s}LogoutResponse" % SAMLP_NAMESPACE]
     return parse_soap_enveloped_saml_thingy(text, tags)
 
 
 def parse_soap_enveloped_saml_logout_response(text):
-    tags = ['{%s}Response' % SAMLP_NAMESPACE,
-            '{%s}LogoutResponse' % SAMLP_NAMESPACE]
+    tags = ["{%s}Response" % SAMLP_NAMESPACE, "{%s}LogoutResponse" % SAMLP_NAMESPACE]
     return parse_soap_enveloped_saml_thingy(text, tags)
 
 
 def parse_soap_enveloped_saml_attribute_query(text):
-    expected_tag = '{%s}AttributeQuery' % SAMLP_NAMESPACE
+    expected_tag = "{%s}AttributeQuery" % SAMLP_NAMESPACE
     return parse_soap_enveloped_saml_thingy(text, [expected_tag])
 
 
 def parse_soap_enveloped_saml_attribute_response(text):
-    tags = ['{%s}Response' % SAMLP_NAMESPACE,
-            '{%s}AttributeResponse' % SAMLP_NAMESPACE]
+    tags = ["{%s}Response" % SAMLP_NAMESPACE, "{%s}AttributeResponse" % SAMLP_NAMESPACE]
     return parse_soap_enveloped_saml_thingy(text, tags)
 
 
 def parse_soap_enveloped_saml_logout_request(text):
-    expected_tag = '{%s}LogoutRequest' % SAMLP_NAMESPACE
+    expected_tag = "{%s}LogoutRequest" % SAMLP_NAMESPACE
     return parse_soap_enveloped_saml_thingy(text, [expected_tag])
 
 
 def parse_soap_enveloped_saml_authn_request(text):
-    expected_tag = '{%s}AuthnRequest' % SAMLP_NAMESPACE
+    expected_tag = "{%s}AuthnRequest" % SAMLP_NAMESPACE
     return parse_soap_enveloped_saml_thingy(text, [expected_tag])
 
 
 def parse_soap_enveloped_saml_artifact_resolve(text):
-    expected_tag = '{%s}ArtifactResolve' % SAMLP_NAMESPACE
+    expected_tag = "{%s}ArtifactResolve" % SAMLP_NAMESPACE
     return parse_soap_enveloped_saml_thingy(text, [expected_tag])
 
 
 def parse_soap_enveloped_saml_artifact_response(text):
-    expected_tag = '{%s}ArtifactResponse' % SAMLP_NAMESPACE
+    expected_tag = "{%s}ArtifactResponse" % SAMLP_NAMESPACE
     return parse_soap_enveloped_saml_thingy(text, [expected_tag])
 
 
 def parse_soap_enveloped_saml_name_id_mapping_request(text):
-    expected_tag = '{%s}NameIDMappingRequest' % SAMLP_NAMESPACE
+    expected_tag = "{%s}NameIDMappingRequest" % SAMLP_NAMESPACE
     return parse_soap_enveloped_saml_thingy(text, [expected_tag])
 
 
 def parse_soap_enveloped_saml_name_id_mapping_response(text):
-    expected_tag = '{%s}NameIDMappingResponse' % SAMLP_NAMESPACE
+    expected_tag = "{%s}NameIDMappingResponse" % SAMLP_NAMESPACE
     return parse_soap_enveloped_saml_thingy(text, [expected_tag])
 
 
 def parse_soap_enveloped_saml_manage_name_id_request(text):
-    expected_tag = '{%s}ManageNameIDRequest' % SAMLP_NAMESPACE
+    expected_tag = "{%s}ManageNameIDRequest" % SAMLP_NAMESPACE
     return parse_soap_enveloped_saml_thingy(text, [expected_tag])
 
 
 def parse_soap_enveloped_saml_manage_name_id_response(text):
-    expected_tag = '{%s}ManageNameIDResponse' % SAMLP_NAMESPACE
+    expected_tag = "{%s}ManageNameIDResponse" % SAMLP_NAMESPACE
     return parse_soap_enveloped_saml_thingy(text, [expected_tag])
 
 
 def parse_soap_enveloped_saml_assertion_id_request(text):
-    expected_tag = '{%s}AssertionIDRequest' % SAMLP_NAMESPACE
+    expected_tag = "{%s}AssertionIDRequest" % SAMLP_NAMESPACE
     return parse_soap_enveloped_saml_thingy(text, [expected_tag])
 
 
 def parse_soap_enveloped_saml_assertion_id_response(text):
-    tags = ['{%s}Response' % SAMLP_NAMESPACE,
-            '{%s}AssertionIDResponse' % SAMLP_NAMESPACE]
+    tags = ["{%s}Response" % SAMLP_NAMESPACE, "{%s}AssertionIDResponse" % SAMLP_NAMESPACE]
     return parse_soap_enveloped_saml_thingy(text, tags)
 
 
 def parse_soap_enveloped_saml_authn_query(text):
-    expected_tag = '{%s}AuthnQuery' % SAMLP_NAMESPACE
+    expected_tag = "{%s}AuthnQuery" % SAMLP_NAMESPACE
     return parse_soap_enveloped_saml_thingy(text, [expected_tag])
 
 
 def parse_soap_enveloped_saml_authn_query_response(text):
-    tags = ['{%s}Response' % SAMLP_NAMESPACE]
+    tags = ["{%s}Response" % SAMLP_NAMESPACE]
     return parse_soap_enveloped_saml_thingy(text, tags)
 
 
 def parse_soap_enveloped_saml_authn_response(text):
-    tags = ['{%s}Response' % SAMLP_NAMESPACE]
+    tags = ["{%s}Response" % SAMLP_NAMESPACE]
     return parse_soap_enveloped_saml_thingy(text, tags)
 
 
-#def parse_soap_enveloped_saml_logout_response(text):
+# def parse_soap_enveloped_saml_logout_response(text):
 #    expected_tag = '{%s}LogoutResponse' % SAMLP_NAMESPACE
 #    return parse_soap_enveloped_saml_thingy(text, [expected_tag])
+
 
 def parse_soap_enveloped_saml_thingy(text, expected_tags):
     """Parses a SOAP enveloped SAML thing and returns the thing as
@@ -139,23 +128,17 @@ def parse_soap_enveloped_saml_thingy(text, expected_tags):
 
     envelope_tag = "{%s}Envelope" % soapenv.NAMESPACE
     if envelope.tag != envelope_tag:
-        raise ValueError(
-            "Invalid envelope tag '{invalid}' should be '{valid}'".format(
-                invalid=envelope.tag, valid=envelope_tag
-            )
-        )
+        raise ValueError(f"Invalid envelope tag '{envelope.tag}' should be '{envelope_tag}'")
 
     if len(envelope) < 1:
         raise Exception("No items in envelope.")
 
     body = None
     for part in envelope:
-        if part.tag == '{%s}Body' % soapenv.NAMESPACE:
+        if part.tag == "{%s}Body" % soapenv.NAMESPACE:
             n_children = len(part)
             if n_children != 1:
-                raise Exception(
-                    "Expected a single child element, found {n}".format(n=n_children)
-                )
+                raise Exception(f"Expected a single child element, found {n_children}")
             body = part
             break
 
@@ -166,8 +149,7 @@ def parse_soap_enveloped_saml_thingy(text, expected_tags):
     if saml_part.tag in expected_tags:
         return ElementTree.tostring(saml_part, encoding="UTF-8")
     else:
-        raise WrongMessageType("Was '%s' expected one of %s" % (saml_part.tag,
-                                                                expected_tags))
+        raise WrongMessageType(f"Was '{saml_part.tag}' expected one of {expected_tags}")
 
 
 NS_AND_TAG = re.compile(r"\{([^}]+)\}(.*)")
@@ -183,7 +165,7 @@ def instanciate_class(item, modules):
                 return create_class_from_element_tree(target, item)
             except KeyError:
                 continue
-    raise Exception("Unknown class: ns='%s', tag='%s'" % (ns, tag))
+    raise Exception(f"Unknown class: ns='{ns}', tag='{tag}'")
 
 
 def class_instances_from_soap_enveloped_saml_thingies(text, modules):
@@ -197,15 +179,11 @@ def class_instances_from_soap_enveloped_saml_thingies(text, modules):
     try:
         envelope = defusedxml.ElementTree.fromstring(text)
     except Exception as exc:
-        raise XmlParseError("%s" % exc)
+        raise XmlParseError(f"{exc}")
 
     envelope_tag = "{%s}Envelope" % soapenv.NAMESPACE
     if envelope.tag != envelope_tag:
-        raise ValueError(
-            "Invalid envelope tag '{invalid}' should be '{valid}'".format(
-                invalid=envelope.tag, valid=envelope_tag
-            )
-        )
+        raise ValueError(f"Invalid envelope tag '{envelope.tag}' should be '{envelope_tag}'")
 
     if len(envelope) < 1:
         raise Exception("No items in envelope.")
@@ -213,7 +191,7 @@ def class_instances_from_soap_enveloped_saml_thingies(text, modules):
     env = {"header": [], "body": None}
 
     for part in envelope:
-        if part.tag == '{%s}Body' % soapenv.NAMESPACE:
+        if part.tag == "{%s}Body" % soapenv.NAMESPACE:
             if len(envelope) < 1:
                 raise Exception("No items in envelope part.")
             env["body"] = instanciate_class(part[0], modules)
@@ -233,15 +211,11 @@ def open_soap_envelope(text):
     try:
         envelope = defusedxml.ElementTree.fromstring(text)
     except Exception as exc:
-        raise XmlParseError("%s" % exc)
+        raise XmlParseError(f"{exc}")
 
     envelope_tag = "{%s}Envelope" % soapenv.NAMESPACE
     if envelope.tag != envelope_tag:
-        raise ValueError(
-            "Invalid envelope tag '{invalid}' should be '{valid}'".format(
-                invalid=envelope.tag, valid=envelope_tag
-            )
-        )
+        raise ValueError(f"Invalid envelope tag '{envelope.tag}' should be '{envelope_tag}'")
 
     if len(envelope) < 1:
         raise Exception("No items in envelope.")
@@ -249,7 +223,7 @@ def open_soap_envelope(text):
     content = {"header": [], "body": None}
 
     for part in envelope:
-        if part.tag == '{%s}Body' % soapenv.NAMESPACE:
+        if part.tag == "{%s}Body" % soapenv.NAMESPACE:
             if len(envelope) < 1:
                 raise Exception("No items in envelope part.")
             content["body"] = ElementTree.tostring(part[0], encoding="UTF-8")
@@ -262,7 +236,7 @@ def open_soap_envelope(text):
 
 
 def make_soap_enveloped_saml_thingy(thingy, headers=None):
-    """ Returns a soap envelope containing a SAML request
+    """Returns a soap envelope containing a SAML request
     as a text string.
 
     :param thingy: The SAML thingy
@@ -278,11 +252,11 @@ def make_soap_enveloped_saml_thingy(thingy, headers=None):
     soap_envelope.body = soapenv.Body()
     soap_envelope.body.add_extension_element(thingy)
 
-    return "%s" % soap_envelope
+    return f"{soap_envelope}"
 
 
 def soap_fault(message=None, actor=None, code=None, detail=None):
-    """ Create a SOAP Fault message
+    """Create a SOAP Fault message
 
     :param message: Human readable error message
     :param actor: Who discovered the error
@@ -308,4 +282,4 @@ def soap_fault(message=None, actor=None, code=None, detail=None):
         detail=_detail,
     )
 
-    return "%s" % fault
+    return f"{fault}"

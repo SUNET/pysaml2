@@ -2,30 +2,31 @@ import datetime
 from hashlib import sha1
 import logging
 
-import pymongo
-from saml2.saml import NAMEID_FORMAT_PERSISTENT
+from pymongo import MongoClient
+import pymongo.errors
+from pymongo.mongo_replica_set_client import MongoReplicaSetClient
+import pymongo.uri_parser
 
 from saml2.eptid import Eptid
-from saml2.mdstore import InMemoryMetaData
-from saml2.mdstore import metadata_modules
-from saml2.mdstore import load_metadata_modules
-from saml2.s_utils import PolicyError
-
-from saml2.ident import code_binary
 from saml2.ident import IdentDB
 from saml2.ident import Unknown
-from saml2.mdie import to_dict
+from saml2.ident import code_binary
 from saml2.mdie import from_dict
+from saml2.mdie import to_dict
+from saml2.mdstore import InMemoryMetaData
+from saml2.mdstore import load_metadata_modules
+from saml2.mdstore import metadata_modules
+from saml2.s_utils import PolicyError
+from saml2.saml import NAMEID_FORMAT_PERSISTENT
 
-import six
 
-
-__author__ = 'rolandh'
+__author__ = "rolandh"
 
 logger = logging.getLogger(__name__)
 
 ONTS = load_metadata_modules()
 MMODS = metadata_modules()
+
 
 class CorruptDatabase(Exception):
     pass
@@ -36,8 +37,8 @@ def context_match(cfilter, cntx):
     return True
 
 
-class SessionStorageMDB(object):
-    """ Session information is stored in a MongoDB database"""
+class SessionStorageMDB:
+    """Session information is stored in a MongoDB database"""
 
     def __init__(self, database="", collection="assertion", **kwargs):
         db = _mdb_get_database(database, **kwargs)
@@ -59,8 +60,7 @@ class SessionStorageMDB(object):
     def get_assertion(self, cid):
         res = []
         for item in self.assertion.find({"assertion_id": cid}):
-            res.append({"assertion": from_dict(item["assertion"], ONTS, True),
-                        "to_sign": item["to_sign"]})
+            res.append({"assertion": from_dict(item["assertion"], ONTS, True), "to_sign": item["to_sign"]})
         if len(res) == 1:
             return res[0]
         elif res is []:
@@ -68,8 +68,7 @@ class SessionStorageMDB(object):
         else:
             raise SystemError("More then one assertion with the same ID")
 
-    def get_assertions_by_subject(self, name_id=None, session_index=None,
-                                  requested_context=None):
+    def get_assertions_by_subject(self, name_id=None, session_index=None, requested_context=None):
         """
 
         :param name_id: One of name_id or key can be used to get the authn
@@ -90,8 +89,7 @@ class SessionStorageMDB(object):
                             result.append(assertion)
                             break
                     if requested_context:
-                        if context_match(requested_context,
-                                         statement.authn_context):
+                        if context_match(requested_context, statement.authn_context):
                             result.append(assertion)
                             break
             else:
@@ -104,8 +102,7 @@ class SessionStorageMDB(object):
         for item in self.assertion.find({"name_id_key": key}):
             self.assertion.remove(item["_id"])
 
-    def get_authn_statements(self, name_id, session_index=None,
-                             requested_context=None):
+    def get_authn_statements(self, name_id, session_index=None, requested_context=None):
         """
 
         :param name_id:
@@ -113,13 +110,11 @@ class SessionStorageMDB(object):
         :param requested_context:
         :return:
         """
-        return [k.authn_statement for k in self.get_assertions_by_subject(
-            name_id, session_index, requested_context)]
+        return [k.authn_statement for k in self.get_assertions_by_subject(name_id, session_index, requested_context)]
 
 
 class IdentMDB(IdentDB):
-    def __init__(self, database="", collection="ident", domain="",
-                 name_qualifier=""):
+    def __init__(self, database="", collection="ident", domain="", name_qualifier=""):
         IdentDB.__init__(self, None, domain, name_qualifier)
         self.mdb = MDB(database=database, collection=collection)
         self.mdb.primary_key = "user_id"
@@ -139,8 +134,9 @@ class IdentMDB(IdentDB):
     def store(self, ident, name_id):
         self.mdb.store(ident, name_id=to_dict(name_id, MMODS, True))
 
-    def find_nameid(self, userid, nformat=None, sp_name_qualifier=None,
-                    name_qualifier=None, sp_provided_id=None, **kwargs):
+    def find_nameid(
+        self, userid, nformat=None, sp_name_qualifier=None, name_qualifier=None, sp_provided_id=None, **kwargs
+    ):
         # reset passed for compatibility kwargs for next usage
         kwargs = {}
         if nformat:
@@ -196,7 +192,7 @@ class IdentMDB(IdentDB):
         return self.construct_nameid(_id, name_id_policy=name_id_policy)
 
 
-class MDB(object):
+class MDB:
     primary_key = "mdb"
 
     def __init__(self, database, collection, **kwargs):
@@ -270,7 +266,7 @@ def _mdb_get_database(uri, **kwargs):
     :params database: name as string or (uri, name)
     :returns: pymongo database object
     """
-    if not "tz_aware" in kwargs:
+    if "tz_aware" not in kwargs:
         # default, but not forced
         kwargs["tz_aware"] = True
 
@@ -283,7 +279,6 @@ def _mdb_get_database(uri, **kwargs):
         # assume URI to be just the database name
         db_name = uri
         _conn = pymongo.MongoClient()
-        pass
     else:
         if "replicaset" in _parsed_uri["options"]:
             connection_factory = pymongo.MongoReplicaSetClient
@@ -293,15 +288,12 @@ def _mdb_get_database(uri, **kwargs):
     _db = _conn[db_name]
 
     if "username" in _parsed_uri:
-        _db.authenticate(
-            _parsed_uri.get("username", None),
-            _parsed_uri.get("password", None)
-        )
+        _db.authenticate(_parsed_uri.get("username", None), _parsed_uri.get("password", None))
 
     return _db
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class EptidMDB(Eptid):
     def __init__(self, secret, database="", collection="eptid"):
         Eptid.__init__(self, secret)
@@ -321,20 +313,21 @@ class EptidMDB(Eptid):
         self.mdb.store(key, **{"eptid": value})
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 def protect(dic):
     res = {}
     for key, val in dic.items():
         key = key.replace(".", "__")
-        if isinstance(val, six.string_types):
+        if isinstance(val, str):
             pass
         elif isinstance(val, dict):
             val = protect(val)
         elif isinstance(val, list):
             li = []
             for va in val:
-                if isinstance(va, six.string_types):
+                if isinstance(va, str):
                     pass
                 elif isinstance(va, dict):
                     va = protect(va)
@@ -352,14 +345,14 @@ def unprotect(dic):
             pass
         else:
             key = key.replace("__", ".")
-        if isinstance(val, six.string_types):
+        if isinstance(val, str):
             pass
         elif isinstance(val, dict):
             val = unprotect(val)
         elif isinstance(val, list):
             li = []
             for va in val:
-                if isinstance(va, six.string_types):
+                if isinstance(va, str):
                     pass
                 elif isinstance(val, dict):
                     va = unprotect(va)
@@ -382,7 +375,7 @@ def export_mdstore_to_mongo_db(mds, database, collection, sub_collection=""):
 
 class MetadataMDB(InMemoryMetaData):
     def __init__(self, attrc, database="", collection=""):
-        super(MetadataMDB, self).__init__(attrc)
+        super().__init__(attrc)
         self.mdb = MDB(database, collection)
         self.mdb.primary_key = "entity_id"
 
@@ -429,7 +422,7 @@ class MetadataMDB(InMemoryMetaData):
         elif len(res) == 1:
             return unprotect(res[0]["entity_description"])
         else:
-            raise CorruptDatabase("More then one document with key %s" % item)
+            raise CorruptDatabase(f"More then one document with key {item}")
 
     def bindings(self, entity_id, typ, service):
         pass

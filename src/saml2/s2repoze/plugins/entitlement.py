@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 import shelve
 
-from zope.interface import implements
-
 # from repoze.who.interfaces import IChallenger, IIdentifier, IAuthenticator
 from repoze.who.interfaces import IMetadataProvider
+from zope.interface import implements
 
 
-class EntitlementMetadataProvider(object):
+class EntitlementMetadataProvider:
 
     implements(IMetadataProvider)
 
@@ -64,13 +63,13 @@ class EntitlementMetadataProvider(object):
             vorg = environ["myapp.vo"]
             try:
                 ents = user["entitlement"][vorg]
-                identity["user"] = {"entitlement": ["%s:%s" % (vorg, e) for e in ents]}
+                identity["user"] = {"entitlement": [f"{vorg}:{e}" for e in ents]}
             except KeyError:
                 pass
         except KeyError:
             res = []
             for vorg, ents in user["entitlement"].items():
-                res.extend(["%s:%s" % (vorg, e) for e in ents])
+                res.extend([f"{vorg}:{e}" for e in ents])
             identity["user"] = res
 
 

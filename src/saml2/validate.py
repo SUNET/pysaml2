@@ -1,17 +1,18 @@
-import calendar
-from six.moves.urllib.parse import urlparse
-import re
-import struct
 import base64
-import time
+import calendar
 from ipaddress import AddressValueError
 from ipaddress import IPv4Address
 from ipaddress import IPv6Address
+import re
+import struct
+import time
+from urllib.parse import urlparse
 
 from saml2 import time_util
 
-XSI_NAMESPACE = 'http://www.w3.org/2001/XMLSchema-instance'
-XSI_NIL = '{%s}nil' % XSI_NAMESPACE
+
+XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance"
+XSI_NIL = "{%s}nil" % XSI_NAMESPACE
 # ---------------------------------------------------------
 
 
@@ -38,6 +39,7 @@ class ResponseLifetimeExceed(Exception):
 class ToEarly(Exception):
     pass
 
+
 # --------------------- validators -------------------------------------
 #
 
@@ -46,7 +48,7 @@ NCNAME = re.compile(r"(?P<NCName>[a-zA-Z_](\w|[_.-])*)")
 
 def valid_ncname(name):
     match = NCNAME.match(name)
-    #if not match:                      # hack for invalid authnRequest/ID from meteor saml lib
+    # if not match:                      # hack for invalid authnRequest/ID from meteor saml lib
     #    raise NotValid("NCName")
     return True
 
@@ -94,10 +96,11 @@ def validate_on_or_after(not_on_or_after, slack):
         now = time_util.utc_now()
         nooa = calendar.timegm(time_util.str_to_time(not_on_or_after))
         if now > nooa + slack:
-            now_str=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(now))
+            now_str = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
             raise ResponseLifetimeExceed(
-                "Can't use response, too old (now=%s + slack=%d > " \
-                "not_on_or_after=%s" % (now_str, slack, not_on_or_after))
+                "Can't use response, too old (now=%s + slack=%d > "
+                "not_on_or_after=%s" % (now_str, slack, not_on_or_after)
+            )
         return nooa
     else:
         return False
@@ -108,9 +111,8 @@ def validate_before(not_before, slack):
         now = time_util.utc_now()
         nbefore = calendar.timegm(time_util.str_to_time(not_before))
         if nbefore > now + slack:
-            now_str = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(now))
-            raise ToEarly("Can't use response yet: (now=%s + slack=%d) "
-                          "<= notbefore=%s" % (now_str, slack, not_before))
+            now_str = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
+            raise ToEarly(f"Can't use response yet: (now={now_str} + slack={int(slack)}) <= notbefore={not_before}")
     return True
 
 
@@ -158,7 +160,7 @@ def valid_duration(val):
 
 
 def valid_string(val):
-    """ Expects unicode
+    """Expects unicode
     Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] |
                     [#x10000-#x10FFFF]
     """
@@ -231,9 +233,9 @@ def valid_base64(val):
 
 
 def valid_qname(val):
-    """ A qname is either
-        NCName or
-        NCName ':' NCName
+    """A qname is either
+    NCName or
+    NCName ':' NCName
     """
 
     try:
@@ -244,7 +246,7 @@ def valid_qname(val):
 
 
 def valid_anytype(val):
-    """ Goes through all known type validators
+    """Goes through all known type validators
 
     :param val: The value to validate
     :return: True is value is valid otherwise an exception is raised
@@ -262,6 +264,7 @@ def valid_anytype(val):
         return True
 
     raise NotValid("AnyType")
+
 
 # -----------------------------------------------------------------------------
 
@@ -328,12 +331,10 @@ def _valid_instance(instance, val):
     try:
         val.verify()
     except NotValid as exc:
-        raise NotValid("Class '%s' instance: %s" % (
-            instance.__class__.__name__, exc.args[0]))
+        raise NotValid(f"Class '{instance.__class__.__name__}' instance: {exc.args[0]}")
     except OutsideCardinality as exc:
-        raise NotValid(
-            "Class '%s' instance cardinality error: %s" % (
-                instance.__class__.__name__, exc.args[0]))
+        raise NotValid(f"Class '{instance.__class__.__name__}' instance cardinality error: {exc.args[0]}")
+
 
 ERROR_TEXT = "Wrong type of value '%s' on attribute '%s' expected it to be %s"
 
@@ -349,17 +350,15 @@ def valid_instance(instance):
 
     if instclass.c_value_type and instance.text:
         try:
-            validate_value_type(instance.text.strip(),
-                                instclass.c_value_type)
+            validate_value_type(instance.text.strip(), instclass.c_value_type)
         except NotValid as exc:
-            raise NotValid("Class '%s' instance: %s" % (class_name,
-                                                        exc.args[0]))
+            raise NotValid(f"Class '{class_name}' instance: {exc.args[0]}")
 
     for (name, typ, required) in instclass.c_attributes.values():
-        value = getattr(instance, name, '')
+        value = getattr(instance, name, "")
         if required and not value:
-            txt = "Required value on property '%s' missing" % name
-            raise MustValueError("Class '%s' instance: %s" % (class_name, txt))
+            txt = f"Required value on property '{name}' missing"
+            raise MustValueError(f"Class '{class_name}' instance: {txt}")
 
         if value:
             try:
@@ -374,10 +373,10 @@ def valid_instance(instance):
                     valid(typ, value)
             except (NotValid, ValueError) as exc:
                 txt = ERROR_TEXT % (value, name, exc.args[0])
-                raise NotValid("Class '%s' instance: %s" % (class_name, txt))
+                raise NotValid(f"Class '{class_name}' instance: {txt}")
 
     for (name, _spec) in instclass.c_children.values():
-        value = getattr(instance, name, '')
+        value = getattr(instance, name, "")
 
         try:
             _card = instclass.c_cardinality[name]
@@ -393,7 +392,7 @@ def valid_instance(instance):
             _cmin = _cmax = _card = None
 
         if value:
-            #_has_val = True
+            # _has_val = True
             if isinstance(value, list):
                 _list = True
                 vlen = len(value)
@@ -403,15 +402,9 @@ def valid_instance(instance):
 
             if _card:
                 if _cmin is not None and _cmin > vlen:
-                    raise NotValid(
-                        "Class '%s' instance cardinality error: %s" % (
-                            class_name, "less then min (%s<%s)" % (vlen,
-                                                                   _cmin)))
+                    raise NotValid(f"Class '{class_name}' instance cardinality error: less then min ({vlen}<{_cmin})")
                 if _cmax is not None and vlen > _cmax:
-                    raise NotValid(
-                        "Class '%s' instance cardinality error: %s" % (
-                            class_name, "more then max (%s>%s)" % (vlen,
-                                                                   _cmax)))
+                    raise NotValid(f"Class '{class_name}' instance cardinality error: more then max ({vlen}>{_cmax})")
 
             if _list:
                 for val in value:
@@ -421,16 +414,12 @@ def valid_instance(instance):
                 _valid_instance(instance, value)
         else:
             if _cmin:
-                raise NotValid(
-                    "Class '%s' instance cardinality error: %s" % (
-                        class_name, "too few values on %s" % name))
+                raise NotValid(f"Class '{class_name}' instance cardinality error: too few values on {name}")
 
     return True
 
 
 def valid_domain_name(dns_name):
-    m = re.match(
-        r"^[a-z0-9]+([-.]{ 1 }[a-z0-9]+).[a-z]{2,5}(:[0-9]{1,5})?(\/.)?$",
-        dns_name, re.I)
+    m = re.match(r"^[a-z0-9]+([-.]{ 1 }[a-z0-9]+).[a-z]{2,5}(:[0-9]{1,5})?(\/.)?$", dns_name, re.I)
     if not m:
         raise ValueError("Not a proper domain name")

@@ -1,15 +1,15 @@
-__author__ = 'rohe0002'
+__author__ = "rohe0002"
 
 import json
 import logging
-import six
 
-from urlparse import urlparse
 from bs4 import BeautifulSoup
-
 from mechanize import ParseResponseEx
-from mechanize._form import ControlNotFoundError, AmbiguityError
+from mechanize._form import AmbiguityError
+from mechanize._form import ControlNotFoundError
 from mechanize._form import ListControl
+from urlparse import urlparse
+
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +35,12 @@ def NoneFunc():
     return None
 
 
-class RResponse():
+class RResponse:
     """
     A Response class that behaves in the way that mechanize expects it.
     Links to a requests.Response
     """
+
     def __init__(self, resp):
         self._resp = resp
         self.index = 0
@@ -80,17 +81,17 @@ class RResponse():
                 if self._len == self.index:
                     part = None
                 elif self._len - self.index < size:
-                    part = self.text[self.index:]
+                    part = self.text[self.index :]
                     self.index = self._len
                 else:
-                    part = self.text[self.index:self.index + size]
+                    part = self.text[self.index : self.index + size]
                     self.index += size
                 return part
         else:
             return self.text
 
 
-class Interaction(object):
+class Interaction:
     def __init__(self, httpc, interactions=None):
         self.httpc = httpc
         self.interactions = interactions
@@ -121,8 +122,7 @@ class Interaction(object):
                         _match += 1
                     else:
                         _c = _bs.title.contents
-                        if isinstance(_c, list) and not isinstance(
-                          _c, six.string_types):
+                        if isinstance(_c, list) and not isinstance(_c, str):
                             for _line in _c:
                                 if val in _line:
                                     _match += 1
@@ -155,9 +155,9 @@ class Interaction(object):
         if not forms:
             raise FlowException(content=response.text, url=url)
 
-        #if len(forms) == 1:
+        # if len(forms) == 1:
         #    return forms[0]
-        #else:
+        # else:
 
         _form = None
         # ignore the first form, because I use ParseResponseEx which adds
@@ -182,7 +182,7 @@ class Interaction(object):
                             _default = _ava["value"]
                             try:
                                 orig_val = form[prop]
-                                if isinstance(orig_val, six.string_types):
+                                if isinstance(orig_val, str):
                                     if orig_val == _default:
                                         _form = form
                                 elif _default in orig_val:
@@ -242,8 +242,7 @@ class Interaction(object):
         url = request._Request__original
 
         if form.method == "POST":
-            return self.httpc.send(url, "POST", data=request.data,
-                                   headers=headers)
+            return self.httpc.send(url, "POST", data=request.data, headers=headers)
         else:
             return self.httpc.send(url, "GET", headers=headers)
 
@@ -263,7 +262,7 @@ class Interaction(object):
             _url = kwargs["location"]
 
         form = self.pick_form(response, _url, **kwargs)
-        #form.backwards_compatible = False
+        # form.backwards_compatible = False
         if not form:
             raise Exception("Can't pick a form !!")
 
@@ -286,12 +285,11 @@ class Interaction(object):
                         raise
 
         if form.action in kwargs["conv"].my_endpoints():
-            return {"SAMLResponse": form["SAMLResponse"],
-                    "RelayState": form["RelayState"]}
+            return {"SAMLResponse": form["SAMLResponse"], "RelayState": form["RelayState"]}
 
         return self.do_click(form, **kwargs)
 
-    #noinspection PyUnusedLocal
+    # noinspection PyUnusedLocal
     def chose(self, orig_response, path, **kwargs):
         """
         Sends a HTTP GET to a url given by the present url and the given
@@ -310,13 +308,13 @@ class Interaction(object):
                 _url = kwargs["location"]
 
             part = urlparse(_url)
-            url = "%s://%s%s" % (part[0], part[1], path)
+            url = f"{part[0]}://{part[1]}{path}"
         else:
             url = path
 
         logger.info("GET %s", url)
         return self.httpc.send(url, "GET")
-        #return resp, ""
+        # return resp, ""
 
     def post_form(self, orig_response, **kwargs):
         """
@@ -334,20 +332,19 @@ class Interaction(object):
 
         return self.do_click(form, **kwargs)
 
-    #noinspection PyUnusedLocal
+    # noinspection PyUnusedLocal
     def parse(self, orig_response, **kwargs):
         # content is a form from which I get the SAMLResponse
         response = RResponse(orig_response)
 
         form = self.pick_form(response, **kwargs)
-        #form.backwards_compatible = False
+        # form.backwards_compatible = False
         if not form:
             raise InteractionNeeded("Can't pick a form !!")
 
-        return {"SAMLResponse": form["SAMLResponse"],
-                "RelayState": form["RelayState"]}
+        return {"SAMLResponse": form["SAMLResponse"], "RelayState": form["RelayState"]}
 
-    #noinspection PyUnusedLocal
+    # noinspection PyUnusedLocal
     def interaction(self, args):
         _type = args["type"]
         if _type == "form":
@@ -359,10 +356,11 @@ class Interaction(object):
         else:
             return NoneFunc
 
+
 # ========================================================================
 
 
-class Action(object):
+class Action:
     def __init__(self, args):
         self.args = args or {}
         self.request = None
@@ -370,7 +368,7 @@ class Action(object):
     def update(self, dic):
         self.args.update(dic)
 
-    #noinspection PyUnusedLocal
+    # noinspection PyUnusedLocal
     def post_op(self, result, conv, args):
         pass
 

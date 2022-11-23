@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-import six
 
-from saml2 import element_to_extension_element
-from saml2 import extension_elements_to_elements
 from saml2 import ExtensionElement
 from saml2 import SamlBase
+from saml2 import element_to_extension_element
+from saml2 import extension_elements_to_elements
 from saml2 import md
 
-__author__ = 'rolandh'
+
+__author__ = "rolandh"
 
 """
 Functions used to import metadata from and export it to a pysaml2 format
@@ -25,26 +25,18 @@ def _eval(val, onts, mdb_safe):
     :param onts: Schemas to be used in the conversion
     :return: The basic dictionary
     """
-    if isinstance(val, six.string_types):
+    if isinstance(val, str):
         val = val.strip()
         if not val:
             return None
         else:
             return val
-    elif (
-        isinstance(val, dict)
-        or isinstance(val, SamlBase)
-        or isinstance(val, ExtensionElement)
-    ):
+    elif isinstance(val, dict) or isinstance(val, SamlBase) or isinstance(val, ExtensionElement):
         return to_dict(val, onts, mdb_safe)
     elif isinstance(val, list):
         lv = []
         for v in val:
-            if (
-                isinstance(v, dict)
-                or isinstance(v, SamlBase)
-                or isinstance(v, ExtensionElement)
-            ):
+            if isinstance(v, dict) or isinstance(v, SamlBase) or isinstance(v, ExtensionElement):
                 lv.append(to_dict(v, onts, mdb_safe))
             else:
                 lv.append(v)
@@ -64,21 +56,18 @@ def to_dict(_dict, onts, mdb_safe=False):
     """
     res = {}
     if isinstance(_dict, SamlBase):
-        res["__class__"] = "%s&%s" % (_dict.c_namespace, _dict.c_tag)
+        res["__class__"] = f"{_dict.c_namespace}&{_dict.c_tag}"
         for key in _dict.keyswv():
             if key in IMP_SKIP:
                 continue
             val = getattr(_dict, key)
             if key == "extension_elements":
-                _eel = extension_elements_to_elements(
-                    val, onts, keep_unmatched=True
-                )
+                _eel = extension_elements_to_elements(val, onts, keep_unmatched=True)
                 _val = [_eval(_v, onts, mdb_safe) for _v in _eel]
             elif key == "extension_attributes":
                 if mdb_safe:
-                    _val = dict([(k.replace(".", "__"), v) for k, v in
-                                 val.items()])
-                    #_val = {k.replace(".", "__"): v for k, v in val.items()}
+                    _val = {k.replace(".", "__"): v for k, v in val.items()}
+                    # _val = {k.replace(".", "__"): v for k, v in val.items()}
                 else:
                     _val = val
             else:
@@ -96,7 +85,7 @@ def to_dict(_dict, onts, mdb_safe=False):
             for _val in [_eval(val, onts, mdb_safe)]
             if _val
         }
-        res["__class__"] = "%s&%s" % (_dict.namespace, _dict.tag)
+        res["__class__"] = f"{_dict.namespace}&{_dict.tag}"
     else:
         for key, val in _dict.items():
             _val = _eval(val, onts, mdb_safe)
@@ -109,6 +98,7 @@ def to_dict(_dict, onts, mdb_safe=False):
 
 # From Python dictionary to pysaml2 SAML2 metadata format
 
+
 def _kwa(val, onts, mdb_safe=False):
     """
     Key word argument conversion
@@ -119,13 +109,11 @@ def _kwa(val, onts, mdb_safe=False):
     :return: A converted dictionary
     """
     if not mdb_safe:
-        return dict([(k, from_dict(v, onts)) for k, v in val.items()
-                     if k not in EXP_SKIP])
+        return {k: from_dict(v, onts) for k, v in val.items() if k not in EXP_SKIP}
     else:
         _skip = ["_id"]
         _skip.extend(EXP_SKIP)
-        return dict([(k.replace("__", "."), from_dict(v, onts)) for k, v in
-                     val.items() if k not in _skip])
+        return {k.replace("__", "."): from_dict(v, onts) for k, v in val.items() if k not in _skip}
 
 
 def from_dict(val, onts, mdb_safe=False):
@@ -162,7 +150,7 @@ def from_dict(val, onts, mdb_safe=False):
                     key = key.replace("__", ".")
                 res[key] = from_dict(v, onts)
             return res
-    elif isinstance(val, six.string_types):
+    elif isinstance(val, str):
         return val
     elif isinstance(val, list):
         return [from_dict(v, onts) for v in val]

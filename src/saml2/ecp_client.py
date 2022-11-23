@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 
 """
@@ -7,27 +6,27 @@ Contains a class that can do SAML ECP Authentication for other python
 programs.
 """
 
-from six.moves import http_cookiejar as cookielib
+from http import cookiejar as cookielib
 import logging
 
-from saml2 import soap
+from saml2 import BINDING_SOAP
+from saml2 import SAMLError
 from saml2 import saml
 from saml2 import samlp
-from saml2 import SAMLError
-from saml2 import BINDING_SOAP
+from saml2 import soap
 from saml2.client_base import MIME_PAOS
 from saml2.config import Config
 from saml2.entity import Entity
-from saml2.httpbase import set_list2dict, dict2set_list
-
-from saml2.profile import paos
-from saml2.profile import ecp
-
+from saml2.httpbase import dict2set_list
+from saml2.httpbase import set_list2dict
 from saml2.mdstore import MetadataStore
+from saml2.profile import ecp
+from saml2.profile import paos
 from saml2.s_utils import BadRequest
 
+
 SERVICE = "urn:oasis:names:tc:SAML:2.0:profiles:SSO:ecp"
-PAOS_HEADER_INFO = 'ver="%s";"%s"' % (paos.NAMESPACE, SERVICE)
+PAOS_HEADER_INFO = f'ver="{paos.NAMESPACE}";"{SERVICE}"'
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +38,21 @@ class Client(Entity):
     ECP-aware SP and IdP.
     """
 
-    def __init__(self, user, passwd, sp="", idp=None, metadata_file=None,
-                 xmlsec_binary=None, verbose=0, ca_certs="",
-                 disable_ssl_certificate_validation=True, key_file=None,
-                 cert_file=None, config=None):
+    def __init__(
+        self,
+        user,
+        passwd,
+        sp="",
+        idp=None,
+        metadata_file=None,
+        xmlsec_binary=None,
+        verbose=0,
+        ca_certs="",
+        disable_ssl_certificate_validation=True,
+        key_file=None,
+        cert_file=None,
+        config=None,
+    ):
         """
         :param user: user name
         :param passwd: user password
@@ -63,8 +73,7 @@ class Client(Entity):
         """
         if not config:
             config = Config()
-            config.disable_ssl_certificate_validation = \
-                disable_ssl_certificate_validation
+            config.disable_ssl_certificate_validation = disable_ssl_certificate_validation
             config.key_file = key_file
             config.cert_file = cert_file
             config.ca_certs = ca_certs
@@ -78,8 +87,7 @@ class Client(Entity):
         self._verbose = verbose
 
         if metadata_file:
-            self._metadata = MetadataStore([saml, samlp], None, config,
-                                           http_client_timeout=config.http_client_timeout)
+            self._metadata = MetadataStore([saml, samlp], None, config, http_client_timeout=config.http_client_timeout)
             self._metadata.load("local", metadata_file)
             logger.debug("Loaded metadata from '%s'", metadata_file)
         else:
@@ -114,13 +122,9 @@ class Client(Entity):
         :return: The response from the IdP
         """
 
-        _, destination = self.pick_binding(
-            "single_sign_on_service", [BINDING_SOAP], "idpsso", entity_id=idp_entity_id
-        )
+        _, destination = self.pick_binding("single_sign_on_service", [BINDING_SOAP], "idpsso", entity_id=idp_entity_id)
 
-        ht_args = self.apply_binding(
-            BINDING_SOAP, authn_request, destination, sign=sign, sigalg=sign_alg
-        )
+        ht_args = self.apply_binding(BINDING_SOAP, authn_request, destination, sign=sign, sigalg=sign_alg)
 
         if headers:
             ht_args["headers"].extend(headers)
@@ -133,11 +137,7 @@ class Client(Entity):
         logger.debug("[P2] Got IdP response: %s", response)
 
         if response.status_code != 200:
-            raise SAMLError(
-                "Request to IdP failed ({status}): {text}".format(
-                    status=response.status_code, text=response.text
-                )
-            )
+            raise SAMLError(f"Request to IdP failed ({response.status_code}): {response.text}")
 
         # SAMLP response in a SOAP envelope body, ecp response in headers
         respdict = self.parse_soap_message(response.text)
@@ -166,8 +166,10 @@ class Client(Entity):
 
         _acs_url = _ecp_response.assertion_consumer_service_url
         if rc_url != _acs_url:
-            error = ("response_consumer_url '%s' does not match" % rc_url,
-                     "assertion_consumer_service_url '%s" % _acs_url)
+            error = (
+                f"response_consumer_url '{rc_url}' does not match",
+                f"assertion_consumer_service_url '{_acs_url}",
+            )
             # Send an error message to the SP
             _ = self.send(rc_url, "POST", data=soap.soap_fault(error))
             # Raise an exception so the user knows something went wrong
@@ -234,7 +236,7 @@ class Client(Entity):
         # **********************************
 
         ht_args = self.use_soap(idp_response, args["rc_url"], [args["relay_state"]])
-        ht_args["headers"][0] = ('Content-Type', MIME_PAOS)
+        ht_args["headers"][0] = ("Content-Type", MIME_PAOS)
         logger.debug("[P3] Post to SP: %s", ht_args["data"])
 
         # POST the package from the IdP to the SP
@@ -245,7 +247,7 @@ class Client(Entity):
             # url I started off with.
             pass
         else:
-            raise SAMLError("Error POSTing package to SP: %s" % response.text)
+            raise SAMLError(f"Error POSTing package to SP: {response.text}")
 
         logger.debug("[P3] SP response: %s", response.text)
 
@@ -260,17 +262,14 @@ class Client(Entity):
             headers = set_list2dict(headers)
             headers["PAOS"] = PAOS_HEADER_INFO
             if "Accept" in headers:
-                headers["Accept"] += ";%s" % MIME_PAOS
+                headers["Accept"] += f";{MIME_PAOS}"
             elif "accept" in headers:
                 headers["Accept"] = headers["accept"]
-                headers["Accept"] += ";%s" % MIME_PAOS
+                headers["Accept"] += f";{MIME_PAOS}"
                 del headers["accept"]
             headers = dict2set_list(headers)
         else:
-            headers = [
-                ('Accept', 'text/html; %s' % MIME_PAOS),
-                ('PAOS', PAOS_HEADER_INFO)
-            ]
+            headers = [("Accept", f"text/html; {MIME_PAOS}"), ("PAOS", PAOS_HEADER_INFO)]
 
         return headers
 
@@ -295,12 +294,11 @@ class Client(Entity):
 
         opargs["headers"] = self.add_paos_headers(opargs["headers"])
         response = self.send(sp_url, op, **opargs)
-        logger.debug("[Op] SP response: %s" % response)
+        logger.debug("[Op] SP response", extra={"response": response})
         print(response.text)
 
         if response.status_code != 200:
-            raise SAMLError(
-                "Request to SP failed: %s" % response.text)
+            raise SAMLError(f"Request to SP failed: {response.text}")
 
         # The response might be a AuthnRequest instance in a SOAP envelope
         # body. If so it's the start of the ECP conversation
@@ -320,8 +318,7 @@ class Client(Entity):
             raise
 
         if response.status_code >= 400:
-            raise SAMLError("Error performing operation: %s" % (
-                response.text,))
+            raise SAMLError(f"Error performing operation: {response.text}")
 
         return response
 
@@ -333,9 +330,7 @@ class Client(Entity):
         return self.operation(url, idp_entity_id, "GET", headers=headers)
 
     def post(self, url=None, data="", idp_entity_id=None, headers=None):
-        return self.operation(url, idp_entity_id, "POST", data=data,
-                              headers=headers)
+        return self.operation(url, idp_entity_id, "POST", data=data, headers=headers)
 
     def put(self, url=None, data="", idp_entity_id=None, headers=None):
-        return self.operation(url, idp_entity_id, "PUT", data=data,
-                              headers=headers)
+        return self.operation(url, idp_entity_id, "PUT", data=data, headers=headers)

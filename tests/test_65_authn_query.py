@@ -1,27 +1,27 @@
 from contextlib import closing
-from six.moves.urllib.parse import urlparse, parse_qs
-from saml2 import BINDING_SOAP, BINDING_HTTP_POST
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
 
-__author__ = 'rolandh'
+from saml2 import BINDING_HTTP_POST
+from saml2 import BINDING_SOAP
+
+
+__author__ = "rolandh"
 
 from saml2.authn_context import INTERNETPROTOCOLPASSWORD
 from saml2.authn_context import requested_authn_context
-from saml2.samlp import AuthnRequest
-from saml2.samlp import NameIDPolicy
-from saml2.samlp import AuthnQuery
 from saml2.client import Saml2Client
-from saml2.saml import Subject
-from saml2.saml import NameID
 from saml2.saml import NAMEID_FORMAT_TRANSIENT
+from saml2.saml import NameID
+from saml2.saml import Subject
+from saml2.samlp import AuthnQuery
 from saml2.server import Server
 
-TAG1 = "name=\"SAMLRequest\" value="
+
+TAG1 = 'name="SAMLRequest" value='
 
 
-AUTHN = {
-    "class_ref": INTERNETPROTOCOLPASSWORD,
-    "authn_auth": "http://www.example.com/login"
-}
+AUTHN = {"class_ref": INTERNETPROTOCOLPASSWORD, "authn_auth": "http://www.example.com/login"}
 
 
 def get_msg(hinfo, binding):
@@ -39,6 +39,7 @@ def get_msg(hinfo, binding):
 
     return xmlstr
 
+
 # ------------------------------------------------------------------------
 
 
@@ -50,8 +51,7 @@ def test_basic():
         destination = srvs[0]["location"]
         authn_context = requested_authn_context(INTERNETPROTOCOLPASSWORD)
 
-        subject = Subject(text="abc",
-                          name_id=NameID(format=NAMEID_FORMAT_TRANSIENT))
+        subject = Subject(text="abc", name_id=NameID(format=NAMEID_FORMAT_TRANSIENT))
 
         _id, aq = sp.create_authn_query(subject, destination, authn_context)
 
@@ -69,31 +69,32 @@ def test_flow():
         # == Create an AuthnRequest response
 
         name_id = idp.ident.transient_nameid(sp.config.entityid, "id12")
-        binding, destination = idp.pick_binding("assertion_consumer_service",
-                                                entity_id=sp.config.entityid)
-        resp = idp.create_authn_response({"eduPersonEntitlement": "Short stop",
-                                          "surName": "Jeter",
-                                          "givenName": "Derek",
-                                          "mail": "derek.jeter@nyy.mlb.com",
-                                          "title": "The man"},
-                                         "id-123456789",
-                                         destination,
-                                         sp.config.entityid,
-                                         name_id=name_id,
-                                         authn=AUTHN)
+        binding, destination = idp.pick_binding("assertion_consumer_service", entity_id=sp.config.entityid)
+        resp = idp.create_authn_response(
+            {
+                "eduPersonEntitlement": "Short stop",
+                "surName": "Jeter",
+                "givenName": "Derek",
+                "mail": "derek.jeter@nyy.mlb.com",
+                "title": "The man",
+            },
+            "id-123456789",
+            destination,
+            sp.config.entityid,
+            name_id=name_id,
+            authn=AUTHN,
+        )
 
-        hinfo = idp.apply_binding(binding, "%s" % resp, destination, relay_state)
+        hinfo = idp.apply_binding(binding, f"{resp}", destination, relay_state)
 
         # ------- @SP ----------
 
         xmlstr = get_msg(hinfo, binding)
         # Explicitly allow unsigned responses for this test
         sp.want_response_signed = False
-        aresp = sp.parse_authn_request_response(xmlstr, binding,
-                                                {resp.in_response_to: "/"})
+        aresp = sp.parse_authn_request_response(xmlstr, binding, {resp.in_response_to: "/"})
 
-        binding, destination = sp.pick_binding("authn_query_service",
-                                               entity_id=idp.config.entityid)
+        binding, destination = sp.pick_binding("authn_query_service", entity_id=idp.config.entityid)
 
         authn_context = requested_authn_context(INTERNETPROTOCOLPASSWORD)
 
@@ -106,7 +107,7 @@ def test_flow():
         assert isinstance(aq, AuthnQuery)
         binding = BINDING_SOAP
 
-        hinfo = sp.apply_binding(binding, "%s" % aq, destination, "state2")
+        hinfo = sp.apply_binding(binding, f"{aq}", destination, "state2")
 
         # -------- @IDP ----------
 
@@ -117,13 +118,11 @@ def test_flow():
         msg = pm.message
         assert msg.id == aq.id
 
-        p_res = idp.create_authn_query_response(msg.subject, msg.session_index,
-                                                msg.requested_authn_context)
+        p_res = idp.create_authn_query_response(msg.subject, msg.session_index, msg.requested_authn_context)
 
         print(p_res)
 
-        hinfo = idp.apply_binding(binding, "%s" % p_res, "", "state2",
-                                  response=True)
+        hinfo = idp.apply_binding(binding, f"{p_res}", "", "state2", response=True)
 
         # ------- @SP ----------
 
@@ -134,6 +133,7 @@ def test_flow():
         print(final)
 
         assert final.response.id == p_res.id
+
 
 if __name__ == "__main__":
     test_flow()
