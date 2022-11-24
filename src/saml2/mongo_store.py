@@ -270,7 +270,6 @@ def _mdb_get_database(uri, **kwargs):
         kwargs["tz_aware"] = True
 
     connection_factory = MongoClient
-    _parsed_uri = {}
 
     try:
         _parsed_uri = pymongo.uri_parser.parse_uri(uri)
@@ -283,9 +282,6 @@ def _mdb_get_database(uri, **kwargs):
         _conn = connection_factory(uri, **kwargs)
 
     _db = _conn[db_name]
-
-    if "username" in _parsed_uri:
-        _db.authenticate(_parsed_uri.get("username", None), _parsed_uri.get("password", None))
 
     return _db
 
