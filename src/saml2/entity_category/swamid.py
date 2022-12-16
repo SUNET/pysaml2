@@ -65,8 +65,8 @@ REFEDS_PERSONALIZED_ACCESS = [
     "displayName",
     "givenName",
     "sn",
-    "eduPersonAssurance",
     "eduPersonScopedAffiliation",
+    "eduPersonAssurance",
     "schacHomeOrganization",
 ]
 
