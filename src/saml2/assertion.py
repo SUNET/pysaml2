@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 import copy
+from dataclasses import dataclass
 import importlib
 import logging
 import re
+from typing import Any, Dict, List, NewType, Optional, Tuple, Type, Union
 from warnings import warn as _warn
 
 from saml2 import saml
 from saml2 import xmlenc
-from saml2.attribute_converter import ac_factory
+from saml2.attribute_converter import AttributeConverter, ac_factory
 from saml2.attribute_converter import from_local
 from saml2.attribute_converter import get_local_name
+from saml2.mdstore import MetadataStore
 from saml2.s_utils import MissingValue
 from saml2.s_utils import assertion_factory
 from saml2.s_utils import factory
@@ -279,20 +282,7 @@ def compile(restrictions):
         spec = spec or {}
 
         entity_categories = spec.get("entity_categories", [])
-        ecs = []
-        for cat in entity_categories:
-            try:
-                _mod = importlib.import_module(cat)
-            except ImportError:
-                _mod = importlib.import_module(f"saml2.entity_category.{cat}")
-
-            _ec = {}
-            for key, items in _mod.RELEASE.items():
-                alist = [k.lower() for k in items]
-                _only_required = getattr(_mod, "ONLY_REQUIRED", {}).get(key, False)
-                _no_aggregation = getattr(_mod, "NO_AGGREGATION", {}).get(key, False)
-                _ec[key] = (alist, _only_required, _no_aggregation)
-            ecs.append(_ec)
+        ecs = EntityCategoryPolicy.from_module_names(entity_categories)
         spec["entity_categories"] = ecs or None
 
         attribute_restrictions = spec.get("attribute_restrictions") or {}
@@ -304,6 +294,110 @@ def compile(restrictions):
         spec["attribute_restrictions"] = _attribute_restrictions or None
 
     return restrictions
+
+
+ReleaseKey = Union[str, Tuple[str, str]]
+
+
+@dataclass
+class EntityCategoryRule:
+    attributes: List[str]
+    only_required: bool
+    no_aggregation: bool
+
+
+ModuleRelease = Dict[ReleaseKey, EntityCategoryRule]
+
+# Required attributes are specified as dicts, e.g.:
+#
+#   {
+#       "friendly_name": "eduPersonScopedAffiliation",
+#       "name": "1.3.6.1.4.1.5923.1.1.1.9",
+#       "name_format": NAME_FORMAT_URI,
+#       "is_required": "true",
+#   }
+RequiredAttribute = Dict[str, str]
+
+AttributesToRelease = Dict[str, None]
+
+
+class EntityCategoryPolicy:
+    def __init__(self, entity_categories: List[ModuleRelease]):
+        self.entity_categories = entity_categories
+
+    @classmethod
+    def from_module_names(cls: Type["EntityCategoryPolicy"], entity_categories: List[str]) -> "EntityCategoryPolicy":
+        ecs: List[ModuleRelease] = []
+        for cat in entity_categories:
+            try:
+                _mod = importlib.import_module(cat)
+            except ImportError:
+                _mod = importlib.import_module(f"saml2.entity_category.{cat}")
+
+            _ec: ModuleRelease = {}
+            for key, items in _mod.RELEASE.items():
+                alist = [k.lower() for k in items]
+                _only_required = getattr(_mod, "ONLY_REQUIRED", {}).get(key, False)
+                _no_aggregation = getattr(_mod, "NO_AGGREGATION", {}).get(key, False)
+                _ec[key] = EntityCategoryRule(
+                    attributes=alist, only_required=_only_required, no_aggregation=_no_aggregation
+                )
+            ecs.append(_ec)
+        return cls(entity_categories=ecs)
+
+    def post_entity_categories(
+        self,
+        self_acs: List[AttributeConverter],
+        sp_entity_id: Optional[str] = None,
+        mds: Optional[MetadataStore] = None,  # TODO: Possibly a 'MetaData' instance (parent of MetadataStore)
+        required: Optional[List[RequiredAttribute]] = None,
+    ) -> AttributesToRelease:
+        restrictions: AttributesToRelease = {}
+
+        required_friendly_names: List[str] = []
+        if required is not None:
+            for d in required:
+                # The dicts in 'required' can have a 'friendly_name', or a 'name' and a 'name_format'.
+                # See the documentation of the RequiredAttribute type.
+                _friendly_name = d.get("friendly_name")
+                if not _friendly_name:
+                    _friendly_name = get_local_name(acs=self_acs, attr=d["name"], name_format=d["name_format"])  # type: ignore
+                    assert isinstance(_friendly_name, str)
+                required_friendly_names.append(_friendly_name)
+        new_required = [friendly_name.lower() for friendly_name in required_friendly_names]
+
+        if mds:
+            ecs: List[str] = mds.entity_categories(sp_entity_id)  # type: ignore
+            for ec_map in self.entity_categories:
+                for key, rule in ec_map.items():
+                    if key == "":  # always released
+                        attrs = rule.attributes
+                    elif isinstance(key, tuple):
+                        if rule.only_required:
+                            attrs = [a for a in rule.attributes if a in new_required]
+                        else:
+                            attrs = rule.attributes
+                        for _key in key:
+                            if _key not in ecs:
+                                attrs = []
+                                break
+                    elif key in ecs:
+                        if rule.only_required:
+                            attrs = [a for a in rule.attributes if a in new_required]
+                        else:
+                            attrs = rule.attributes
+                    else:
+                        attrs = []
+
+                    if attrs and rule.no_aggregation:
+                        # clear restrictions if the found category is a no aggregation category
+                        restrictions = {}
+                    for attr in attrs:
+                        restrictions[attr] = None
+                    else:
+                        restrictions[""] = None
+
+        return restrictions
 
 
 class Policy:
@@ -407,7 +501,9 @@ class Policy:
 
         return self.get("sign", sp_entity_id, default=[])
 
-    def get_entity_categories(self, sp_entity_id, mds=None, required=None):
+    def get_entity_categories(
+        self, sp_entity_id: str, mds: Optional[MetadataStore] = None, required: Optional[List[RequiredAttribute]] = None
+    ) -> AttributesToRelease:
         """
 
         :param sp_entity_id:
@@ -424,59 +520,18 @@ class Policy:
             logger.warning(warn_msg)
             _warn(warn_msg, DeprecationWarning)
 
-        def post_entity_categories(maps, sp_entity_id=None, mds=None, required=None):
-            restrictions = {}
-            required_friendly_names = [
-                d.get("friendly_name") or get_local_name(acs=self.acs, attr=d["name"], name_format=d["name_format"])
-                for d in (required or [])
-            ]
-            required = [friendly_name.lower() for friendly_name in required_friendly_names]
-
-            if mds:
-                ecs = mds.entity_categories(sp_entity_id)
-                for ec_map in maps:
-                    for key, (atlist, only_required, no_aggregation) in ec_map.items():
-                        if key == "":  # always released
-                            attrs = atlist
-                        elif isinstance(key, tuple):
-                            if only_required:
-                                attrs = [a for a in atlist if a in required]
-                            else:
-                                attrs = atlist
-                            for _key in key:
-                                if _key not in ecs:
-                                    attrs = []
-                                    break
-                        elif key in ecs:
-                            if only_required:
-                                attrs = [a for a in atlist if a in required]
-                            else:
-                                attrs = atlist
-                        else:
-                            attrs = []
-
-                        if attrs and no_aggregation:
-                            # clear restrictions if the found category is a no aggregation category
-                            restrictions = {}
-                        for attr in attrs:
-                            restrictions[attr] = None
-                        else:
-                            restrictions[""] = None
-
-            return restrictions
-
-        sentinel = object()
-        result1 = self.get("entity_categories", sp_entity_id, default=sentinel)
-        if result1 is sentinel:
+        result1: Optional[EntityCategoryPolicy] = self.get("entity_categories", sp_entity_id)  # type: ignore
+        if result1 is None:
             return {}
 
-        result2 = post_entity_categories(
-            result1,
+        assert isinstance(result1, EntityCategoryPolicy)
+
+        return result1.post_entity_categories(
+            self_acs=self.acs,
             sp_entity_id=sp_entity_id,
             mds=(mds or self.metadata_store),
             required=required,
         )
-        return result2
 
     def not_on_or_after(self, sp_entity_id):
         """When the assertion stops being valid, should not be
