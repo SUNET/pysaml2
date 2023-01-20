@@ -301,6 +301,7 @@ ReleaseKey = Union[str, Tuple[str, str]]
 
 @dataclass
 class EntityCategoryRule:
+    release_key: ReleaseKey
     attributes: List[str]
     only_required: bool
     no_aggregation: bool
@@ -318,12 +319,12 @@ ModuleRelease = Dict[ReleaseKey, EntityCategoryRule]
 #   }
 RequiredAttribute = Dict[str, str]
 
-AttributesToRelease = Dict[str, None]
+AttributeRestrictions = Dict[str, None]
 
 
 class EntityCategoryPolicy:
-    def __init__(self, entity_categories: List[ModuleRelease]):
-        self.entity_categories = entity_categories
+    def __init__(self, entity_category_rulesets: List[ModuleRelease]):
+        self.entity_category_rulesets = entity_category_rulesets
 
     @classmethod
     def from_module_names(cls: Type["EntityCategoryPolicy"], entity_categories: List[str]) -> "EntityCategoryPolicy":
@@ -340,19 +341,19 @@ class EntityCategoryPolicy:
                 _only_required = getattr(_mod, "ONLY_REQUIRED", {}).get(key, False)
                 _no_aggregation = getattr(_mod, "NO_AGGREGATION", {}).get(key, False)
                 _ec[key] = EntityCategoryRule(
-                    attributes=alist, only_required=_only_required, no_aggregation=_no_aggregation
+                    release_key=key, attributes=alist, only_required=_only_required, no_aggregation=_no_aggregation
                 )
             ecs.append(_ec)
-        return cls(entity_categories=ecs)
+        return cls(entity_category_rulesets=ecs)
 
-    def post_entity_categories(
+    def attribute_restrictions_for_sp(
         self,
-        self_acs: List[AttributeConverter],
+        acs: List[AttributeConverter],
         sp_entity_id: Optional[str] = None,
         mds: Optional[MetadataStore] = None,  # TODO: Possibly a 'MetaData' instance (parent of MetadataStore)
         required: Optional[List[RequiredAttribute]] = None,
-    ) -> AttributesToRelease:
-        restrictions: AttributesToRelease = {}
+    ) -> AttributeRestrictions:
+        restrictions: AttributeRestrictions = {}
 
         required_friendly_names: List[str] = []
         if required is not None:
@@ -361,41 +362,51 @@ class EntityCategoryPolicy:
                 # See the documentation of the RequiredAttribute type.
                 _friendly_name = d.get("friendly_name")
                 if not _friendly_name:
-                    _friendly_name = get_local_name(acs=self_acs, attr=d["name"], name_format=d["name_format"])  # type: ignore
-                    assert isinstance(_friendly_name, str)
-                required_friendly_names.append(_friendly_name)
-        new_required = [friendly_name.lower() for friendly_name in required_friendly_names]
+                    _friendly_name = get_local_name(acs=acs, attr=d["name"], name_format=d["name_format"])  # type: ignore
+                assert isinstance(_friendly_name, str)
+                required_friendly_names.append(_friendly_name.lower())
 
-        if mds:
-            ecs: List[str] = mds.entity_categories(sp_entity_id)  # type: ignore
-            for ec_map in self.entity_categories:
-                for key, rule in ec_map.items():
-                    if key == "":  # always released
+        if not mds:
+            return restrictions
+
+        sp_ecs: List[str] = mds.entity_categories(sp_entity_id)  # type: ignore
+        effective_ecs: List[str] = []
+        for ec_ruleset in self.entity_category_rulesets:
+            for release_key, rule in ec_ruleset.items():
+                if isinstance(release_key, tuple):
+                    if all(ec_uri in sp_ecs for ec_uri in release_key):
+                        effective_ecs.append(rule)
+                elif release_key in sp_ecs:
+                    effective_ecs.append(rule)
+
+        for ec_ruleset in self.entity_category_rulesets:
+            for release_key, rule in ec_ruleset.items():
+                if release_key == "":  # always released
+                    attrs = rule.attributes
+                elif isinstance(release_key, tuple):
+                    if rule.only_required:
+                        attrs = [a for a in rule.attributes if a in required_friendly_names]
+                    else:
                         attrs = rule.attributes
-                    elif isinstance(key, tuple):
-                        if rule.only_required:
-                            attrs = [a for a in rule.attributes if a in new_required]
-                        else:
-                            attrs = rule.attributes
-                        for _key in key:
-                            if _key not in ecs:
-                                attrs = []
-                                break
-                    elif key in ecs:
-                        if rule.only_required:
-                            attrs = [a for a in rule.attributes if a in new_required]
-                        else:
-                            attrs = rule.attributes
+                    for _key in release_key:
+                        if _key not in sp_ecs:
+                            attrs = []
+                            break
+                elif release_key in sp_ecs:
+                    if rule.only_required:
+                        attrs = [a for a in rule.attributes if a in required_friendly_names]
                     else:
-                        attrs = []
+                        attrs = rule.attributes
+                else:
+                    attrs = []
 
-                    if attrs and rule.no_aggregation:
-                        # clear restrictions if the found category is a no aggregation category
-                        restrictions = {}
-                    for attr in attrs:
-                        restrictions[attr] = None
-                    else:
-                        restrictions[""] = None
+                if attrs and rule.no_aggregation:
+                    # clear restrictions if the found category is a no aggregation category
+                    restrictions = {}
+                for attr in attrs:
+                    restrictions[attr] = None
+                else:
+                    restrictions[""] = None
 
         return restrictions
 
@@ -503,7 +514,7 @@ class Policy:
 
     def get_entity_categories(
         self, sp_entity_id: str, mds: Optional[MetadataStore] = None, required: Optional[List[RequiredAttribute]] = None
-    ) -> AttributesToRelease:
+    ) -> AttributeRestrictions:
         """
 
         :param sp_entity_id:
@@ -526,8 +537,8 @@ class Policy:
 
         assert isinstance(result1, EntityCategoryPolicy)
 
-        return result1.post_entity_categories(
-            self_acs=self.acs,
+        return result1.attribute_restrictions_for_sp(
+            acs=self.acs,
             sp_entity_id=sp_entity_id,
             mds=(mds or self.metadata_store),
             required=required,
