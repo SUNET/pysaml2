@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+from __future__ import annotations
+
 import copy
 from dataclasses import dataclass
 import importlib
 import logging
 import re
-from typing import Any, Dict, List, NewType, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Type, TypeVar, TypedDict, Union
 from warnings import warn as _warn
 
 from saml2 import saml
@@ -20,45 +22,35 @@ from saml2.s_utils import sid
 from saml2.saml import NAME_FORMAT_URI
 from saml2.time_util import in_a_while
 from saml2.time_util import instant
+from saml2.typing import AttributeAsDict, AttributeValues
 
 
 logger = logging.getLogger(__name__)
 
 
-def _filter_values(vals, vlist=None, must=False):
-    """Removes values from *vals* that does not appear in vlist
+VT = TypeVar("VT")
+
+
+def _filter_values(values: list[VT], allowed_values: list[VT], must: bool = False) -> list[VT]:
+    """Removes values from *values* that does not appear in allowed_values.
 
     :param vals: The values that are to be filtered
-    :param vlist: required or optional value
+    :param allowed_values: required or optional value
     :param must: Whether the allowed values must appear
     :return: The set of values after filtering
     """
 
-    if not vlist:  # No value specified equals any value
-        return vals
+    if not allowed_values:  # No value specified equals any value
+        return values
 
-    if vals is None:  # cannot iterate over None, return early
-        return vals
+    res: list[VT] = [x for x in values if x in allowed_values]
 
-    if isinstance(vlist, str):
-        vlist = [vlist]
-
-    res = []
-
-    for val in vlist:
-        if val in vals:
-            res.append(val)
-
-    if must:
-        if res:
-            return res
-        else:
-            raise MissingValue("Required attribute value missing")
-    else:
-        return res
+    if must and not res:
+        raise MissingValue("Required attribute value missing")
+    return res
 
 
-def _match(attr, ava):
+def _match(attr: str, ava: AttributeValues) -> Optional[str]:
     if attr in ava:
         return attr
 
@@ -73,7 +65,16 @@ def _match(attr, ava):
     return None
 
 
-def filter_on_attributes(ava, required=None, optional=None, acs=None, fail_on_unfulfilled_requirements=True):
+AttributesAsDicts = list[AttributeAsDict]
+
+
+def filter_on_attributes(
+    ava: AttributeValues,
+    required: Optional[AttributesAsDicts] = None,
+    optional: Optional[AttributesAsDicts] = None,
+    acs=None,
+    fail_on_unfulfilled_requirements: bool = True,
+):
     """Filter
 
     :param ava: An attribute value assertion as a dictionary
@@ -86,7 +87,19 @@ def filter_on_attributes(ava, required=None, optional=None, acs=None, fail_on_un
     :return: The modified attribute value assertion
     """
 
-    def _match_attr_name(attr, ava):
+    def _filter_value_or_values(
+        val: Union[list[str], str], allowed_values: list[str], must: bool = False
+    ) -> Union[str, list[str]]:
+        """Convert single value to list of values before calling _filter_values."""
+        values: list[str]
+        if isinstance(val, str):
+            values = [val]
+        else:
+            values = val
+        res = _filter_values(values, allowed_values, must)
+        return res
+
+    def _match_attr_name(attr: AttributeAsDict, ava: AttributeValues) -> Optional[str]:
         name = attr["name"].lower()
         name_format = attr.get("name_format")
         friendly_name = attr.get("friendly_name")
@@ -98,19 +111,23 @@ def filter_on_attributes(ava, required=None, optional=None, acs=None, fail_on_un
         )
         return _fn
 
-    def _apply_attr_value_restrictions(attr, res, must=False):
-        values = [av["text"] for av in attr.get("attribute_value", [])]
+    def _apply_attr_value_restrictions(
+        friendly_name: str, attr: AttributeAsDict, res: dict[str, list[Any]], must: bool = False
+    ):
+        _av_list = attr.get("attribute_value", [])
+        assert _av_list is not None  # please mypy, the get() above defaults to empty list
+        allowed_values = [av["text"] for av in _av_list]
 
-        try:
-            res[_fn].extend(_filter_values(ava[_fn], values))
-        except KeyError:
-            # ignore duplicate RequestedAttribute entries
-            val = _filter_values(ava[_fn], values)
-            res[_fn] = val if val is not None else []
+        _values = _filter_value_or_values(ava[friendly_name], allowed_values, must)
+        if not _values:
+            return  # nothing to add
 
-        return _filter_values(ava[_fn], values, must)
+        if friendly_name not in res:
+            res[friendly_name] = []
 
-    res = {}
+        res[friendly_name].extend(_values)
+
+    res: dict[str, list[Any]] = {}
     if required is None:
         required = []
 
@@ -118,7 +135,7 @@ def filter_on_attributes(ava, required=None, optional=None, acs=None, fail_on_un
         _fn = _match_attr_name(attr, ava)
 
         if _fn:
-            _apply_attr_value_restrictions(attr, res, True)
+            _apply_attr_value_restrictions(_fn, attr, res, True)
         elif fail_on_unfulfilled_requirements:
             desc = f"Required attribute missing: '{attr['name']}'"
             raise MissingValue(desc)
@@ -129,7 +146,14 @@ def filter_on_attributes(ava, required=None, optional=None, acs=None, fail_on_un
     for attr in optional:
         _fn = _match_attr_name(attr, ava)
         if _fn:
-            _apply_attr_value_restrictions(attr, res, False)
+            _apply_attr_value_restrictions(_fn, attr, res, False)
+
+    # TODO: Kludge to turn lists-of-strings back into strings if the data was given
+    #       as a string in `ava`. This is needed to make the tests pass, but maybe it
+    #       would be preferable to declare ava to only have lists of strings?
+    for this in res.keys():
+        if isinstance(ava[this], str):
+            res[this] = res[this][0]
 
     return res
 
@@ -216,7 +240,15 @@ def filter_on_wire_representation(ava, acs, required=None, optional=None):
     return res
 
 
-def filter_attribute_value_assertions(ava, attribute_restrictions=None):
+# The regexps are an optional "allow-list" for values. If regexps are provided, one of them has to
+# match a value for it to be released.
+AllowedAttributeValue = re.Pattern[str]
+AttributeRestrictions = dict[str, Optional[list[AllowedAttributeValue]]]
+
+
+def filter_attribute_value_assertions(
+    ava: AttributeValues, attribute_restrictions: Optional[AttributeRestrictions] = None
+) -> AttributeValues:
     """Will weed out attribute values and values according to the
     rules defined in the attribute restrictions. If filtering results in
     an attribute without values, then the attribute is removed from the
@@ -228,6 +260,7 @@ def filter_attribute_value_assertions(ava, attribute_restrictions=None):
     :return: The modified attribute value assertion
     """
     if not attribute_restrictions:
+        # If there are no restrictions, release everything we have
         return ava
 
     for attr, vals in list(ava.items()):
@@ -241,7 +274,7 @@ def filter_attribute_value_assertions(ava, attribute_restrictions=None):
                 continue
             if isinstance(vals, str):
                 vals = [vals]
-            rvals = []
+            rvals: list[str] = []
             for restr in _rests:
                 for val in vals:
                     if restr.match(val):
@@ -267,8 +300,27 @@ def restriction_from_attribute_spec(attributes):
     return restr
 
 
-def compile(restrictions):
-    """This is only for IdPs or AAs, and it's about limiting what
+PolicyConfigKey = Union[str, Literal["default"]]
+
+
+class PolicyConfigValue(TypedDict):
+    lifetime: Optional[Any]
+    attribute_restrictions: Optional[AttributeRestrictions]
+    name_form: Optional[str]
+    nameid_format: Optional[str]
+    entity_categories: EntityCategoryPolicy
+    sign: Optional[Union[Literal["response"], Literal["assertion"], Literal["on_demand"]]]
+    fail_on_missing_requested: Optional[bool]
+
+
+PolicyConfig = Dict[PolicyConfigKey, PolicyConfigValue]
+
+
+def compile(restrictions: Mapping[str, Any]) -> PolicyConfig:
+    """
+    Pre-compile regular expressions in rules in `restrictions'.
+
+    This is only for IdPs or AAs, and it's about limiting what
     is returned to the SP.
     In the configuration file, restrictions on which values that
     can be returned are specified with the help of regular expressions.
@@ -278,22 +330,45 @@ def compile(restrictions):
     :return: The assertion with the string specification replaced with
         a compiled regular expression.
     """
+    config: PolicyConfig = {}
     for who, spec in restrictions.items():
-        spec = spec or {}
+        if spec is None:
+            spec = {}
 
-        entity_categories = spec.get("entity_categories", [])
-        ecs = EntityCategoryPolicy.from_module_names(entity_categories)
-        spec["entity_categories"] = ecs or None
+        entity_categories: list[str] = spec.get("entity_categories", [])
+        _new_entity_categories = EntityCategoryPolicy.from_module_names(entity_categories)
 
-        attribute_restrictions = spec.get("attribute_restrictions") or {}
-        _attribute_restrictions = {}
+        attribute_restrictions: Mapping[str, list[str]] = spec.get("attribute_restrictions") or {}
+        _attribute_restrictions: AttributeRestrictions = {}
         for key, values in attribute_restrictions.items():
             lkey = key.lower()
             values = [] if not values else values
             _attribute_restrictions[lkey] = [re.compile(value) for value in values] or None
-        spec["attribute_restrictions"] = _attribute_restrictions or None
+        _new_attribute_restrictions = _attribute_restrictions or None
 
-    return restrictions
+        config[who] = PolicyConfigValue(
+            lifetime=spec.get("lifetime"),
+            attribute_restrictions=_new_attribute_restrictions,
+            name_form=spec.get("name_form"),
+            nameid_format=spec.get("nameid_format"),
+            entity_categories=_new_entity_categories,
+            sign=spec.get("sign"),
+            fail_on_missing_requested=spec.get("fail_on_missing_requested"),
+        )
+
+    return config
+
+
+@dataclass
+class EntityCategoryMatcher:
+    ecs: List[str]
+
+    def matches(self, sp_ecs: List[str]) -> bool:
+        """Return True if all our entity categories is present in the list of SP entity categories"""
+        if self.ecs == [""]:
+            # A rule with this matching criteria results in attributes always being released
+            return True
+        return all([x in sp_ecs for x in self.ecs])
 
 
 ReleaseKey = Union[str, Tuple[str, str]]
@@ -301,25 +376,17 @@ ReleaseKey = Union[str, Tuple[str, str]]
 
 @dataclass
 class EntityCategoryRule:
-    release_key: ReleaseKey
+    matcher: EntityCategoryMatcher
     attributes: List[str]
     only_required: bool
     no_aggregation: bool
 
+    # def matches_sp(entity_id: str) -> bool:
+    #     ecs = ecs_filter(metadatalookup(entity_id))
+    #     if a in self.
 
-ModuleRelease = Dict[ReleaseKey, EntityCategoryRule]
 
-# Required attributes are specified as dicts, e.g.:
-#
-#   {
-#       "friendly_name": "eduPersonScopedAffiliation",
-#       "name": "1.3.6.1.4.1.5923.1.1.1.9",
-#       "name_format": NAME_FORMAT_URI,
-#       "is_required": "true",
-#   }
-RequiredAttribute = Dict[str, str]
-
-AttributeRestrictions = Dict[str, None]
+ModuleRelease = list[EntityCategoryRule]
 
 
 class EntityCategoryPolicy:
@@ -335,13 +402,27 @@ class EntityCategoryPolicy:
             except ImportError:
                 _mod = importlib.import_module(f"saml2.entity_category.{cat}")
 
-            _ec: ModuleRelease = {}
+            _ec: ModuleRelease = []
             for key, items in _mod.RELEASE.items():
                 alist = [k.lower() for k in items]
                 _only_required = getattr(_mod, "ONLY_REQUIRED", {}).get(key, False)
                 _no_aggregation = getattr(_mod, "NO_AGGREGATION", {}).get(key, False)
-                _ec[key] = EntityCategoryRule(
-                    release_key=key, attributes=alist, only_required=_only_required, no_aggregation=_no_aggregation
+
+                # Convert tuples to a list of strings, and a single string to a list of one string
+                _key_as_list: List[str]
+                if isinstance(key, str):
+                    _key_as_list = [key]
+                else:
+                    _key_as_list = list(key)
+                _matcher = EntityCategoryMatcher(_key_as_list)
+
+                _ec.append(
+                    EntityCategoryRule(
+                        matcher=_matcher,
+                        attributes=alist,
+                        only_required=_only_required,
+                        no_aggregation=_no_aggregation,
+                    )
                 )
             ecs.append(_ec)
         return cls(entity_category_rulesets=ecs)
@@ -351,7 +432,7 @@ class EntityCategoryPolicy:
         acs: List[AttributeConverter],
         sp_entity_id: Optional[str] = None,
         mds: Optional[MetadataStore] = None,  # TODO: Possibly a 'MetaData' instance (parent of MetadataStore)
-        required: Optional[List[RequiredAttribute]] = None,
+        required: Optional[List[AttributeAsDict]] = None,
     ) -> AttributeRestrictions:
         restrictions: AttributeRestrictions = {}
 
@@ -360,53 +441,30 @@ class EntityCategoryPolicy:
             for d in required:
                 # The dicts in 'required' can have a 'friendly_name', or a 'name' and a 'name_format'.
                 # See the documentation of the RequiredAttribute type.
-                _friendly_name = d.get("friendly_name")
+                _friendly_name: Optional[str] = d.get("friendly_name")
                 if not _friendly_name:
-                    _friendly_name = get_local_name(acs=acs, attr=d["name"], name_format=d["name_format"])  # type: ignore
+                    _friendly_name = get_local_name(acs=acs, attr=d["name"], name_format=d["name_format"])
                 assert isinstance(_friendly_name, str)
                 required_friendly_names.append(_friendly_name.lower())
 
         if not mds:
             return restrictions
 
-        sp_ecs: List[str] = mds.entity_categories(sp_entity_id)  # type: ignore
-        effective_ecs: List[str] = []
-        for ec_ruleset in self.entity_category_rulesets:
-            for release_key, rule in ec_ruleset.items():
-                if isinstance(release_key, tuple):
-                    if all(ec_uri in sp_ecs for ec_uri in release_key):
-                        effective_ecs.append(rule)
-                elif release_key in sp_ecs:
-                    effective_ecs.append(rule)
+        sp_ecs: List[str] = mds.entity_categories(sp_entity_id)
 
         for ec_ruleset in self.entity_category_rulesets:
-            for release_key, rule in ec_ruleset.items():
-                if release_key == "":  # always released
-                    attrs = rule.attributes
-                elif isinstance(release_key, tuple):
-                    if rule.only_required:
-                        attrs = [a for a in rule.attributes if a in required_friendly_names]
+            for this_rule in ec_ruleset:
+                if this_rule.matcher.matches(sp_ecs):
+                    if this_rule.only_required:
+                        attrs = [a for a in this_rule.attributes if a in required_friendly_names]
                     else:
-                        attrs = rule.attributes
-                    for _key in release_key:
-                        if _key not in sp_ecs:
-                            attrs = []
-                            break
-                elif release_key in sp_ecs:
-                    if rule.only_required:
-                        attrs = [a for a in rule.attributes if a in required_friendly_names]
-                    else:
-                        attrs = rule.attributes
-                else:
-                    attrs = []
+                        attrs = this_rule.attributes
 
-                if attrs and rule.no_aggregation:
-                    # clear restrictions if the found category is a no aggregation category
-                    restrictions = {}
-                for attr in attrs:
-                    restrictions[attr] = None
-                else:
-                    restrictions[""] = None
+                    for attr in attrs:
+                        restrictions[attr] = None
+
+        if not restrictions:
+            restrictions[""] = None
 
         return restrictions
 
@@ -414,13 +472,13 @@ class EntityCategoryPolicy:
 class Policy:
     """Handles restrictions on assertions."""
 
-    def __init__(self, restrictions=None, mds=None):
+    def __init__(self, restrictions: Optional[Mapping[str, Any]] = None, mds: Optional[MetadataStore] = None):
         self.metadata_store = mds
         self._restrictions = self.setup_restrictions(restrictions)
         logger.debug("policy restrictions: %s", self._restrictions)
-        self.acs = []
+        self.acs: list[AttributeConverter] = []
 
-    def setup_restrictions(self, restrictions=None):
+    def setup_restrictions(self, restrictions: Optional[Mapping[str, Any]] = None) -> Optional[PolicyConfig]:
         if restrictions is None:
             return None
 
@@ -428,7 +486,7 @@ class Policy:
         restrictions = compile(restrictions)
         return restrictions
 
-    def get(self, attribute, sp_entity_id, default=None):
+    def get(self, attribute: str, sp_entity_id: str, default: Any = None) -> Any:
         """
 
         :param attribute:
@@ -437,36 +495,40 @@ class Policy:
         :return:
         """
         if not self._restrictions:
+            # TODO: Shouldn't we be checking for ra_info here before returning default?
             return default
 
-        ra_info = self.metadata_store.registration_info(sp_entity_id) or {} if self.metadata_store is not None else {}
-        ra_entity_id = ra_info.get("registration_authority")
+        ra_info: Mapping[str, Any] = {}
+        if self.metadata_store is not None:
+            ra_info = self.metadata_store.registration_info(sp_entity_id) or {}
+        ra_entity_id: str = ra_info.get("registration_authority")  # type: ignore[assignment]
 
         sp_restrictions = self._restrictions.get(sp_entity_id)
         ra_restrictions = self._restrictions.get(ra_entity_id)
         default_restrictions = self._restrictions.get("default") or self._restrictions.get("")
-        restrictions = (
+        restrictions: Mapping[str, Any] = (
             sp_restrictions
             if sp_restrictions is not None
             else ra_restrictions
             if ra_restrictions is not None
             else default_restrictions
             if default_restrictions is not None
-            else {}
+            else {}  # type: ignore[typeddict-item]
         )
 
         attribute_restriction = restrictions.get(attribute)
-        restriction = attribute_restriction if attribute_restriction is not None else default
-        return restriction
+        if attribute_restriction is None:
+            return default
+        return attribute_restriction
 
-    def get_nameid_format(self, sp_entity_id):
+    def get_nameid_format(self, sp_entity_id: str):
         """Get the NameIDFormat to used for the entity id
         :param: The SP entity ID
         :retur: The format
         """
         return self.get("nameid_format", sp_entity_id, saml.NAMEID_FORMAT_TRANSIENT)
 
-    def get_name_form(self, sp_entity_id):
+    def get_name_form(self, sp_entity_id: str):
         """Get the NameFormat to used for the entity id
         :param: The SP entity ID
         :retur: The format
@@ -474,7 +536,7 @@ class Policy:
 
         return self.get("name_form", sp_entity_id, default=NAME_FORMAT_URI)
 
-    def get_lifetime(self, sp_entity_id):
+    def get_lifetime(self, sp_entity_id: str):
         """The lifetime of the assertion
         :param sp_entity_id: The SP entity ID
         :param: lifetime as a dictionary
@@ -482,7 +544,7 @@ class Policy:
         # default is a hour
         return self.get("lifetime", sp_entity_id, {"hours": 1})
 
-    def get_attribute_restrictions(self, sp_entity_id):
+    def get_attribute_restrictions(self, sp_entity_id: str) -> Optional[AttributeRestrictions]:
         """Return the attribute restriction for SP that want the information
 
         :param sp_entity_id: The SP entity ID
@@ -491,7 +553,7 @@ class Policy:
 
         return self.get("attribute_restrictions", sp_entity_id)
 
-    def get_fail_on_missing_requested(self, sp_entity_id):
+    def get_fail_on_missing_requested(self, sp_entity_id: str):
         """Return the whether the IdP should should fail if the SPs
         requested attributes could not be found.
 
@@ -501,7 +563,7 @@ class Policy:
 
         return self.get("fail_on_missing_requested", sp_entity_id, default=True)
 
-    def get_sign(self, sp_entity_id):
+    def get_sign(self, sp_entity_id: str):
         """
         Possible choices
         "sign": ["response", "assertion", "on_demand"]
@@ -512,8 +574,8 @@ class Policy:
 
         return self.get("sign", sp_entity_id, default=[])
 
-    def get_entity_categories(
-        self, sp_entity_id: str, mds: Optional[MetadataStore] = None, required: Optional[List[RequiredAttribute]] = None
+    def get_restrictions_for_entity_categories(
+        self, sp_entity_id: str, mds: Optional[MetadataStore] = None, required: Optional[List[AttributeAsDict]] = None
     ) -> AttributeRestrictions:
         """
 
@@ -531,8 +593,8 @@ class Policy:
             logger.warning(warn_msg)
             _warn(warn_msg, DeprecationWarning)
 
-        result1: Optional[EntityCategoryPolicy] = self.get("entity_categories", sp_entity_id)  # type: ignore
-        if result1 is None:
+        result1: Optional[EntityCategoryPolicy] = self.get("entity_categories", sp_entity_id)
+        if result1 is None or not result1.entity_category_rulesets:
             return {}
 
         assert isinstance(result1, EntityCategoryPolicy)
@@ -544,7 +606,7 @@ class Policy:
             required=required,
         )
 
-    def not_on_or_after(self, sp_entity_id):
+    def not_on_or_after(self, sp_entity_id: str):
         """When the assertion stops being valid, should not be
         used after this time.
 
@@ -554,7 +616,14 @@ class Policy:
 
         return in_a_while(**self.get_lifetime(sp_entity_id))
 
-    def filter(self, ava, sp_entity_id, mdstore=None, required=None, optional=None):
+    def filter(
+        self,
+        ava: AttributeValues,
+        sp_entity_id: str,
+        mdstore: Optional[MetadataStore] = None,
+        required: Optional[list[AttributeAsDict]] = None,
+        optional: Optional[list[AttributeAsDict]] = None,
+    ) -> AttributeValues:
         """What attribute and attribute values returns depends on what
         the SP or the registration authority has said it wants in the request
         or in the metadata file and what the IdP/AA wants to release.
@@ -585,7 +654,7 @@ class Policy:
         subject_ava = ava.copy()
 
         # entity category restrictions
-        _ent_rest = self.get_entity_categories(sp_entity_id, mds=mdstore, required=required)
+        _ent_rest = self.get_restrictions_for_entity_categories(sp_entity_id, mds=mdstore, required=required)
         if _ent_rest:
             subject_ava = filter_attribute_value_assertions(subject_ava, _ent_rest)
         elif required or optional:
@@ -604,7 +673,7 @@ class Policy:
 
         return subject_ava or {}
 
-    def restrict(self, ava, sp_entity_id, metadata=None):
+    def restrict(self, ava: AttributeValues, sp_entity_id: str, metadata: Optional[MetadataStore] = None):
         """Identity attribute names are expected to be expressed as FriendlyNames
 
         :return: A filtered ava according to the IdPs/AAs rules and

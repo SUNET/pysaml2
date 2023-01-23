@@ -8,6 +8,7 @@ import random
 import string
 import sys
 import traceback
+from typing import Union
 import zlib
 
 from saml2 import VERSION
@@ -327,7 +328,7 @@ def do_ava(val, typ=""):
     return attrval
 
 
-def do_attribute(val, typ, key):
+def do_attribute(val, typ, key: Union[str, tuple]) -> saml.Attribute:
     attr = saml.Attribute()
     attrval = do_ava(val, typ)
     if attrval:
@@ -343,7 +344,7 @@ def do_attribute(val, typ, key):
             friendly = ""
         if name:
             attr.name = name
-        if format:
+        if nformat:
             attr.name_format = nformat
         if friendly:
             attr.friendly_name = friendly
