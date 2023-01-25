@@ -230,9 +230,6 @@ class HTTPBase:
                     logger.debug("%s: %s", arg.upper(), _kwargs[arg])
                 except KeyError:
                     pass
-            if "headers" in _kwargs and isinstance(_kwargs["headers"], list):
-                # requests.request wants a dict of headers, not a list of tuples
-                _kwargs["headers"] = dict(_kwargs["headers"])
             r = requests.request(method, url, **_kwargs)
             logger.debug("Response status: %s", r.status_code)
         except requests.ConnectionError as exc:
@@ -293,8 +290,6 @@ class HTTPBase:
         :param sign:
         :return: dictionary
         """
-        # XXX this will be transformed to a dict() later on, in send() (above) -
-        # would it be a safe change to make it a dict here instead?
         headers = [("content-type", "application/soap+xml")]
 
         soap_message = make_soap_enveloped_saml_thingy(request, soap_headers)
