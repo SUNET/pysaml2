@@ -1,3 +1,5 @@
+git:
+  branch: ft-refeds_ec
 triggers:
   cron: "@weekly"
 pre_build_script:
