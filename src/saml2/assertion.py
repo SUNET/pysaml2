@@ -360,8 +360,8 @@ def compile(restrictions: Mapping[str, Any]) -> PolicyConfig:
 
 
 class EntityCategoryMatcher(BaseModel):
-    required: List[str]
-    conflicts: List[str] = []
+    required: List[str]  # List of entity category URIs that must be present in the SP's entity categories
+    conflicts: List[str] = []  # List of entity category URIs that must not be present in the SP's entity categories
 
     def matches(self, sp_ecs: List[str]) -> bool:
         """Return True if all our entity categories is present in the list of SP entity categories"""
@@ -381,31 +381,41 @@ class EntityCategoryMatcher(BaseModel):
 
 class EntityCategoryRule(BaseModel):
     match: EntityCategoryMatcher
-    attributes: List[str]
-    only_required: bool = False
+    attributes: List[str]  # attributes to release if this rule matches (friendly names)
+    only_required: bool = False  # If this rule matches, only include the required attributes for the SP
 
     @validator("attributes")
     def lowercase_attribute_names(cls, v: List[str]):
+        """Make sure all attribute names are lower case, for easier comparison later."""
         return [x.lower() for x in v]
 
 
-ModuleRelease = list[EntityCategoryRule]
+class EntityCategoryPolicy(BaseModel):
+    """Holder of rule sets for entity categories.
 
+    `categories' keys are category names (currently also module names from where the rules are loaded)
+    `categories' values are lists of rules for that category.
+    """
 
-class EntityCategoryPolicy:
-    def __init__(self, entity_category_rulesets: List[ModuleRelease]):
-        self.entity_category_rulesets = entity_category_rulesets
+    categories: dict[str, list[EntityCategoryRule]]
+
+    def __str__(self) -> str:
+        return f"<EntityCategoryRuleSets: {self.categories.keys()}>"
 
     @classmethod
     def from_module_names(cls: Type["EntityCategoryPolicy"], entity_categories: List[str]) -> "EntityCategoryPolicy":
-        ecs: List[ModuleRelease] = []
-        for cat in entity_categories:
-            try:
-                _mod = importlib.import_module(cat)
-            except ImportError:
-                _mod = importlib.import_module(f"saml2.entity_category.{cat}")
+        """Load a list of rules for a category.
 
-            _ec: ModuleRelease = []
+        In the current implementation, the rules are loaded from a module - one module per category.
+        """
+        res: dict[str, list[EntityCategoryRule]] = {}
+        for category in entity_categories:
+            try:
+                _mod = importlib.import_module(category)
+            except ImportError:
+                _mod = importlib.import_module(f"saml2.entity_category.{category}")
+
+            rules: list[EntityCategoryRule] = []
             for key, items in _mod.RELEASE.items():
                 alist = [k.lower() for k in items]
                 _only_required = getattr(_mod, "ONLY_REQUIRED", {}).get(key, False)
@@ -417,7 +427,7 @@ class EntityCategoryPolicy:
                 else:
                     _key_as_list = list(key)
 
-                _ec.append(
+                rules.append(
                     EntityCategoryRule(
                         match=EntityCategoryMatcher(required=_key_as_list, conflicts=[]),
                         attributes=alist,
@@ -427,13 +437,13 @@ class EntityCategoryPolicy:
             if hasattr(_mod, "RESTRICTIONS") and isinstance(_mod.RESTRICTIONS, list):
                 for this in _mod.RESTRICTIONS:
                     try:
-                        _ec.append(EntityCategoryRule.parse_obj(this))
+                        rules.append(EntityCategoryRule.parse_obj(this))
                     except ValidationError:
                         logger.warning(f"Invalid entity category rule: {this}")
                         raise
 
-            ecs.append(_ec)
-        return cls(entity_category_rulesets=ecs)
+            res[category] = rules
+        return cls(categories=res)
 
     def attribute_restrictions_for_sp(
         self,
@@ -463,7 +473,7 @@ class EntityCategoryPolicy:
         extra_logger.debug(f"Compiling attributes to release based on SP entity categories: {sp_ecs}")
         extra_logger.debug(f"Required attributes for this SP: {required_friendly_names}")
 
-        for ec_ruleset in self.entity_category_rulesets:
+        for ec_ruleset in self.rule_sets:
             for this_rule in ec_ruleset:
                 _matches = this_rule.match.matches(sp_ecs)
                 extra_logger.debug(f"Rule {this_rule.match}, matches: {_matches}")
@@ -609,7 +619,7 @@ class Policy:
             _warn(warn_msg, DeprecationWarning)
 
         result1: Optional[EntityCategoryPolicy] = self.get("entity_categories", sp_entity_id)
-        if result1 is None or not result1.entity_category_rulesets:
+        if result1 is None or not result1.rule_sets:
             return {}
 
         assert isinstance(result1, EntityCategoryPolicy)

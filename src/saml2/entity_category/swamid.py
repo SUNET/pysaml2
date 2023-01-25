@@ -111,17 +111,9 @@ RELEASE = {
     ESI: MYACADEMICID_ESI,
     (ESI, COCOv1): MYACADEMICID_ESI + GEANT_COCO,
     (ESI, COCOv2): MYACADEMICID_ESI + REFEDS_COCO,
-    # XXX: disabled temporarily until we can figure out how to handle them
-    #      these need to be able to be combined with other categories just not with each other
-    # no aggregation categories
-    # PERSONALIZED: REFEDS_PERSONALIZED_ACCESS,
-    # PSEUDONYMOUS: REFEDS_PSEUDONYMOUS_ACCESS,
-    # ANONYMOUS: REFEDS_ANONYMOUS_ACCESS,
 }
 
 RESTRICTIONS = [
-    # NOTICE: order is important. When evaluating "required" and "conflicts" the first
-    #        match will be used.
     {
         "match": {
             "required": [PERSONALIZED],
@@ -142,6 +134,8 @@ RESTRICTIONS = [
         },
         "attributes": REFEDS_ANONYMOUS_ACCESS,
     },
+    # Example of conversion of some of the rules in RELEASE to this new format:
+    #
     # {
     #     "match": {
     #         "required": [COCOv1],
@@ -154,6 +148,7 @@ RESTRICTIONS = [
     #         "required": [ESI, COCOv1],
     #     },
     #     "attributes": MYACADEMICID_ESI + GEANT_COCO,
+    #     "only_required": True,
     # },
 ]
 
@@ -162,10 +157,4 @@ ONLY_REQUIRED = {
     COCOv2: True,
     (ESI, COCOv1): True,
     (ESI, COCOv2): True,
-}
-
-NO_AGGREGATION = {
-    PERSONALIZED: True,
-    PSEUDONYMOUS: True,
-    ANONYMOUS: True,
 }
