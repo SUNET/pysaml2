@@ -468,14 +468,14 @@ class EntityCategoryPolicy(BaseModel):
         if not mds:
             return restrictions
 
-        sp_ecs: List[str] = mds.entity_categories(sp_entity_id)
+        sp_categories: List[str] = mds.entity_categories(sp_entity_id)
 
-        extra_logger.debug(f"Compiling attributes to release based on SP entity categories: {sp_ecs}")
+        extra_logger.debug(f"Compiling attributes to release based on SP entity categories: {sp_categories}")
         extra_logger.debug(f"Required attributes for this SP: {required_friendly_names}")
 
-        for ec_ruleset in self.rule_sets:
-            for this_rule in ec_ruleset:
-                _matches = this_rule.match.matches(sp_ecs)
+        for rule_set in self.categories.values():
+            for this_rule in rule_set:
+                _matches = this_rule.match.matches(sp_categories)
                 extra_logger.debug(f"Rule {this_rule.match}, matches: {_matches}")
                 if _matches:
                     if this_rule.only_required:
@@ -619,7 +619,7 @@ class Policy:
             _warn(warn_msg, DeprecationWarning)
 
         result1: Optional[EntityCategoryPolicy] = self.get("entity_categories", sp_entity_id)
-        if result1 is None or not result1.rule_sets:
+        if result1 is None or not result1.categories:
             return {}
 
         assert isinstance(result1, EntityCategoryPolicy)
