@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 import copy
-from dataclasses import dataclass
 import importlib
 import logging
 import re
-from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Type, TypeVar, TypedDict, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Type, TypeVar, TypedDict, Union
 from warnings import warn as _warn
 
 from saml2 import saml
@@ -24,9 +23,10 @@ from saml2.time_util import in_a_while
 from saml2.time_util import instant
 from saml2.typing import AttributeAsDict, AttributeValues
 
+from pydantic import BaseModel, ValidationError, validator
 
 logger = logging.getLogger(__name__)
-
+extra_logger = logger.getChild("extra")
 
 VT = TypeVar("VT")
 
@@ -359,31 +359,34 @@ def compile(restrictions: Mapping[str, Any]) -> PolicyConfig:
     return config
 
 
-@dataclass
-class EntityCategoryMatcher:
-    ecs: List[str]
+class EntityCategoryMatcher(BaseModel):
+    required: List[str]
+    conflicts: List[str] = []
 
     def matches(self, sp_ecs: List[str]) -> bool:
         """Return True if all our entity categories is present in the list of SP entity categories"""
-        if self.ecs == [""]:
+        _conflicts = self._conflicts(sp_ecs)
+        if _conflicts:
+            extra_logger.debug(f"Not matching, SP entity categories in conflict with {self.conflicts}")
+            return False
+        if self.required == [""]:
             # A rule with this matching criteria results in attributes always being released
             return True
-        return all([x in sp_ecs for x in self.ecs])
+        return all([x in sp_ecs for x in self.required])
+
+    def _conflicts(self, sp_ecs: List[str]) -> bool:
+        """Return True if any of the SP's entity categories are present in `conflicts'."""
+        return any([x in sp_ecs for x in self.conflicts])
 
 
-ReleaseKey = Union[str, Tuple[str, str]]
-
-
-@dataclass
-class EntityCategoryRule:
-    matcher: EntityCategoryMatcher
+class EntityCategoryRule(BaseModel):
+    match: EntityCategoryMatcher
     attributes: List[str]
-    only_required: bool
-    no_aggregation: bool
+    only_required: bool = False
 
-    # def matches_sp(entity_id: str) -> bool:
-    #     ecs = ecs_filter(metadatalookup(entity_id))
-    #     if a in self.
+    @validator("attributes")
+    def lowercase_attribute_names(cls, v: List[str]):
+        return [x.lower() for x in v]
 
 
 ModuleRelease = list[EntityCategoryRule]
@@ -406,7 +409,6 @@ class EntityCategoryPolicy:
             for key, items in _mod.RELEASE.items():
                 alist = [k.lower() for k in items]
                 _only_required = getattr(_mod, "ONLY_REQUIRED", {}).get(key, False)
-                _no_aggregation = getattr(_mod, "NO_AGGREGATION", {}).get(key, False)
 
                 # Convert tuples to a list of strings, and a single string to a list of one string
                 _key_as_list: List[str]
@@ -414,16 +416,22 @@ class EntityCategoryPolicy:
                     _key_as_list = [key]
                 else:
                     _key_as_list = list(key)
-                _matcher = EntityCategoryMatcher(_key_as_list)
 
                 _ec.append(
                     EntityCategoryRule(
-                        matcher=_matcher,
+                        match=EntityCategoryMatcher(required=_key_as_list, conflicts=[]),
                         attributes=alist,
                         only_required=_only_required,
-                        no_aggregation=_no_aggregation,
                     )
                 )
+            if hasattr(_mod, "RESTRICTIONS") and isinstance(_mod.RESTRICTIONS, list):
+                for this in _mod.RESTRICTIONS:
+                    try:
+                        _ec.append(EntityCategoryRule.parse_obj(this))
+                    except ValidationError:
+                        logger.warning(f"Invalid entity category rule: {this}")
+                        raise
+
             ecs.append(_ec)
         return cls(entity_category_rulesets=ecs)
 
@@ -452,13 +460,20 @@ class EntityCategoryPolicy:
 
         sp_ecs: List[str] = mds.entity_categories(sp_entity_id)
 
+        extra_logger.debug(f"Compiling attributes to release based on SP entity categories: {sp_ecs}")
+        extra_logger.debug(f"Required attributes for this SP: {required_friendly_names}")
+
         for ec_ruleset in self.entity_category_rulesets:
             for this_rule in ec_ruleset:
-                if this_rule.matcher.matches(sp_ecs):
+                _matches = this_rule.match.matches(sp_ecs)
+                extra_logger.debug(f"Rule {this_rule.match}, matches: {_matches}")
+                if _matches:
                     if this_rule.only_required:
                         attrs = [a for a in this_rule.attributes if a in required_friendly_names]
+                        extra_logger.debug(f"Adding only required attributes: {attrs}")
                     else:
                         attrs = this_rule.attributes
+                        extra_logger.debug(f"Adding attributes: {attrs}")
 
                     for attr in attrs:
                         restrictions[attr] = None
@@ -466,6 +481,7 @@ class EntityCategoryPolicy:
         if not restrictions:
             restrictions[""] = None
 
+        logger.debug(f"Compiled attribute restrictions: {restrictions}")
         return restrictions
 
 
@@ -495,7 +511,6 @@ class Policy:
         :return:
         """
         if not self._restrictions:
-            # TODO: Shouldn't we be checking for ra_info here before returning default?
             return default
 
         ra_info: Mapping[str, Any] = {}

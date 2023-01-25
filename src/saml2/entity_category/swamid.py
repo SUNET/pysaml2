@@ -100,8 +100,6 @@ NREN = "http://www.swamid.se/category/nren-service"  # Deprecated from 2021-03-3
 HEI = "http://www.swamid.se/category/hei-service"  # Deprecated from 2021-03-31
 
 RELEASE = {
-    # NOTICE: order is important
-    # no-aggregation categories need to come last and in order of least to most restrictive
     "": [],
     SFS_1993_1153: ["norEduPersonNIN", "eduPersonAssurance"],
     (RESEARCH_AND_EDUCATION, EU): NAME + STATIC_ORG_INFO + OTHER,
@@ -120,6 +118,44 @@ RELEASE = {
     # PSEUDONYMOUS: REFEDS_PSEUDONYMOUS_ACCESS,
     # ANONYMOUS: REFEDS_ANONYMOUS_ACCESS,
 }
+
+RESTRICTIONS = [
+    # NOTICE: order is important. When evaluating "required" and "conflicts" the first
+    #        match will be used.
+    {
+        "match": {
+            "required": [PERSONALIZED],
+            "conflicts": [PSEUDONYMOUS, ANONYMOUS],
+        },
+        "attributes": REFEDS_PERSONALIZED_ACCESS,
+    },
+    {
+        "match": {
+            "required": [PSEUDONYMOUS],
+            "conflicts": [ANONYMOUS],
+        },
+        "attributes": REFEDS_PSEUDONYMOUS_ACCESS,
+    },
+    {
+        "match": {
+            "required": [ANONYMOUS],
+        },
+        "attributes": REFEDS_ANONYMOUS_ACCESS,
+    },
+    # {
+    #     "match": {
+    #         "required": [COCOv1],
+    #     },
+    #     "attributes": GEANT_COCO,
+    #     "only_required": True,
+    # },
+    # {
+    #     "match": {
+    #         "required": [ESI, COCOv1],
+    #     },
+    #     "attributes": MYACADEMICID_ESI + GEANT_COCO,
+    # },
+]
 
 ONLY_REQUIRED = {
     COCOv1: True,
