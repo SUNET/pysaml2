@@ -867,10 +867,8 @@ class CryptoBackendXMLSecurity(CryptoBackend):
     to an external PKCS#11 module.
     """
 
-    def __init__(self, keyspec, debug=False):
+    def __init__(self):
         CryptoBackend.__init__(self)
-        self.keyspec = keyspec
-        self.debug = debug
 
     def version(self):
         # XXX if XMLSecurity.__init__ included a __version__, that would be
@@ -894,7 +892,7 @@ class CryptoBackendXMLSecurity(CryptoBackend):
         import xmlsec
 
         xml = xmlsec.parse_xml(statement)
-        signed = xmlsec.sign(xml, self.keyspec)
+        signed = xmlsec.sign(xml, key_file)
         signed_str = lxml.etree.tostring(signed, xml_declaration=False, encoding="UTF-8")
         if not isinstance(signed_str, str):
             signed_str = signed_str.decode("utf-8")
@@ -972,7 +970,7 @@ def security_context(conf):
                 sec_backend = RSACrypto(rsa_key)
     elif conf.crypto_backend == "XMLSecurity":
         # new and somewhat untested pyXMLSecurity crypto backend.
-        crypto = CryptoBackendXMLSecurity(conf.getattr("key_file", ""))
+        crypto = CryptoBackendXMLSecurity()
     else:
         err_msg = "Unknown crypto_backend {backend}"
         err_msg = err_msg.format(backend=conf.crypto_backend)
