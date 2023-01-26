@@ -50,7 +50,7 @@ def _filter_values(values: list[VT], allowed_values: list[VT], must: bool = Fals
     """Removes values from *values* that does not appear in allowed_values.
 
     :param vals: The values that are to be filtered
-    :param allowed_values: required or optional value
+    :param allowed_values: required or optional values
     :param must: Whether the allowed values must appear
     :return: The set of values after filtering
     """
@@ -96,8 +96,8 @@ def filter_on_attributes(
     * Ensure that all the required attributes are present (else raise MissingValue)
 
     :param ava: An attribute value assertion as a dictionary
-    :param required: list of RequestedAttribute instances defined to be required
-    :param optional: list of RequestedAttribute instances defined to be optional
+    :param required: list of attributes defined to be required
+    :param optional: list of attributes defined to be optional
     :param fail_on_unfulfilled_requirements: If required attributes
         are missing fail or fail not depending on this parameter.
     :return: The modified attribute value assertion

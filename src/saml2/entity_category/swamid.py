@@ -113,6 +113,14 @@ RELEASE = {
     (ESI, COCOv2): MYACADEMICID_ESI + REFEDS_COCO,
 }
 
+ONLY_REQUIRED = {
+    COCOv1: True,
+    COCOv2: True,
+    (ESI, COCOv1): True,
+    (ESI, COCOv2): True,
+}
+
+# These restrictions are parsed (and validated) into a list of saml2.assertion.EntityCategoryRule instances.
 RESTRICTIONS = [
     {
         "match": {
@@ -151,10 +159,3 @@ RESTRICTIONS = [
     #     "only_required": True,
     # },
 ]
-
-ONLY_REQUIRED = {
-    COCOv1: True,
-    COCOv2: True,
-    (ESI, COCOv1): True,
-    (ESI, COCOv2): True,
-}
