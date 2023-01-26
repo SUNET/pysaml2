@@ -21,7 +21,7 @@ from saml2.s_utils import sid
 from saml2.saml import NAME_FORMAT_URI
 from saml2.time_util import in_a_while
 from saml2.time_util import instant
-from saml2.typing import AttributeAsDict, AttributeValues
+from saml2.typing import AttributeAsDict, AttributeValues, AttributeValuesStrict
 
 from pydantic import BaseModel, ValidationError, validator
 
@@ -72,16 +72,17 @@ def filter_on_attributes(
     ava: AttributeValues,
     required: Optional[AttributesAsDicts] = None,
     optional: Optional[AttributesAsDicts] = None,
-    acs=None,
+    acs: Optional[list[AttributeConverter]] = None,
     fail_on_unfulfilled_requirements: bool = True,
-):
-    """Filter
+) -> AttributeValues:
+    """Filter attributes in `ava', returning a new instance of AttributeValues.
+
+    * Ensure that all the values in the attribute value assertion are allowed
+    * Ensure that all the required attributes are present (else raise MissingValue)
 
     :param ava: An attribute value assertion as a dictionary
-    :param required: list of RequestedAttribute instances defined to be
-        required
-    :param optional: list of RequestedAttribute instances defined to be
-        optional
+    :param required: list of RequestedAttribute instances defined to be required
+    :param optional: list of RequestedAttribute instances defined to be optional
     :param fail_on_unfulfilled_requirements: If required attributes
         are missing fail or fail not depending on this parameter.
     :return: The modified attribute value assertion
@@ -99,7 +100,13 @@ def filter_on_attributes(
         res = _filter_values(values, allowed_values, must)
         return res
 
-    def _match_attr_name(attr: AttributeAsDict, ava: AttributeValues) -> Optional[str]:
+    def _identify_attribute(attr: AttributeAsDict, ava: AttributeValues) -> Optional[str]:
+        """Find and identify `attr' in `ava'.
+
+        The attribute we want to work with might be identified by its name, name_format,
+        friendly_name or it's URI. This function tries to find the attribute in `ava' and
+        returns the friendly_name of the attribute in `ava'.
+        """
         name = attr["name"].lower()
         name_format = attr.get("name_format")
         friendly_name = attr.get("friendly_name")
@@ -112,8 +119,9 @@ def filter_on_attributes(
         return _fn
 
     def _apply_attr_value_restrictions(
-        friendly_name: str, attr: AttributeAsDict, res: dict[str, list[Any]], must: bool = False
+        friendly_name: str, attr: AttributeAsDict, res: AttributeValuesStrict, must: bool = False
     ):
+        """Add the attribute `friendly_name` to `res`, filtering its values if necessary."""
         _av_list = attr.get("attribute_value", [])
         assert _av_list is not None  # please mypy, the get() above defaults to empty list
         allowed_values = [av["text"] for av in _av_list]
@@ -127,33 +135,35 @@ def filter_on_attributes(
 
         res[friendly_name].extend(_values)
 
-    res: dict[str, list[Any]] = {}
+    new_ava = AttributeValuesStrict({})
     if required is None:
         required = []
 
     for attr in required:
-        _fn = _match_attr_name(attr, ava)
+        _fn = _identify_attribute(attr, ava)
 
         if _fn:
-            _apply_attr_value_restrictions(_fn, attr, res, True)
+            _apply_attr_value_restrictions(_fn, attr, new_ava, True)
         elif fail_on_unfulfilled_requirements:
-            desc = f"Required attribute missing: '{attr['name']}'"
-            raise MissingValue(desc)
+            raise MissingValue(f"Required attribute missing: '{attr['name']}'")
 
     if optional is None:
         optional = []
 
     for attr in optional:
-        _fn = _match_attr_name(attr, ava)
+        _fn = _identify_attribute(attr, ava)
         if _fn:
-            _apply_attr_value_restrictions(_fn, attr, res, False)
+            _apply_attr_value_restrictions(_fn, attr, new_ava, False)
 
     # TODO: Kludge to turn lists-of-strings back into strings if the data was given
     #       as a string in `ava`. This is needed to make the tests pass, but maybe it
     #       would be preferable to declare ava to only have lists of strings?
-    for this in res.keys():
+    res = AttributeValues({})
+    for this in new_ava.keys():
         if isinstance(ava[this], str):
-            res[this] = res[this][0]
+            res[this] = new_ava[this][0]
+        else:
+            res[this] = new_ava[this]
 
     return res
 
@@ -360,6 +370,12 @@ def compile(restrictions: Mapping[str, Any]) -> PolicyConfig:
 
 
 class EntityCategoryMatcher(BaseModel):
+    """
+    Part of EntityCategoryRule.
+
+    Decides, based on a list of entity categories for an SP, if this rule applies to the SP or not.
+    """
+
     required: List[str]  # List of entity category URIs that must be present in the SP's entity categories
     conflicts: List[str] = []  # List of entity category URIs that must not be present in the SP's entity categories
 
@@ -380,6 +396,8 @@ class EntityCategoryMatcher(BaseModel):
 
 
 class EntityCategoryRule(BaseModel):
+    """A rule to decide whether or not to add a list of attributes for release to an SP."""
+
     match: EntityCategoryMatcher
     attributes: List[str]  # attributes to release if this rule matches (friendly names)
     only_required: bool = False  # If this rule matches, only include the required attributes for the SP
@@ -400,13 +418,18 @@ class EntityCategoryPolicy(BaseModel):
     categories: dict[str, list[EntityCategoryRule]]
 
     def __str__(self) -> str:
-        return f"<EntityCategoryRuleSets: {self.categories.keys()}>"
+        return f"<{self.__class__.__name__}: {self.categories.keys()}>"
 
     @classmethod
     def from_module_names(cls: Type["EntityCategoryPolicy"], entity_categories: List[str]) -> "EntityCategoryPolicy":
         """Load a list of rules for a category.
 
         In the current implementation, the rules are loaded from a module - one module per category.
+
+        The old format was to have the rules in the module's RELEASE dictionary, and the ONLY_REQUIRED dictionary.
+
+        The new format is to load a list of rules from the RESTRICTIONS in the module, and use pydantic to validate
+        and convert the rules to EntityCategoryRule objects.
         """
         res: dict[str, list[EntityCategoryRule]] = {}
         for category in entity_categories:
@@ -415,7 +438,10 @@ class EntityCategoryPolicy(BaseModel):
             except ImportError:
                 _mod = importlib.import_module(f"saml2.entity_category.{category}")
 
+            # `rules' is the list of rules loaded from this module
             rules: list[EntityCategoryRule] = []
+
+            # Old format, load rules from RELEASE and ONLY_REQUIRED (two dictionaries)
             for key, items in _mod.RELEASE.items():
                 alist = [k.lower() for k in items]
                 _only_required = getattr(_mod, "ONLY_REQUIRED", {}).get(key, False)
@@ -434,6 +460,8 @@ class EntityCategoryPolicy(BaseModel):
                         only_required=_only_required,
                     )
                 )
+
+            # New format, load rules from RESTRICTIONS (a list)
             if hasattr(_mod, "RESTRICTIONS") and isinstance(_mod.RESTRICTIONS, list):
                 for this in _mod.RESTRICTIONS:
                     try:
@@ -452,6 +480,17 @@ class EntityCategoryPolicy(BaseModel):
         mds: Optional[MetadataStore] = None,  # TODO: Possibly a 'MetaData' instance (parent of MetadataStore)
         required: Optional[List[AttributeAsDict]] = None,
     ) -> AttributeRestrictions:
+        """
+        Compile the attribute restrictions for a given SP.
+
+        Attribute restrictions are expressed as a dict with attribute names as keys
+        and optionally a list of regular expressions as values.
+
+        If the value is a list of regular expressions, then the value of the attribute must match
+        one of the regular expressions. Otherwise the attribute is not allowed (meaning will not be released).
+
+        If the value is None, then all values are allowed (think of it as "no restrictions apply").
+        """
         restrictions: AttributeRestrictions = {}
 
         required_friendly_names: List[str] = []
@@ -470,7 +509,9 @@ class EntityCategoryPolicy(BaseModel):
 
         sp_categories: List[str] = mds.entity_categories(sp_entity_id)
 
-        extra_logger.debug(f"Compiling attributes to release based on SP entity categories: {sp_categories}")
+        extra_logger.debug(
+            f"Compiling attributes to release based on SP {sp_entity_id} entity categories: {sp_categories}"
+        )
         extra_logger.debug(f"Required attributes for this SP: {required_friendly_names}")
 
         for rule_set in self.categories.values():
@@ -549,14 +590,14 @@ class Policy:
     def get_nameid_format(self, sp_entity_id: str):
         """Get the NameIDFormat to used for the entity id
         :param: The SP entity ID
-        :retur: The format
+        :return: The format
         """
         return self.get("nameid_format", sp_entity_id, saml.NAMEID_FORMAT_TRANSIENT)
 
     def get_name_form(self, sp_entity_id: str):
         """Get the NameFormat to used for the entity id
         :param: The SP entity ID
-        :retur: The format
+        :return: The format
         """
 
         return self.get("name_form", sp_entity_id, default=NAME_FORMAT_URI)

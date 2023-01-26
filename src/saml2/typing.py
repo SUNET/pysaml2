@@ -23,3 +23,4 @@ class AttributeAsDict(TypedDict):
 
 # Type for the common 'ava' parameter.
 AttributeValues = dict[str, Union[list[str], str]]
+AttributeValuesStrict = dict[str, list[str]]
