@@ -1,7 +1,11 @@
 # Type information for common pysaml2 data types, often found in configuration etc.
 #
 
-from typing import Literal, Mapping, Optional, TypedDict, Union
+from typing import Literal
+from typing import Mapping
+from typing import Optional
+from typing import TypedDict
+from typing import Union
 
 
 # Required attributes are specified as dicts, e.g.:

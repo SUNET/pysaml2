@@ -5,12 +5,26 @@ import copy
 import importlib
 import logging
 import re
-from typing import Any, Dict, List, Literal, Mapping, Optional, Type, TypeVar, TypedDict, Union
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Literal
+from typing import Mapping
+from typing import Optional
+from typing import Type
+from typing import TypedDict
+from typing import TypeVar
+from typing import Union
 from warnings import warn as _warn
+
+from pydantic import BaseModel
+from pydantic import ValidationError
+from pydantic import validator
 
 from saml2 import saml
 from saml2 import xmlenc
-from saml2.attribute_converter import AttributeConverter, ac_factory
+from saml2.attribute_converter import AttributeConverter
+from saml2.attribute_converter import ac_factory
 from saml2.attribute_converter import from_local
 from saml2.attribute_converter import get_local_name
 from saml2.mdstore import MetadataStore
@@ -21,9 +35,10 @@ from saml2.s_utils import sid
 from saml2.saml import NAME_FORMAT_URI
 from saml2.time_util import in_a_while
 from saml2.time_util import instant
-from saml2.typing import AttributeAsDict, AttributeValues, AttributeValuesStrict
+from saml2.typing import AttributeAsDict
+from saml2.typing import AttributeValues
+from saml2.typing import AttributeValuesStrict
 
-from pydantic import BaseModel, ValidationError, validator
 
 logger = logging.getLogger(__name__)
 extra_logger = logger.getChild("extra")
