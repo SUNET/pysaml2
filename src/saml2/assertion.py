@@ -43,10 +43,8 @@ from saml2.typing import AttributeValuesStrict
 logger = logging.getLogger(__name__)
 extra_logger = logger.getChild("extra")
 
-VT = TypeVar("VT")
 
-
-def _filter_values(values: list[VT], allowed_values: list[VT], must: bool = False) -> list[VT]:
+def _filter_values(values: list[str], allowed_values: list[str], must: bool = False) -> list[str]:
     """Removes values from *values* that does not appear in allowed_values.
 
     :param vals: The values that are to be filtered
@@ -58,7 +56,7 @@ def _filter_values(values: list[VT], allowed_values: list[VT], must: bool = Fals
     if not allowed_values:  # No value specified equals any value
         return values
 
-    res: list[VT] = [x for x in values if x in allowed_values]
+    res = [x for x in values if x in allowed_values]
 
     if must and not res:
         raise MissingValue("Required attribute value missing")
@@ -289,7 +287,7 @@ def filter_attribute_value_assertions(
         return ava
 
     for attr, vals in list(ava.items()):
-        _attr = attr.lower()
+        _attr = attr.lower()  # TODO: check if needed
         try:
             _rests = attribute_restrictions[_attr]
         except KeyError:
@@ -338,7 +336,7 @@ class PolicyConfigValue(TypedDict):
     fail_on_missing_requested: Optional[bool]
 
 
-PolicyConfig = Dict[PolicyConfigKey, PolicyConfigValue]
+PolicyConfig = dict[PolicyConfigKey, PolicyConfigValue]
 
 
 def compile(restrictions: Mapping[str, Any]) -> PolicyConfig:
@@ -536,7 +534,8 @@ class EntityCategoryPolicy(BaseModel):
                 if _matches:
                     if this_rule.only_required:
                         attrs = [a for a in this_rule.attributes if a in required_friendly_names]
-                        extra_logger.debug(f"Adding only required attributes: {attrs}")
+                        _not_adding = [a for a in this_rule.attributes if a not in required_friendly_names]
+                        extra_logger.debug(f"Adding only required attributes: {attrs}, not adding: {_not_adding}")
                     else:
                         attrs = this_rule.attributes
                         extra_logger.debug(f"Adding attributes: {attrs}")
@@ -655,7 +654,7 @@ class Policy:
 
         return self.get("sign", sp_entity_id, default=[])
 
-    def get_restrictions_for_entity_categories(
+    def _get_restrictions_for_entity_categories(
         self, sp_entity_id: str, mds: Optional[MetadataStore] = None, required: Optional[List[AttributeAsDict]] = None
     ) -> AttributeRestrictions:
         """
@@ -735,7 +734,7 @@ class Policy:
         subject_ava = ava.copy()
 
         # entity category restrictions
-        _ent_rest = self.get_restrictions_for_entity_categories(sp_entity_id, mds=mdstore, required=required)
+        _ent_rest = self._get_restrictions_for_entity_categories(sp_entity_id, mds=mdstore, required=required)
         if _ent_rest:
             subject_ava = filter_attribute_value_assertions(subject_ava, _ent_rest)
         elif required or optional:
