@@ -5,6 +5,8 @@ import copy
 import importlib
 import logging
 import re
+from warnings import warn as _warn
+
 from typing import Any
 from typing import Dict
 from typing import List
@@ -42,6 +44,51 @@ from saml2.typing import AttributeValuesStrict
 
 logger = logging.getLogger(__name__)
 extra_logger = logger.getChild("extra")
+
+
+class EntityCategoryMatcher(BaseModel):
+    """
+    Part of EntityCategoryRule.
+
+    Decides, based on a list of entity categories for an SP, if this rule applies to the SP or not.
+    """
+
+    required: List[str]  # List of entity category URIs that must be present in the SP's entity categories
+    conflicts: List[str] = []  # List of entity category URIs that must not be present in the SP's entity categories
+
+    def matches(self, sp_ecs: List[str]) -> bool:
+        """Return True if all our entity categories is present in the list of SP entity categories"""
+        _conflicts = self._conflicts(sp_ecs)
+        if _conflicts:
+            extra_logger.debug(f"Not matching, SP entity categories in conflict with {self.conflicts}")
+            return False
+        if self.required == [""]:
+            # A rule with this matching criteria results in attributes always being released
+            return True
+        return all([x in sp_ecs for x in self.required])
+
+    def _conflicts(self, sp_ecs: List[str]) -> bool:
+        """Return True if any of the SP's entity categories are present in `conflicts'."""
+        return any([x in sp_ecs for x in self.conflicts])
+
+
+class EntityCategoryRule(BaseModel):
+    """A rule to decide whether or not to add a list of attributes for release to an SP."""
+
+    match: EntityCategoryMatcher
+    attributes: List[str]  # attributes to release if this rule matches (friendly names)
+    only_required: bool = False  # If this rule matches, only include the required attributes for the SP
+
+    @validator("attributes")
+    def lowercase_attribute_names(cls, v: List[str]):
+        """Make sure all attribute names are lower case, for easier comparison later."""
+        return [x.lower() for x in v]
+
+
+# The regexps are an optional "allow-list" for values. If regexps are provided, one of them has to
+# match a value for it to be released.
+AllowedAttributeValue = re.Pattern[str]
+AttributeRestrictions = dict[str, Optional[list[AllowedAttributeValue]]]
 
 
 def _filter_values(values: list[str], allowed_values: list[str], must: bool = False) -> list[str]:
@@ -263,12 +310,6 @@ def filter_on_wire_representation(ava, acs, required=None, optional=None):
     return res
 
 
-# The regexps are an optional "allow-list" for values. If regexps are provided, one of them has to
-# match a value for it to be released.
-AllowedAttributeValue = re.Pattern[str]
-AttributeRestrictions = dict[str, Optional[list[AllowedAttributeValue]]]
-
-
 def filter_attribute_value_assertions(
     ava: AttributeValues, attribute_restrictions: Optional[AttributeRestrictions] = None
 ) -> AttributeValues:
@@ -321,104 +362,6 @@ def restriction_from_attribute_spec(attributes):
             else:
                 restr[attribute.name] = re.compile(val.text)
     return restr
-
-
-PolicyConfigKey = Union[str, Literal["default"]]
-
-
-class PolicyConfigValue(TypedDict):
-    lifetime: Optional[Any]
-    attribute_restrictions: Optional[AttributeRestrictions]
-    name_form: Optional[str]
-    nameid_format: Optional[str]
-    entity_categories: EntityCategoryPolicy
-    sign: Optional[Union[Literal["response"], Literal["assertion"], Literal["on_demand"]]]
-    fail_on_missing_requested: Optional[bool]
-
-
-PolicyConfig = dict[PolicyConfigKey, PolicyConfigValue]
-
-
-def compile(restrictions: Mapping[str, Any]) -> PolicyConfig:
-    """
-    Pre-compile regular expressions in rules in `restrictions'.
-
-    This is only for IdPs or AAs, and it's about limiting what
-    is returned to the SP.
-    In the configuration file, restrictions on which values that
-    can be returned are specified with the help of regular expressions.
-    This function goes through and pre-compiles the regular expressions.
-
-    :param restrictions: policy configuration
-    :return: The assertion with the string specification replaced with
-        a compiled regular expression.
-    """
-    config: PolicyConfig = {}
-    for who, spec in restrictions.items():
-        if spec is None:
-            spec = {}
-
-        entity_categories: list[str] = spec.get("entity_categories", [])
-        _new_entity_categories = EntityCategoryPolicy.from_module_names(entity_categories)
-
-        attribute_restrictions: Mapping[str, list[str]] = spec.get("attribute_restrictions") or {}
-        _attribute_restrictions: AttributeRestrictions = {}
-        for key, values in attribute_restrictions.items():
-            lkey = key.lower()
-            values = [] if not values else values
-            _attribute_restrictions[lkey] = [re.compile(value) for value in values] or None
-        _new_attribute_restrictions = _attribute_restrictions or None
-
-        config[who] = PolicyConfigValue(
-            lifetime=spec.get("lifetime"),
-            attribute_restrictions=_new_attribute_restrictions,
-            name_form=spec.get("name_form"),
-            nameid_format=spec.get("nameid_format"),
-            entity_categories=_new_entity_categories,
-            sign=spec.get("sign"),
-            fail_on_missing_requested=spec.get("fail_on_missing_requested"),
-        )
-
-    return config
-
-
-class EntityCategoryMatcher(BaseModel):
-    """
-    Part of EntityCategoryRule.
-
-    Decides, based on a list of entity categories for an SP, if this rule applies to the SP or not.
-    """
-
-    required: List[str]  # List of entity category URIs that must be present in the SP's entity categories
-    conflicts: List[str] = []  # List of entity category URIs that must not be present in the SP's entity categories
-
-    def matches(self, sp_ecs: List[str]) -> bool:
-        """Return True if all our entity categories is present in the list of SP entity categories"""
-        _conflicts = self._conflicts(sp_ecs)
-        if _conflicts:
-            extra_logger.debug(f"Not matching, SP entity categories in conflict with {self.conflicts}")
-            return False
-        if self.required == [""]:
-            # A rule with this matching criteria results in attributes always being released
-            return True
-        return all([x in sp_ecs for x in self.required])
-
-    def _conflicts(self, sp_ecs: List[str]) -> bool:
-        """Return True if any of the SP's entity categories are present in `conflicts'."""
-        return any([x in sp_ecs for x in self.conflicts])
-
-
-class EntityCategoryRule(BaseModel):
-    """A rule to decide whether or not to add a list of attributes for release to an SP."""
-
-    match: EntityCategoryMatcher
-    attributes: List[str]  # attributes to release if this rule matches (friendly names)
-    only_required: bool = False  # If this rule matches, only include the required attributes for the SP
-
-    @validator("attributes")
-    def lowercase_attribute_names(cls, v: List[str]):
-        """Make sure all attribute names are lower case, for easier comparison later."""
-        return [x.lower() for x in v]
 
 
 class EntityCategoryPolicy(BaseModel):
@@ -550,6 +493,25 @@ class EntityCategoryPolicy(BaseModel):
         return restrictions
 
 
+PolicyConfigKey = Union[str, Literal["default"]]
+
+
+class PolicyConfigValue(BaseModel):
+    lifetime: Optional[Any]
+    attribute_restrictions: Optional[AttributeRestrictions]
+    name_form: Optional[str]
+    nameid_format: Optional[str]
+    entity_categories: EntityCategoryPolicy
+    sign: Optional[Union[Literal["response"], Literal["assertion"], Literal["on_demand"]]]
+    fail_on_missing_requested: Optional[bool]
+
+    class Config:
+        arbitrary_types_allowed = True  # allow re.Pattern as type in AttributeRestrictions
+
+
+PolicyConfig = dict[PolicyConfigKey, PolicyConfigValue]
+
+
 class Policy:
     """Handles restrictions on assertions."""
 
@@ -564,8 +526,51 @@ class Policy:
             return None
 
         restrictions = copy.deepcopy(restrictions)
-        restrictions = compile(restrictions)
+        restrictions = self._compile_restrictions(restrictions)
         return restrictions
+
+    @staticmethod
+    def _compile_restrictions(restrictions: Mapping[str, Any]) -> PolicyConfig:
+        """
+        Pre-compile regular expressions in rules in `restrictions'.
+
+        This is only for IdPs or AAs, and it's about limiting what
+        is returned to the SP.
+        In the configuration file, restrictions on which values that
+        can be returned are specified with the help of regular expressions.
+        This function goes through and pre-compiles the regular expressions.
+
+        :param restrictions: policy configuration
+        :return: The assertion with the string specification replaced with
+            a compiled regular expression.
+        """
+        config: PolicyConfig = {}
+        for who, spec in restrictions.items():
+            if spec is None:
+                spec = {}
+
+            entity_categories: list[str] = spec.get("entity_categories", [])
+            _new_entity_categories = EntityCategoryPolicy.from_module_names(entity_categories)
+
+            attribute_restrictions: Mapping[str, list[str]] = spec.get("attribute_restrictions") or {}
+            _attribute_restrictions: AttributeRestrictions = {}
+            for key, values in attribute_restrictions.items():
+                lkey = key.lower()
+                values = [] if not values else values
+                _attribute_restrictions[lkey] = [re.compile(value) for value in values] or None
+            _new_attribute_restrictions = _attribute_restrictions or None
+
+            config[who] = PolicyConfigValue(
+                lifetime=spec.get("lifetime"),
+                attribute_restrictions=_new_attribute_restrictions,
+                name_form=spec.get("name_form"),
+                nameid_format=spec.get("nameid_format"),
+                entity_categories=_new_entity_categories,
+                sign=spec.get("sign"),
+                fail_on_missing_requested=spec.get("fail_on_missing_requested"),
+            )
+
+        return config
 
     def get(self, attribute: str, sp_entity_id: str, default: Any = None) -> Any:
         """
@@ -586,17 +591,17 @@ class Policy:
         sp_restrictions = self._restrictions.get(sp_entity_id)
         ra_restrictions = self._restrictions.get(ra_entity_id)
         default_restrictions = self._restrictions.get("default") or self._restrictions.get("")
-        restrictions: Mapping[str, Any] = (
+        restrictions: Optional[PolicyConfigValue] = (
             sp_restrictions
             if sp_restrictions is not None
             else ra_restrictions
             if ra_restrictions is not None
             else default_restrictions
             if default_restrictions is not None
-            else {}  # type: ignore[typeddict-item]
+            else None
         )
 
-        attribute_restriction = restrictions.get(attribute)
+        attribute_restriction = getattr(restrictions, attribute, None)
         if attribute_restriction is None:
             return default
         return attribute_restriction
@@ -1068,3 +1073,8 @@ class Assertion(dict):
                 del self[key]
 
         return ava
+
+
+def compile(restrictions: Mapping[str, Any]) -> PolicyConfig:
+    _warn("compile() is believe to be unused as an exported function and will be removed, use Policy() instead")
+    return Policy._compile_restrictions(restrictions)
