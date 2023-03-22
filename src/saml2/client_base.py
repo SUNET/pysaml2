@@ -170,21 +170,29 @@ class Base(Entity):
         else:
             self.state = state_cache
 
-        attribute_defaults = {
-            "logout_requests_signed": False,
-            "logout_responses_signed": False,
-            "allow_unsolicited": False,
-            "authn_requests_signed": False,
-            "want_assertions_signed": False,
-            "want_response_signed": True,
-            "want_assertions_or_response_signed": False,
-        }
-        for attr, val_default in attribute_defaults.items():
+        self.logout_requests_signed = False
+        self.logout_responses_signed = False
+        self.allow_unsolicited = False
+        self.authn_requests_signed = False
+        self.want_assertions_signed = False
+        self.want_response_signed = True
+        self.want_assertions_or_response_signed = False
+
+        _attributes_from_config = [
+            "logout_requests_signed",
+            "logout_responses_signed",
+            "allow_unsolicited",
+            "authn_requests_signed",
+            "want_assertions_signed",
+            "want_response_signed",
+            "want_assertions_or_response_signed",
+        ]
+        for attr in _attributes_from_config:
             val_config = self.config.getattr(attr, "sp")
-            val = val_config if val_config is not None else val_default
-            if val == "true":
-                val = True
-            setattr(self, attr, val)
+            if val_config is not None:
+                if val_config == "true":
+                    val_config = True
+                setattr(self, attr, val_config)
 
         if self.entity_type == "sp" and not any(
             [
