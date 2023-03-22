@@ -475,7 +475,7 @@ def import_rsa_key_from_file(filename):
 
 def parse_xmlsec_output(output):
     """Parse the output from xmlsec to try to find out if the
-    command was successfull or not.
+    command was successful or not.
 
     :param output: The output from Popen
     :return: A boolean; True if the command was a success otherwise False

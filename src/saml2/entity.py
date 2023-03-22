@@ -466,7 +466,7 @@ class Entity(HTTPBase):
         :param txt:
         :param binding:
         :param msgtype:
-        :return:
+        :return: Bytes with presumably XML
         """
         # logger.debug("unravel '%s'", txt)
         if binding not in [
@@ -524,7 +524,7 @@ class Entity(HTTPBase):
 
     # XXX DONE will actually use sign_alg and digest_alg for the POST-Binding
     # XXX DONE deepest level - needs to decide the sign_alg and digest_alg value
-    # XXX a controler for signed_instance_factory
+    # XXX a controller for signed_instance_factory
     # XXX syncs pre_signature_part and signed_instance_factory
     # XXX makes sure pre_signature_part is called before signed_instance_factory
     # XXX calls pre_signature_part - must have sign_alg & digest_alg

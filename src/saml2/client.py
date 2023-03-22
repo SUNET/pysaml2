@@ -60,7 +60,7 @@ class Saml2Client(Base):
 
         :param entityid: The entity ID of the IdP to send the request to
         :param relay_state: To where the user should be returned after
-            successfull log in.
+            successful log in.
         :param binding: Which binding to use for sending the request
         :param vorg: The entity_id of the virtual organization I'm a member of
         :param nameid_format:
@@ -115,7 +115,7 @@ class Saml2Client(Base):
 
         :param entityid: The entity ID of the IdP to send the request to
         :param relay_state: To where the user should be returned after
-            successfull log in.
+            successful log in.
         :param binding: Which binding to use for sending the request
         :param vorg: The entity_id of the virtual organization I'm a member of
         :param nameid_format:
@@ -125,7 +125,7 @@ class Saml2Client(Base):
         :param sign: Whether the request should be signed or not.
         :param response_binding: Which binding to use for receiving the response
         :param kwargs: Extra key word arguments
-        :return: session id and AuthnRequest info
+        :return: session id, binding and AuthnRequest info
         """
 
         expected_binding = binding

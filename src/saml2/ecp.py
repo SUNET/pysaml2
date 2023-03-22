@@ -42,7 +42,7 @@ def ecp_auth_request(cls, entityid=None, relay_state="", sign=None, sign_alg=Non
 
     :param entityid: The entity ID of the IdP to send the request to
     :param relay_state: To where the user should be returned after
-        successfull log in.
+        successful log in.
     :param sign: Whether the request should be signed or not.
     :return: AuthnRequest response
     """

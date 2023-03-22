@@ -5,8 +5,6 @@ import copy
 import importlib
 import logging
 import re
-from warnings import warn as _warn
-
 from typing import Any
 from typing import Dict
 from typing import List

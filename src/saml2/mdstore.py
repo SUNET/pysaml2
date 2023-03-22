@@ -1327,7 +1327,7 @@ class MetadataStore(MetaData):
                     "name_format": "urn:oasis:names:tc:SAML:2.0:attrname-format:uri",
                     "friendly_name": "subject-id",
                     "is_required": "true",
-                }
+                },
             ]
         elif subject_id_req == "pairwise-id":
             return [
