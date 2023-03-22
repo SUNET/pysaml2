@@ -3,6 +3,16 @@ from binascii import hexlify
 import copy
 from hashlib import sha1
 import logging
+from typing import Any
+from typing import AnyStr
+from typing import Mapping
+from typing import NewType
+from typing import Optional
+from typing import Tuple
+from typing import Type
+from typing import TypeVar
+from typing import Union
+from typing import cast
 import zlib
 
 import requests
@@ -34,6 +44,7 @@ from saml2.profile import ecp
 from saml2.profile import paos
 from saml2.profile import samlec
 from saml2.response import LogoutResponse
+from saml2.response import ResponseClass
 from saml2.response import UnsolicitedResponse
 from saml2.s_utils import UnravelError
 from saml2.s_utils import UnsupportedBinding
@@ -53,10 +64,12 @@ from saml2.samlp import AssertionIDRequest
 from saml2.samlp import AttributeQuery
 from saml2.samlp import AuthnQuery
 from saml2.samlp import AuthnRequest
+from saml2.samlp import AuthnRequestType_
 from saml2.samlp import AuthzDecisionQuery
 from saml2.samlp import LogoutRequest
 from saml2.samlp import ManageNameIDRequest
 from saml2.samlp import NameIDMappingRequest
+from saml2.samlp import RequestAbstractType_
 from saml2.samlp import SessionIndex
 from saml2.samlp import artifact_resolve_from_string
 from saml2.samlp import response_from_string
@@ -73,6 +86,9 @@ from saml2.soap import class_instances_from_soap_enveloped_saml_thingies
 from saml2.soap import open_soap_envelope
 from saml2.soap import parse_soap_enveloped_saml_artifact_resolve
 from saml2.time_util import instant
+from saml2.typing import OutstandingCertsType
+from saml2.typing import SAMLBinding
+from saml2.typing import SAMLHttpArgs
 from saml2.virtual_org import VirtualOrg
 from saml2.xmldsig import DIGEST_ALLOWED_ALG
 from saml2.xmldsig import SIG_ALLOWED_ALG
@@ -96,6 +112,8 @@ SERVICE2MESSAGE = {
     "artifact_resolve_service": ArtifactResolve,
     "single_logout_service": LogoutRequest,
 }
+
+RequestClass = TypeVar("RequestClass", bound=AuthnRequestType_)
 
 
 class UnknownBinding(SAMLError):
@@ -238,7 +256,7 @@ class Entity(HTTPBase):
     # XXX deprecate sigalg for sign_alg
     def apply_binding(
         self,
-        binding,
+        binding: SAMLBinding,
         msg_str,
         destination="",
         relay_state="",
@@ -246,7 +264,7 @@ class Entity(HTTPBase):
         sign=None,
         sigalg=None,
         **kwargs,
-    ):
+    ) -> SAMLHttpArgs:
         """
         Construct the necessary HTTP arguments dependent on Binding
 
@@ -310,17 +328,29 @@ class Entity(HTTPBase):
 
         return info
 
-    def pick_binding(self, service, bindings=None, descr_type="", request=None, entity_id=""):
+    def pick_binding(
+        self,
+        service: str,
+        bindings: Optional[list[SAMLBinding]] = None,
+        descr_type: str = "",
+        request: Optional[Union[AuthnRequest, LogoutRequest]] = None,
+        entity_id: str = "",
+    ) -> Tuple[SAMLBinding, Optional[str]]:
+        """
+        Pick a binding to use for a service.
+
+        Returns: A tuple with binding and destination
+        """
         if request and not entity_id:
             entity_id = request.issuer.text.strip()
 
         sfunc = getattr(self.metadata, service)
 
         if not bindings:
-            if request and request.protocol_binding:
-                bindings = [request.protocol_binding]
+            if isinstance(request, AuthnRequest) and isinstance(request.protocol_binding, str):
+                bindings = [cast(SAMLBinding, request.protocol_binding)]
             else:
-                bindings = self.config.preferred_binding[service]
+                bindings = [cast(SAMLBinding, x) for x in self.config.preferred_binding[service]]
 
         if not descr_type:
             if self.entity_type == "sp":
@@ -328,7 +358,7 @@ class Entity(HTTPBase):
             else:
                 descr_type = "spsso"
 
-        _url = getattr(request, f"{service}_url", None)
+        _url: Optional[str] = getattr(request, f"{service}_url", None)
         _index = getattr(request, f"{service}_index", None)
 
         for binding in bindings:
@@ -367,7 +397,12 @@ class Entity(HTTPBase):
         }
         return margs
 
-    def response_args(self, message, bindings=None, descr_type=""):
+    def response_args(
+        self,
+        message: RequestAbstractType_,
+        bindings: Optional[list[SAMLBinding]] = None,
+        descr_type: str = "",
+    ) -> dict[str, Any]:
         """
 
         :param message: The message to which a reply is constructed
@@ -375,7 +410,7 @@ class Entity(HTTPBase):
         :param descr_type: Type of descriptor (spssp, idpsso, )
         :return: Dictionary
         """
-        info = {"in_response_to": message.id}
+        info: dict[str, Any] = {"in_response_to": message.id}
 
         if isinstance(message, AuthnRequest):
             rsrv = "assertion_consumer_service"
@@ -414,6 +449,9 @@ class Entity(HTTPBase):
                 else:
                     descr_type = "spsso"
 
+            if not isinstance(message, (AuthnRequest, LogoutRequest)):
+                raise SAMLError(f"Can't pick a binding for a request of type {type(message)}")
+
             binding, destination = self.pick_binding(rsrv, bindings, descr_type=descr_type, request=message)
             info["binding"] = binding
             info["destination"] = destination
@@ -421,7 +459,7 @@ class Entity(HTTPBase):
         return info
 
     @staticmethod
-    def unravel(txt, binding, msgtype="response"):
+    def unravel(txt: AnyStr, binding: SAMLBinding, msgtype: str = "response") -> bytes:
         """
         Will unpack the received text. Depending on the context the original
          response may have been transformed before transmission.
@@ -447,7 +485,7 @@ class Entity(HTTPBase):
                 elif binding == BINDING_HTTP_POST:
                     try:
                         xmlstr = decode_base64_and_inflate(txt)
-                    except zlib.error:
+                    except (zlib.error, TypeError):
                         xmlstr = base64.b64decode(txt)
                 elif binding == BINDING_SOAP:
                     func = getattr(soap, f"parse_soap_enveloped_saml_{msgtype}")
@@ -455,7 +493,10 @@ class Entity(HTTPBase):
                 elif binding == BINDING_HTTP_ARTIFACT:
                     xmlstr = base64.b64decode(txt)
                 else:
-                    xmlstr = txt
+                    if isinstance(txt, str):
+                        xmlstr = txt.encode("utf-8")
+                    else:
+                        xmlstr = txt
             except Exception:
                 raise UnravelError(f"Unravelling binding '{binding}' failed")
 
@@ -530,7 +571,7 @@ class Entity(HTTPBase):
     # XXX DONE ensure this works for the POST-Binding
     def _message(
         self,
-        request_cls,
+        request_cls: Type[RequestClass],
         destination=None,
         message_id=0,
         consent=None,
@@ -541,7 +582,7 @@ class Entity(HTTPBase):
         sign_alg=None,
         digest_alg=None,
         **kwargs,
-    ):
+    ) -> Tuple[str, RequestClass]:
         """
         Some parameters appear in all requests so simplify by doing
         it in one place
@@ -1387,13 +1428,13 @@ class Entity(HTTPBase):
 
     def _parse_response(
         self,
-        xmlstr,
-        response_cls,
+        xmlstr: Optional[AnyStr],
+        response_cls: Type[ResponseClass],
         service,
-        binding,
-        outstanding_certs=None,
+        binding: SAMLBinding,
+        outstanding_certs: Optional[OutstandingCertsType] = None,
         **kwargs,
-    ):
+    ) -> Optional[ResponseClass]:
         """Deal with a Response
 
         :param xmlstr: The response as a xml string
@@ -1415,9 +1456,8 @@ class Entity(HTTPBase):
             else:
                 kwargs["asynchop"] = True
 
-        response = None
         if not xmlstr:
-            return response
+            return None
 
         if "return_addrs" not in kwargs:
             bindings = {
@@ -1435,8 +1475,8 @@ class Entity(HTTPBase):
             logger.error(str(exc))
             raise
 
-        xmlstr = self.unravel(xmlstr, binding, response_cls.msgtype)
-        if not xmlstr:  # Not a valid reponse
+        _xmlstr = self.unravel(xmlstr, binding, response_cls.msgtype)
+        if not _xmlstr:  # Not a valid response
             return None
 
         try:
@@ -1448,7 +1488,7 @@ class Entity(HTTPBase):
             # or not the response is signed. The attribute on the response class
             # is reset to the recorded value in the finally clause below.
             response.require_response_signature = True
-            response = response.loads(xmlstr, False, origxml=xmlstr)
+            response = response.loads(_xmlstr, False, origxml=_xmlstr)
         except SigverError as err:
             if require_response_signature:
                 logger.error("Signature Error: %s", str(err))
@@ -1458,7 +1498,7 @@ class Entity(HTTPBase):
                 # so reset the attribute on the response class to the recorded
                 # value and attempt to consume the unpacked XML again.
                 response.require_response_signature = require_response_signature
-                response = response.loads(xmlstr, False, origxml=xmlstr)
+                response = response.loads(_xmlstr, False, origxml=_xmlstr)
         except UnsolicitedResponse:
             logger.error("Unsolicited response")
             raise
@@ -1471,13 +1511,14 @@ class Entity(HTTPBase):
         finally:
             response.require_response_signature = require_response_signature
 
-        logger.debug("XMLSTR: %s", xmlstr)
+        logger.debug("XMLSTR: %s", _xmlstr)
 
         if not response:
+            # TODO: Don't think we can ever get here.
             return response
 
         keys = None
-        if outstanding_certs:
+        if outstanding_certs and isinstance(response.in_response_to, str):
             try:
                 cert = outstanding_certs[response.in_response_to]
             except KeyError:
@@ -1525,7 +1566,9 @@ class Entity(HTTPBase):
 
     # ------------------------------------------------------------------------
 
-    def parse_logout_request_response(self, xmlstr, binding=BINDING_SOAP):
+    def parse_logout_request_response(
+        self, xmlstr: AnyStr, binding: SAMLBinding = BINDING_SOAP
+    ) -> Optional[LogoutResponse]:
         return self._parse_response(xmlstr, LogoutResponse, "single_logout_service", binding)
 
     # ------------------------------------------------------------------------

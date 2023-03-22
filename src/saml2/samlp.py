@@ -4,6 +4,8 @@
 # Generated Mon May  2 14:23:33 2011 by parse_xsd.py version 0.4.
 #
 
+from typing import AnyStr
+
 import saml2
 from saml2 import SamlBase
 from saml2 import saml
@@ -1801,7 +1803,7 @@ def factory(tag, **kwargs):
     return ELEMENT_BY_TAG[tag](**kwargs)
 
 
-def any_response_from_string(xmlstr):
+def any_response_from_string(xmlstr: AnyStr) -> ResponseType_:
     resp = None
     for func in [
         status_response_type__from_string,

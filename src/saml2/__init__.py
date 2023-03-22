@@ -18,12 +18,16 @@
 
 import logging
 from typing import Any
+from typing import AnyStr
 from typing import Optional
+from typing import Type
+from typing import TypeVar
 from typing import Union
 from xml.etree import ElementTree
 
 import defusedxml.ElementTree
 
+from saml2.typing import SAMLBinding
 from saml2.validate import valid_instance
 from saml2.version import version as __version__
 
@@ -51,24 +55,29 @@ VERSION = "2.0"
 # The specification was later updated with errata, and the new version is here:
 # http://www.oasis-open.org/committees/download.php/56779/sstc-saml-bindings-errata-2.0-wd-06.pdf
 # parse a SOAP header, make a SOAP request, and receive a SOAP response
-BINDING_SOAP = "urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
+BINDING_SOAP = SAMLBinding("urn:oasis:names:tc:SAML:2.0:bindings:SOAP")
 # parse a PAOS header, make a PAOS request, and receive a PAOS response
-BINDING_PAOS = "urn:oasis:names:tc:SAML:2.0:bindings:PAOS"
+BINDING_PAOS = SAMLBinding("urn:oasis:names:tc:SAML:2.0:bindings:PAOS")
 # URI encoded messages
-BINDING_HTTP_REDIRECT = "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+BINDING_HTTP_REDIRECT = SAMLBinding("urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect")
 # HTML encoded messages
-BINDING_HTTP_POST = "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+BINDING_HTTP_POST = SAMLBinding("urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST")
 # sensitive messages are transported over a backchannel
-BINDING_HTTP_ARTIFACT = "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact"
+BINDING_HTTP_ARTIFACT = SAMLBinding("urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact")
 # as uri response encoded message
-BINDING_URI = "urn:oasis:names:tc:SAML:2.0:bindings:URI"
+BINDING_URI = SAMLBinding("urn:oasis:names:tc:SAML:2.0:bindings:URI")
+
+
+SamlMessageClass = TypeVar("SamlMessageClass")
 
 
 def class_name(instance):
     return f"{instance.c_namespace}:{instance.c_tag}"
 
 
-def create_class_from_xml_string(target_class, xml_string):
+def create_class_from_xml_string(
+    target_class: Type[SamlMessageClass], xml_string: AnyStr
+) -> Optional[SamlMessageClass]:
     """Creates an instance of the target class from a string.
 
     :param target_class: The class which will be instantiated and populated
@@ -83,8 +92,10 @@ def create_class_from_xml_string(target_class, xml_string):
         not match those of the target class.
     """
     if not isinstance(xml_string, bytes):
-        xml_string = xml_string.encode("utf-8")
-    tree = defusedxml.ElementTree.fromstring(xml_string)
+        _xml_string = xml_string.encode("utf-8")
+    else:
+        _xml_string = xml_string
+    tree = defusedxml.ElementTree.fromstring(_xml_string)
     return create_class_from_element_tree(target_class, tree)
 
 

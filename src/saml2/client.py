@@ -6,6 +6,8 @@
 to conclude its tasks.
 """
 import logging
+from typing import Optional
+from typing import Tuple
 
 import saml2
 from saml2 import BINDING_HTTP_POST
@@ -28,6 +30,8 @@ from saml2.saml import AssertionIDRef
 from saml2.samlp import STATUS_REQUEST_DENIED
 from saml2.samlp import STATUS_UNKNOWN_PRINCIPAL
 from saml2.time_util import not_on_or_after
+from saml2.typing import SAMLBinding
+from saml2.typing import SAMLHttpArgs
 
 
 logger = logging.getLogger(__name__)
@@ -40,7 +44,7 @@ class Saml2Client(Base):
         self,
         entityid=None,
         relay_state="",
-        binding=saml2.BINDING_HTTP_REDIRECT,
+        binding: SAMLBinding = saml2.BINDING_HTTP_REDIRECT,
         vorg="",
         nameid_format=None,
         scoping=None,
@@ -49,9 +53,9 @@ class Saml2Client(Base):
         sign=None,
         sigalg=None,
         digest_alg=None,
-        response_binding=saml2.BINDING_HTTP_POST,
+        response_binding: SAMLBinding = saml2.BINDING_HTTP_POST,
         **kwargs,
-    ):
+    ) -> Tuple[str, SAMLHttpArgs]:
         """Makes all necessary preparations for an authentication request.
 
         :param entityid: The entity ID of the IdP to send the request to
@@ -94,7 +98,7 @@ class Saml2Client(Base):
         self,
         entityid=None,
         relay_state="",
-        binding=None,
+        binding: Optional[SAMLBinding] = None,
         vorg="",
         nameid_format=None,
         scoping=None,
@@ -105,7 +109,7 @@ class Saml2Client(Base):
         sigalg=None,
         digest_alg=None,
         **kwargs,
-    ):
+    ) -> Tuple[str, SAMLBinding, SAMLHttpArgs]:
         """Makes all necessary preparations for an authentication request
         that negotiates which binding to use for authentication.
 
@@ -137,14 +141,14 @@ class Saml2Client(Base):
             else:
                 binding_destinations.append((binding, destination))
 
-        for binding, destination in binding_destinations:
+        for _binding, destination in binding_destinations:
             logger.debug("destination to provider: %s", destination)
 
             # XXX - sign_post will embed the signature to the xml doc
             # XXX   ^through self.create_authn_request(...)
             # XXX - sign_redirect will add the signature to the query params
             # XXX   ^through self.apply_binding(...)
-            sign_redirect = sign and binding == BINDING_HTTP_REDIRECT
+            sign_redirect = sign and _binding == BINDING_HTTP_REDIRECT
             sign_post = sign and not sign_redirect
 
             reqid, request = self.create_authn_request(
@@ -165,7 +169,7 @@ class Saml2Client(Base):
             logger.debug("AuthNReq: %s", _req_str)
 
             http_info = self.apply_binding(
-                binding,
+                _binding,
                 _req_str,
                 destination,
                 relay_state,

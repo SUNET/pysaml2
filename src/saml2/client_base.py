@@ -7,7 +7,12 @@ to conclude its tasks.
 import logging
 import threading
 import time
+from typing import Any
+from typing import AnyStr
 from typing import Mapping
+from typing import Optional
+from typing import Tuple
+from typing import TypeVar
 from urllib.parse import parse_qs
 from urllib.parse import urlencode
 from urllib.parse import urlparse
@@ -35,8 +40,10 @@ from saml2.response import AttributeResponse
 from saml2.response import AuthnQueryResponse
 from saml2.response import AuthnResponse
 from saml2.response import AuthzResponse
+from saml2.response import ConvInfoType
 from saml2.response import NameIDMappingResponse
 from saml2.response import StatusError
+from saml2.response import StatusResponse
 from saml2.s_utils import UnravelError
 from saml2.s_utils import do_attributes
 from saml2.s_utils import signature
@@ -51,6 +58,10 @@ from saml2.samlp import Extensions
 from saml2.samlp import NameIDMappingRequest
 from saml2.samlp import RequestedAuthnContext
 from saml2.soap import make_soap_enveloped_saml_thingy
+from saml2.typing import OutstandingCertsType
+from saml2.typing import OutstandingQueriesType
+from saml2.typing import SAMLBinding
+from saml2.typing import SAMLHttpArgs
 
 
 logger = logging.getLogger(__name__)
@@ -279,7 +290,7 @@ class Base(Entity):
         destination,
         vorg="",
         scoping=None,
-        binding=BINDING_HTTP_POST,
+        binding: SAMLBinding = BINDING_HTTP_POST,
         nameid_format=None,
         service_url_binding=None,
         message_id=0,
@@ -292,7 +303,7 @@ class Base(Entity):
         allow_create=None,
         requested_attributes=None,
         **kwargs,
-    ):
+    ) -> Tuple[str, AuthnRequest]:
         """Creates an authentication request.
 
         :param destination: Where the request should be sent.
@@ -321,7 +332,7 @@ class Base(Entity):
         :return: either a tuple of request ID and <samlp:AuthnRequest> instance
                  or a tuple of request ID and str when sign is set to True
         """
-        args = {}
+        args: dict[str, Any] = {}
 
         # AssertionConsumerServiceURL
         # AssertionConsumerServiceIndex
@@ -331,9 +342,10 @@ class Base(Entity):
         )
         assertion_consumer_service_index = kwargs.pop("assertion_consumer_service_index", None)
         service_url = (self.service_urls(service_url_binding or binding) or [None])[0]
+        _binding: Optional[str] = binding
         if hide_assertion_consumer_service:
             args["assertion_consumer_service_url"] = None
-            binding = None
+            _binding = None
         elif assertion_consumer_service_url:
             args["assertion_consumer_service_url"] = assertion_consumer_service_url
         elif assertion_consumer_service_index:
@@ -343,7 +355,7 @@ class Base(Entity):
 
         # ProviderName
         provider_name = kwargs.get("provider_name")
-        if not provider_name and binding != BINDING_PAOS:
+        if not provider_name and _binding != BINDING_PAOS:
             provider_name = self._my_name()
         args["provider_name"] = provider_name
 
@@ -453,7 +465,7 @@ class Base(Entity):
             sign_prepare,
             sign_alg=sign_alg,
             digest_alg=digest_alg,
-            protocol_binding=binding,
+            protocol_binding=_binding,
             scoping=scoping,
             nsprefix=nsprefix,
             **args,
@@ -756,7 +768,14 @@ class Base(Entity):
 
     # ======== response handling ===========
 
-    def parse_authn_request_response(self, xmlstr, binding, outstanding=None, outstanding_certs=None, conv_info=None):
+    def parse_authn_request_response(
+        self,
+        xmlstr: AnyStr,
+        binding: SAMLBinding,
+        outstanding: Optional[OutstandingQueriesType] = None,
+        outstanding_certs: Optional[OutstandingCertsType] = None,
+        conv_info: Optional[ConvInfoType] = None,
+    ) -> Optional[AuthnResponse]:
         """Deal with an AuthnResponse
 
         :param xmlstr: The reply as a xml string
@@ -804,7 +823,7 @@ class Base(Entity):
             logger.error("Response type not supported: %s", saml2.class_name(resp))
             return None
 
-        if resp.assertion and len(resp.response.encrypted_assertion) == 0 and resp.name_id:
+        if resp.assertion and resp.response and len(resp.response.encrypted_assertion) == 0 and resp.name_id:
             self.users.add_information_about_person(resp.session_info())
             logger.info("--- ADDED person info ----")
 

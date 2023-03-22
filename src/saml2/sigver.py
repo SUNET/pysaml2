@@ -14,6 +14,8 @@ from subprocess import Popen
 import sys
 from tempfile import NamedTemporaryFile
 from time import mktime
+from typing import AnyStr
+from typing import Optional
 from uuid import uuid4 as gen_random_key
 
 import dateutil
@@ -1620,8 +1622,14 @@ class SecurityContext:
         return self.correctly_signed_message(decoded_xml, "assertion", must, origdoc, only_valid_cert)
 
     def correctly_signed_response(
-        self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, require_response_signature=False, **kwargs
-    ):
+        self,
+        decoded_xml: AnyStr,
+        must: bool = False,
+        origdoc: Optional[AnyStr] = None,
+        only_valid_cert: bool = False,
+        require_response_signature: bool = False,
+        **kwargs,
+    ) -> samlp.ResponseType_:
         """Check if a instance is correctly signed, if we have metadata for
         the IdP that sent the info use that, if not use the key that are in
         the message if any.

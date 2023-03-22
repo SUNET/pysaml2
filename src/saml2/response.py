@@ -1,7 +1,16 @@
 #!/usr/bin/env python
 #
+from __future__ import annotations
+
 import calendar
 import logging
+from typing import Any
+from typing import AnyStr
+from typing import Mapping
+from typing import Optional
+from typing import Type
+from typing import TypeVar
+from typing import Union
 
 from saml2 import SAMLError
 from saml2 import class_name
@@ -11,6 +20,7 @@ from saml2 import samlp
 from saml2 import time_util
 from saml2 import xmldsig as ds
 from saml2 import xmlenc as xenc
+from saml2.assertion import Assertion
 from saml2.attribute_converter import to_local
 from saml2.s_utils import RequestVersionTooHigh
 from saml2.s_utils import RequestVersionTooLow
@@ -41,12 +51,16 @@ from saml2.samlp import STATUS_UNKNOWN_ATTR_PROFILE
 from saml2.samlp import STATUS_UNKNOWN_PRINCIPAL
 from saml2.samlp import STATUS_UNSUPPORTED_BINDING
 from saml2.samlp import STATUS_VERSION_MISMATCH
+from saml2.samlp import ResponseType_
 from saml2.sigver import DecryptError
+from saml2.sigver import SecurityContext
 from saml2.sigver import SignatureError
 from saml2.sigver import security_context
 from saml2.sigver import signed
 from saml2.time_util import later_than
 from saml2.time_util import str_to_time
+from saml2.typing import AttributeValues
+from saml2.typing import OutstandingQueriesType
 from saml2.validate import NotValid
 from saml2.validate import valid_address
 from saml2.validate import valid_instance
@@ -56,6 +70,11 @@ from saml2.validate import validate_on_or_after
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+
+ResponseClass = TypeVar("ResponseClass", bound="StatusResponse")
+# TODO: Not sure this conv_info parameter is actually used for something. Apparently it can contain "remote_addr".
+ConvInfoType = Mapping[str, Any]
 
 # ---------------------------------------------------------------------------
 
@@ -277,19 +296,27 @@ def attribute_response(conf, return_addrs, timeslack=0, asynchop=False, test=Fal
 class StatusResponse:
     msgtype = "status_response"
 
-    def __init__(self, sec_context, return_addrs=None, timeslack=0, request_id=0, asynchop=True, conv_info=None):
+    def __init__(
+        self,
+        sec_context: SecurityContext,
+        return_addrs=None,
+        timeslack=0,
+        request_id=0,
+        asynchop=True,
+        conv_info: Optional[ConvInfoType] = None,
+    ):
         self.sec = sec_context
         self.return_addrs = return_addrs or []
 
         self.timeslack = timeslack
         self.request_id = request_id
 
-        self.xmlstr = ""
-        self.origxml = ""
+        self.xmlstr: str = ""
+        self.origxml: Union[str, bytes] = ""
         self.name_id = None
-        self.response = None
+        self.response: Optional[ResponseType_] = None
         self.not_on_or_after = 0
-        self.in_response_to = None
+        self.in_response_to: Optional[str] = None
         self.signature_check = self.sec.correctly_signed_response
         self.require_signature = False
         self.require_response_signature = False
@@ -305,7 +332,7 @@ class StatusResponse:
         self.response = None
         self.not_on_or_after = 0
 
-    def _postamble(self):
+    def _postamble(self: ResponseClass) -> ResponseClass:
         if not self.response:
             logger.warning("Response was not correctly signed")
             if self.xmlstr:
@@ -338,14 +365,19 @@ class StatusResponse:
 
         return self._postamble()
 
-    def _loads(self, xmldata, decode=True, origxml=None):
+    def _loads(
+        self: ResponseClass,
+        xmldata: AnyStr,
+        decode: bool = True,
+        origxml: Optional[AnyStr] = None,
+    ) -> ResponseClass:
 
         # own copy
         if isinstance(xmldata, bytes):
             self.xmlstr = xmldata[:].decode("utf-8")
         else:
             self.xmlstr = xmldata[:]
-        logger.debug("xmlstr: %s", self.xmlstr)
+        logger.debug(f"xmlstr: {self.xmlstr}")
         if origxml:
             self.origxml = origxml
         else:
@@ -358,7 +390,7 @@ class StatusResponse:
 
         try:
             self.response = self.signature_check(
-                xmldata,
+                xmldata,  # TODO: Should this be self.xmlstr?
                 origdoc=origxml,
                 must=self.require_signature,
                 require_response_signature=self.require_response_signature,
@@ -421,7 +453,12 @@ class StatusResponse:
         valid = self.issue_instant_ok() and self.status_ok()
         return valid
 
-    def loads(self, xmldata, decode=True, origxml=None):
+    def loads(
+        self: ResponseClass,
+        xmldata: AnyStr,
+        decode: bool = True,
+        origxml: Optional[AnyStr] = None,
+    ) -> ResponseClass:
         return self._loads(xmldata, decode, origxml)
 
     def verify(self, keys=None):
@@ -476,11 +513,11 @@ class AuthnResponse(StatusResponse):
 
     def __init__(
         self,
-        sec_context,
+        sec_context: SecurityContext,
         attribute_converters,
         entity_id,
         return_addrs=None,
-        outstanding_queries=None,
+        outstanding_queries: Optional[OutstandingQueriesType] = None,
         timeslack=0,
         asynchop=True,
         allow_unsolicited=False,
@@ -502,9 +539,9 @@ class AuthnResponse(StatusResponse):
             self.outstanding_queries = {}
         self.context = "AuthnReq"
         self.came_from = None
-        self.ava = None
-        self.assertion = None
-        self.assertions = []
+        self.ava: Optional[AttributeValues] = None
+        self.assertion: Optional[Assertion] = None
+        self.assertions: list[Assertion] = []
         self.session_not_on_or_after = 0
         self.allow_unsolicited = allow_unsolicited
         self.require_signature = want_assertions_signed
@@ -1038,7 +1075,7 @@ class AuthnResponse(StatusResponse):
         """Return the ID of the response"""
         return self.response.id
 
-    def authn_info(self):
+    def authn_info(self) -> list[tuple[str, list[str], str]]:
         res = []
         for statement in getattr(self.assertion, "authn_statement", []):
             authn_instant = getattr(statement, "authn_instant", "")

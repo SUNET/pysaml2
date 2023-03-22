@@ -1,8 +1,10 @@
 # Type information for common pysaml2 data types, often found in configuration etc.
 #
 
+from typing import Any
 from typing import Literal
 from typing import Mapping
+from typing import NewType
 from typing import Optional
 from typing import TypedDict
 from typing import Union
@@ -28,3 +30,14 @@ class AttributeAsDict(TypedDict):
 # Type for the common 'ava' parameter.
 AttributeValues = dict[str, Union[list[str], str]]
 AttributeValuesStrict = dict[str, list[str]]
+
+SAMLBinding = NewType("SAMLBinding", str)
+SAMLHttpArgs = NewType("SAMLHttpArgs", dict[str, Any])
+
+OutstandingQueriesType = Mapping[str, Any]
+# the CertMapping values are dicts like:
+# { ...
+#   "key": ...
+# }
+_CertMapping = NewType("_CertMapping", dict[str, Any])
+OutstandingCertsType = Mapping[str, Union[_CertMapping, list[_CertMapping]]]

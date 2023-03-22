@@ -8,6 +8,7 @@ import random
 import string
 import sys
 import traceback
+from typing import AnyStr
 from typing import Union
 import zlib
 
@@ -142,7 +143,7 @@ def valid_email(emailaddress, domains=GENERIC_DOMAINS):
         return False  # Email address has funny characters.
 
 
-def decode_base64_and_inflate(string):
+def decode_base64_and_inflate(string: AnyStr) -> bytes:
     """base64 decodes and then inflates according to RFC1951
 
     :param string: a deflated and encoded string
@@ -152,16 +153,18 @@ def decode_base64_and_inflate(string):
     return zlib.decompress(base64.b64decode(string), -15)
 
 
-def deflate_and_base64_encode(string_val):
+def deflate_and_base64_encode(string_val: AnyStr) -> bytes:
     """
     Deflates and the base64 encodes a string
 
     :param string_val: The string to deflate and encode
     :return: The deflated and encoded string
     """
-    if not isinstance(string_val, bytes):
-        string_val = string_val.encode("utf-8")
-    return base64.b64encode(zlib.compress(string_val)[2:-4])
+    if isinstance(string_val, bytes):
+        _val = string_val
+    else:
+        _val = string_val.encode("utf-8")
+    return base64.b64encode(zlib.compress(_val)[2:-4])
 
 
 def rndstr(size=16, alphabet=""):
