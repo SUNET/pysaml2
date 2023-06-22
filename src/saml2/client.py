@@ -177,7 +177,7 @@ class Saml2Client(Base):
                 sigalg=sigalg,
             )
 
-            return reqid, binding, http_info
+            return reqid, _binding, http_info
         else:
             error_context = {
                 "message": "No supported bindings available for authentication",
