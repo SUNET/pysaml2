@@ -481,7 +481,8 @@ def parse_xmlsec_output(output):
     :return: A boolean; True if the command was a success otherwise False
     """
     for line in output.splitlines():
-        if line == "OK":
+        logger.debug(f"xmlsec output: {line}")
+        if line == "Verification status: OK":
             return True
         elif line == "FAIL":
             raise XmlsecError(output)
@@ -837,6 +838,7 @@ class CryptoBackendXmlSec1(CryptoBackend):
         :result: Whatever xmlsec wrote to an --output temporary file
         """
         with NamedTemporaryFile(suffix=".xml") as ntf:
+            com_list.extend(["--lax-key-search"])
             com_list.extend(["--output", ntf.name])
             com_list += extra_args
 
