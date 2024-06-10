@@ -482,7 +482,8 @@ def parse_xmlsec_output(output):
     """
     for line in output.splitlines():
         logger.debug(f"xmlsec output: {line}")
-        if line == "Verification status: OK":
+        line = line.removeprefix("Verification status: ")  # xmlsec 1.3.4 added this prefix
+        if line == "OK":
             return True
         elif line == "FAIL":
             raise XmlsecError(output)

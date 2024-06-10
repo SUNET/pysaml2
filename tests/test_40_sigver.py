@@ -1077,20 +1077,27 @@ def test_sha256_signing_non_ascii_ava():
     assert s
 
 
-def test_xmlsec_output_line_parsing():
-    output1 = "prefix\nOK\npostfix"
-    assert sigver.parse_xmlsec_output(output1)
-
-    output2 = "prefix\nFAIL\npostfix"
-    with raises(sigver.XmlsecError):
-        sigver.parse_xmlsec_output(output2)
-
-    output3 = "prefix\r\nOK\r\npostfix"
-    assert sigver.parse_xmlsec_output(output3)
-
-    output4 = "prefix\r\nFAIL\r\npostfix"
-    with raises(sigver.XmlsecError):
-        sigver.parse_xmlsec_output(output4)
+@pytest.mark.parametrize(
+    "output, expected",
+    [
+        pytest.param("prefix\nOK\npostfix", True),
+        pytest.param("prefix\nFAIL\npostfix", False),
+        pytest.param("prefix\r\nOK\r\npostfix", True),
+        pytest.param("prefix\r\nFAIL\r\npostfix", False),
+        pytest.param("prefix\nVerification status: OK\npostfix", True),
+        pytest.param("prefix\nVerification status: FAIL\npostfix", False),
+        pytest.param("prefix\nVerification status: ERROR\npostfix", False),
+        pytest.param("prefix\r\nVerification status: OK\r\npostfix", True),
+        pytest.param("prefix\r\nVerification status: FAIL\r\npostfix", False),
+        pytest.param("prefix\r\nVerification status: ERROR\r\npostfix", False),
+    ],
+)
+def test_xmlsec_output_line_parsing(output, expected):
+    if expected:
+        assert sigver.parse_xmlsec_output(output) is expected
+    else:
+        with raises(sigver.XmlsecError):
+            sigver.parse_xmlsec_output(output)
 
 
 def test_cert_trailing_newlines_ignored():
