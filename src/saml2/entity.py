@@ -3,6 +3,7 @@ from binascii import hexlify
 import copy
 from hashlib import sha1
 import logging
+import zlib
 
 import requests
 
@@ -439,21 +440,24 @@ class Entity(HTTPBase):
             None,
         ]:
             raise UnknownBinding(f"Don't know how to handle '{binding}'")
-        else:
-            try:
-                if binding == BINDING_HTTP_REDIRECT:
+
+        try:
+            if binding == BINDING_HTTP_REDIRECT:
+                xmlstr = decode_base64_and_inflate(txt)
+            elif binding == BINDING_HTTP_POST:
+                try:
                     xmlstr = decode_base64_and_inflate(txt)
-                elif binding == BINDING_HTTP_POST:
+                except zlib.error:
                     xmlstr = base64.b64decode(txt)
-                elif binding == BINDING_SOAP:
-                    func = getattr(soap, f"parse_soap_enveloped_saml_{msgtype}")
-                    xmlstr = func(txt)
-                elif binding == BINDING_HTTP_ARTIFACT:
-                    xmlstr = base64.b64decode(txt)
-                else:
-                    xmlstr = txt
-            except Exception:
-                raise UnravelError(f"Unravelling binding '{binding}' failed")
+            elif binding == BINDING_SOAP:
+                func = getattr(soap, f"parse_soap_enveloped_saml_{msgtype}")
+                xmlstr = func(txt)
+            elif binding == BINDING_HTTP_ARTIFACT:
+                xmlstr = base64.b64decode(txt)
+            else:
+                xmlstr = txt
+        except Exception:
+            raise UnravelError(f"Unravelling binding '{binding}' failed")
 
         return xmlstr
 
@@ -870,7 +874,7 @@ class Entity(HTTPBase):
                         _assertion.signature = pre_signature_part(
                             _assertion.id,
                             self.sec.my_cert,
-                            1,
+                            2,
                             sign_alg=sign_alg,
                             digest_alg=digest_alg,
                         )
@@ -1579,7 +1583,7 @@ class Entity(HTTPBase):
 
         typecode = _art[:2]
         if typecode != ARTIFACT_TYPECODE:
-            raise ValueError(f"Invalid artifact typecode '{typecode}' should be {ARTIFACT_TYPECODE}")
+            raise ValueError(f"Invalid artifact typecode {repr(typecode)} should be {repr(ARTIFACT_TYPECODE)}")
 
         try:
             endpoint_index = str(int(_art[2:4]))

@@ -1,8 +1,66 @@
 # Changelog
 
-## 7.3.0 (XXXX-XX-XX)
+## 7.5.2 (2025-02-10)
 
-- Support for pymongo >=3.5
+- Include the XSD of the XML Encryption Syntax and Processing Version 1.1 to the schema validator
+
+
+## 7.5.1 (2025-02-10)
+
+- deps: restrict pyOpenSSL up to v24.2.1 until it is replaced
+- deps: update dependncies for the lockfile and examples
+
+
+## 7.5.0 (2024-01-30)
+
+- Fix missing requested attributes from the ACS
+- Add support for errorURL to be exposed in metadata for IdP
+- Update logged message when the signature validation on the assertion fails
+- Replace imp with importlib
+- deps: restrict xmlschema version
+- deps: remove utility from packaging
+- examples: update code and README to align with latest code
+- docs: update readme with info about xmlsec1 compatibility
+
+
+## 7.4.2 (2023-06-11)
+
+- Add support for xmlsec1 1.3.x
+- Use the set crypto_backend when creating the entity metadata
+
+
+## 7.4.1 (2023-02-24)
+
+- Fix subject-id requirements processing
+
+
+## 7.4.0 (2023-02-14)
+
+- Ensure the ID of each Signature element is unique when signing an encrypted assertion
+- Bump Python to 3.9
+- dev: Add mypy configuration and type stubs
+- tests: move tox.ini config into pyproject.toml
+- docs: Update release instructions
+
+
+## 7.3.0 (2023-02-14)
+
+- During metadata generation, render extensions both for EntityDescriptor and IdPSSODescriptor
+- Fix compatibility with certain SAML implementation that inflate messasges on the POST binding
+- Update the SWAMID entity category requirements
+- Fix check for NameID when it originates from an encrypted asssertion
+- Add support for pymongo `>=3.5` and `<5`
+- Update README with supported specifications
+- Remove dependency on the six package
+- Cleanup unused imports and pythonisms for Python versions older than 3.6
+- Convert README to markdown
+- Introduce flake8 to check for issues
+- Use black and isort to manage formatting and imports
+- Use poetry to manage the project dependencies, packaging and versions
+- Fix whitespace typos on the eIDAS schemas
+- Try different logout bindings on the saml2.client level
+- Add the mailLocalAddress attribute as part of the saml and shib uri name format bundles
+- Add the isMemberOf attribute as part of the basic attribute format bundle
 
 
 ## 7.2.1 (2022-08-23)
