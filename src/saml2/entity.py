@@ -449,9 +449,6 @@ class Entity(HTTPBase):
                 else:
                     descr_type = "spsso"
 
-            if not isinstance(message, (AuthnRequest, LogoutRequest)):
-                raise SAMLError(f"Can't pick a binding for a request of type {type(message)}")
-
             binding, destination = self.pick_binding(rsrv, bindings, descr_type=descr_type, request=message)
             info["binding"] = binding
             info["destination"] = destination
@@ -478,27 +475,24 @@ class Entity(HTTPBase):
             None,
         ]:
             raise UnknownBinding(f"Don't know how to handle '{binding}'")
-        else:
-            try:
-                if binding == BINDING_HTTP_REDIRECT:
+
+        try:
+            if binding == BINDING_HTTP_REDIRECT:
+                xmlstr = decode_base64_and_inflate(txt)
+            elif binding == BINDING_HTTP_POST:
+                try:
                     xmlstr = decode_base64_and_inflate(txt)
-                elif binding == BINDING_HTTP_POST:
-                    try:
-                        xmlstr = decode_base64_and_inflate(txt)
-                    except (zlib.error, TypeError):
-                        xmlstr = base64.b64decode(txt)
-                elif binding == BINDING_SOAP:
-                    func = getattr(soap, f"parse_soap_enveloped_saml_{msgtype}")
-                    xmlstr = func(txt)
-                elif binding == BINDING_HTTP_ARTIFACT:
+                except zlib.error:
                     xmlstr = base64.b64decode(txt)
-                else:
-                    if isinstance(txt, str):
-                        xmlstr = txt.encode("utf-8")
-                    else:
-                        xmlstr = txt
-            except Exception:
-                raise UnravelError(f"Unravelling binding '{binding}' failed")
+            elif binding == BINDING_SOAP:
+                func = getattr(soap, f"parse_soap_enveloped_saml_{msgtype}")
+                xmlstr = func(txt)
+            elif binding == BINDING_HTTP_ARTIFACT:
+                xmlstr = base64.b64decode(txt)
+            else:
+                xmlstr = txt
+        except Exception:
+            raise UnravelError(f"Unravelling binding '{binding}' failed")
 
         return xmlstr
 
