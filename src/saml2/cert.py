@@ -160,7 +160,7 @@ class OpenSSLWrapper:
         ])
         builder = builder.subject_name(subject_name)
         if not request:
-            now = datetime.datetime.now(datetime.UTC)
+            now = datetime.datetime.now(datetime.timezone.utc)
             builder = builder.serial_number(
                 sn,
             ).not_valid_before(
@@ -261,7 +261,7 @@ class OpenSSLWrapper:
             sign_key_str, password=passphrase)
         req_cert = x509.load_pem_x509_csr(request_cert_str)
 
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
         cert = x509.CertificateBuilder().subject_name(
             req_cert.subject,
         ).serial_number(
@@ -321,7 +321,7 @@ class OpenSSLWrapper:
                 cert_str = cert_str.encode("utf-8")
             ca_cert = x509.load_pem_x509_certificate(signing_cert_str)
             cert = x509.load_pem_x509_certificate(cert_str)
-            now = datetime.datetime.now(datetime.UTC)
+            now = datetime.datetime.now(datetime.timezone.utc)
 
             if ca_cert.not_valid_before_utc >= now:
                 return False, "CA certificate is not valid yet."

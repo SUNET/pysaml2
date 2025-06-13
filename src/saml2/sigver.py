@@ -389,7 +389,7 @@ def active_cert(key):
     except AttributeError:
         return False
 
-    now = datetime.datetime.now(datetime.UTC)
+    now = datetime.datetime.now(datetime.timezone.utc)
     valid_from = cert.not_valid_before_utc
     valid_to = cert.not_valid_after_utc
     active = valid_from <= now < valid_to
