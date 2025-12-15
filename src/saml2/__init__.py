@@ -2,18 +2,18 @@
 
 """Contains base classes representing SAML elements.
 
-    These codes were originally written by Jeffrey Scudder for
-    representing Saml elements. Takashi Matsuo had added some codes, and
-    changed some. Roland Hedberg rewrote the whole thing from bottom up so
-    barely anything but the original structures remained.
+These codes were originally written by Jeffrey Scudder for
+representing Saml elements. Takashi Matsuo had added some codes, and
+changed some. Roland Hedberg rewrote the whole thing from bottom up so
+barely anything but the original structures remained.
 
-    Module objective: provide data classes for SAML constructs. These
-    classes hide the XML-ness of SAML and provide a set of native Python
-    classes to interact with.
+Module objective: provide data classes for SAML constructs. These
+classes hide the XML-ness of SAML and provide a set of native Python
+classes to interact with.
 
-    Conversions to and from XML should only be necessary when the SAML classes
-    "touch the wire" and are sent over HTTP. For this reason this module
-    provides methods and functions to convert SAML classes to and from strings.
+Conversions to and from XML should only be necessary when the SAML classes
+"touch the wire" and are sent over HTTP. For this reason this module
+provides methods and functions to convert SAML classes to and from strings.
 """
 
 import logging
@@ -59,11 +59,15 @@ BINDING_SOAP = SAMLBinding("urn:oasis:names:tc:SAML:2.0:bindings:SOAP")
 # parse a PAOS header, make a PAOS request, and receive a PAOS response
 BINDING_PAOS = SAMLBinding("urn:oasis:names:tc:SAML:2.0:bindings:PAOS")
 # URI encoded messages
-BINDING_HTTP_REDIRECT = SAMLBinding("urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect")
+BINDING_HTTP_REDIRECT = SAMLBinding(
+    "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+)
 # HTML encoded messages
 BINDING_HTTP_POST = SAMLBinding("urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST")
 # sensitive messages are transported over a backchannel
-BINDING_HTTP_ARTIFACT = SAMLBinding("urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact")
+BINDING_HTTP_ARTIFACT = SAMLBinding(
+    "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact"
+)
 # as uri response encoded message
 BINDING_URI = SAMLBinding("urn:oasis:names:tc:SAML:2.0:bindings:URI")
 
@@ -300,7 +304,6 @@ class ExtensionContainer:
     c_namespace = ""
 
     def __init__(self, text=None, extension_elements=None, extension_attributes=None):
-
         self.text = text
         self.extension_elements = extension_elements or []
         self.extension_attributes = extension_attributes or {}
@@ -415,7 +418,10 @@ def make_vals(val, klass, klass_inst=None, prop=None, part=False, base64encode=F
             cinst = klass().set_text(val)
         except ValueError:
             if not part:
-                cis = [make_vals(sval, klass, klass_inst, prop, True, base64encode) for sval in val]
+                cis = [
+                    make_vals(sval, klass, klass_inst, prop, True, base64encode)
+                    for sval in val
+                ]
                 setattr(klass_inst, prop, cis)
             else:
                 raise
@@ -475,9 +481,15 @@ class SamlBase(ExtensionContainer):
             if isinstance(member_class, list):
                 if getattr(self, member_name) is None:
                     setattr(self, member_name, [])
-                getattr(self, member_name).append(create_class_from_element_tree(member_class[0], child_tree))
+                getattr(self, member_name).append(
+                    create_class_from_element_tree(member_class[0], child_tree)
+                )
             else:
-                setattr(self, member_name, create_class_from_element_tree(member_class, child_tree))
+                setattr(
+                    self,
+                    member_name,
+                    create_class_from_element_tree(member_class, child_tree),
+                )
         else:
             ExtensionContainer._convert_element_tree_to_member(self, child_tree)
 
@@ -490,7 +502,9 @@ class SamlBase(ExtensionContainer):
             setattr(self, self.__class__.c_attributes[attribute][0], value)
         else:
             # If it doesn't appear in the attribute list it's an extension
-            ExtensionContainer._convert_element_attribute_to_member(self, attribute, value)
+            ExtensionContainer._convert_element_attribute_to_member(
+                self, attribute, value
+            )
 
     # Three methods to create an ElementTree from an object
     def _add_members_to_element_tree(self, tree):
@@ -536,7 +550,9 @@ class SamlBase(ExtensionContainer):
         should not be called on in this class.
 
         """
-        new_tree = ElementTree.Element(f"{{{self.__class__.c_namespace}}}{self.__class__.c_tag}")
+        new_tree = ElementTree.Element(
+            f"{{{self.__class__.c_namespace}}}{self.__class__.c_tag}"
+        )
         self._add_members_to_element_tree(new_tree)
         return new_tree
 
@@ -571,7 +587,6 @@ class SamlBase(ExtensionContainer):
         return None
 
     def get_ns_map(self, elements, uri_set):
-
         for elem in elements:
             uri_set = self.get_ns_map_attribute(elem.attrib, uri_set)
             children = list(elem)
@@ -588,12 +603,20 @@ class SamlBase(ExtensionContainer):
             prefix_map[f"encas{len(prefix_map)}"] = uri
         return prefix_map
 
-    def get_xml_string_with_self_contained_assertion_within_advice_encrypted_assertion(self, assertion_tag, advice_tag):
+    def get_xml_string_with_self_contained_assertion_within_advice_encrypted_assertion(
+        self, assertion_tag, advice_tag
+    ):
         for tmp_encrypted_assertion in self.assertion.advice.encrypted_assertion:
             if tmp_encrypted_assertion.encrypted_data is None:
-                prefix_map = self.get_prefix_map([tmp_encrypted_assertion._to_element_tree().find(assertion_tag)])
+                prefix_map = self.get_prefix_map(
+                    [tmp_encrypted_assertion._to_element_tree().find(assertion_tag)]
+                )
                 tree = self._to_element_tree()
-                encs = tree.find(assertion_tag).find(advice_tag).findall(tmp_encrypted_assertion._to_element_tree().tag)
+                encs = (
+                    tree.find(assertion_tag)
+                    .find(advice_tag)
+                    .findall(tmp_encrypted_assertion._to_element_tree().tag)
+                )
                 for enc in encs:
                     assertion = enc.find(assertion_tag)
                     if assertion is not None:
@@ -601,23 +624,31 @@ class SamlBase(ExtensionContainer):
 
         return ElementTree.tostring(tree, encoding="UTF-8").decode("utf-8")
 
-    def get_xml_string_with_self_contained_assertion_within_encrypted_assertion(self, assertion_tag):
+    def get_xml_string_with_self_contained_assertion_within_encrypted_assertion(
+        self, assertion_tag
+    ):
         """Makes a encrypted assertion only containing self contained
         namespaces.
 
         :param assertion_tag: Tag for the assertion to be transformed.
         :return: A new samlp.Resonse in string representation.
         """
-        prefix_map = self.get_prefix_map([self.encrypted_assertion._to_element_tree().find(assertion_tag)])
+        prefix_map = self.get_prefix_map(
+            [self.encrypted_assertion._to_element_tree().find(assertion_tag)]
+        )
 
         tree = self._to_element_tree()
 
-        self.set_prefixes(tree.find(self.encrypted_assertion._to_element_tree().tag).find(assertion_tag), prefix_map)
+        self.set_prefixes(
+            tree.find(self.encrypted_assertion._to_element_tree().tag).find(
+                assertion_tag
+            ),
+            prefix_map,
+        )
 
         return ElementTree.tostring(tree, encoding="UTF-8").decode("utf-8")
 
     def set_prefixes(self, elem, prefix_map):
-
         # check if this is a tree wrapper
         if not ElementTree.iselement(elem):
             elem = elem.getroot()
@@ -658,7 +689,6 @@ class SamlBase(ExtensionContainer):
                 del elem.attrib[key]
 
     def to_string_force_namespace(self, nspair):
-
         elem = self._to_element_tree()
 
         self.set_prefixes(elem, nspair)
@@ -776,14 +806,18 @@ class SamlBase(ExtensionContainer):
                 # print("### %s" % ava[prop])
                 # means there can be a list of values
                 if isinstance(klassdef, list):
-                    make_vals(ava[prop], klassdef[0], self, prop, base64encode=base64encode)
+                    make_vals(
+                        ava[prop], klassdef[0], self, prop, base64encode=base64encode
+                    )
                 else:
                     cis = make_vals(ava[prop], klassdef, self, prop, True, base64encode)
                     setattr(self, prop, cis)
 
         if "extension_elements" in ava:
             for item in ava["extension_elements"]:
-                self.extension_elements.append(ExtensionElement(item["tag"]).loadd(item))
+                self.extension_elements.append(
+                    ExtensionElement(item["tag"]).loadd(item)
+                )
 
         if "extension_attributes" in ava:
             for key, val in ava["extension_attributes"].items():
@@ -911,12 +945,16 @@ def element_to_extension_element(element):
         if member_value is not None:
             exel.attributes[xml_attribute] = member_value
 
-    exel.children.extend([element_to_extension_element(c) for c in element.children_with_values()])
+    exel.children.extend(
+        [element_to_extension_element(c) for c in element.children_with_values()]
+    )
 
     return exel
 
 
-def extension_element_to_element(extension_element, translation_functions, namespace=None):
+def extension_element_to_element(
+    extension_element, translation_functions, namespace=None
+):
     """Convert an extension element to a normal element.
     In order to do this you need to have an idea of what type of
     element it is. Or rather which module it belongs to.
@@ -973,7 +1011,11 @@ def extension_elements_to_elements(extension_elements, schemas, keep_unmatched=F
         convert_results = (
             inst
             for schema in schemas
-            for inst in [extension_element_to_element(extension_element, schema.ELEMENT_FROM_STRING, schema.NAMESPACE)]
+            for inst in [
+                extension_element_to_element(
+                    extension_element, schema.ELEMENT_FROM_STRING, schema.NAMESPACE
+                )
+            ]
             if inst
         )
         result = next(convert_results, extension_element if keep_unmatched else None)

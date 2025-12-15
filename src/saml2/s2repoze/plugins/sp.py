@@ -5,6 +5,7 @@ and SAML2 attribute aggregations as metadata collector in your
 WSGI application.
 
 """
+
 from io import StringIO
 import logging
 import platform
@@ -103,17 +104,23 @@ class SAML2Plugin:
         self.cache = cache
         self.discosrv = discovery
         self.idp_query_param = idp_query_param
-        self.logout_endpoints = [parse.urlparse(ep).path for ep in config.endpoint("single_logout_service")]
+        self.logout_endpoints = [
+            parse.urlparse(ep).path for ep in config.endpoint("single_logout_service")
+        ]
         try:
             self.metadata = self.conf.metadata
         except KeyError:
             self.metadata = None
         if sid_store:
-            self.outstanding_queries = shelve.open(sid_store, writeback=True, protocol=2)
+            self.outstanding_queries = shelve.open(
+                sid_store, writeback=True, protocol=2
+            )
         else:
             self.outstanding_queries = {}
         if sid_store_cert:
-            self.outstanding_certs = shelve.open(sid_store_cert, writeback=True, protocol=2)
+            self.outstanding_certs = shelve.open(
+                sid_store_cert, writeback=True, protocol=2
+            )
         else:
             self.outstanding_certs = {}
 
@@ -212,7 +219,9 @@ class SAML2Plugin:
             query = environ.get(key)
             if query:
                 try:
-                    _idp_entity_id = dict(parse.parse_qs(query))[self.idp_query_param][0]
+                    _idp_entity_id = dict(parse.parse_qs(query))[self.idp_query_param][
+                        0
+                    ]
                     if _idp_entity_id in idps:
                         idp_entity_id = _idp_entity_id
                     break
@@ -232,7 +241,9 @@ class SAML2Plugin:
                 if self.wayf:
                     if query:
                         try:
-                            wayf_selected = dict(parse.parse_qs(query))["wayf_selected"][0]
+                            wayf_selected = dict(parse.parse_qs(query))[
+                                "wayf_selected"
+                            ][0]
                         except KeyError:
                             return self._wayf_redirect(came_from)
                         idp_entity_id = wayf_selected
@@ -240,15 +251,21 @@ class SAML2Plugin:
                         return self._wayf_redirect(came_from)
                 elif self.discosrv:
                     if query:
-                        idp_entity_id = _cli.parse_discovery_service_response(query=environ.get("QUERY_STRING"))
+                        idp_entity_id = _cli.parse_discovery_service_response(
+                            query=environ.get("QUERY_STRING")
+                        )
                     else:
                         sid_ = sid()
                         self.outstanding_queries[sid_] = came_from
                         logger.debug("Redirect to Discovery Service function")
                         eid = _cli.config.entityid
-                        ret = _cli.config.getattr("endpoints", "sp")["discovery_response"][0][0]
+                        ret = _cli.config.getattr("endpoints", "sp")[
+                            "discovery_response"
+                        ][0][0]
                         ret += f"?sid={sid_}"
-                        loc = _cli.create_discovery_service_request(self.discosrv, eid, **{"return": ret})
+                        loc = _cli.create_discovery_service_request(
+                            self.discosrv, eid, **{"return": ret}
+                        )
                         return -1, SeeOther(loc)
 
                 else:
@@ -323,8 +340,14 @@ class SAML2Plugin:
                 if _cli.config.generate_cert_func is not None:
                     cert_str, req_key_str = _cli.config.generate_cert_func()
                     cert = {"cert": cert_str, "key": req_key_str}
-                    spcertenc = SPCertEnc(x509_data=ds.X509Data(x509_certificate=ds.X509Certificate(text=cert_str)))
-                    extensions = Extensions(extension_elements=[element_to_extension_element(spcertenc)])
+                    spcertenc = SPCertEnc(
+                        x509_data=ds.X509Data(
+                            x509_certificate=ds.X509Certificate(text=cert_str)
+                        )
+                    )
+                    extensions = Extensions(
+                        extension_elements=[element_to_extension_element(spcertenc)]
+                    )
 
                 if _cli.authn_requests_signed:
                     _sid = sid()
@@ -507,7 +530,9 @@ class SAML2Plugin:
                 # check for SAML2 authN response
                 try:
                     if logout:
-                        response = self.saml_client.parse_logout_request_response(post["SAMLResponse"][0], binding)
+                        response = self.saml_client.parse_logout_request_response(
+                            post["SAMLResponse"][0], binding
+                        )
                         if response:
                             action = self.saml_client.handle_logout_response(response)
 
@@ -519,7 +544,9 @@ class SAML2Plugin:
                                 environ["samlsp.pending"] = request
                             return {}
                     else:
-                        session_info = self._eval_authn_response(environ, post, binding=binding)
+                        session_info = self._eval_authn_response(
+                            environ, post, binding=binding
+                        )
                 except Exception as err:
                     environ["s2repoze.saml_error"] = err
                     return {}
@@ -587,7 +614,9 @@ class SAML2Plugin:
                         # expanded
                         identity["pysaml2_vo_expanded"] = 1
                 except KeyError:
-                    logger.exception("Failed to do attribute aggregation, " "missing common attribute")
+                    logger.exception(
+                        "Failed to do attribute aggregation, missing common attribute"
+                    )
         logger.debug("[add_metadata] returns: %s", dict(identity))
 
         if not identity["user"]:
@@ -610,7 +639,8 @@ class SAML2Plugin:
             if (
                 identity.get("user")
                 and environ.get("s2repoze.sessioninfo")
-                and identity.get("user") == environ.get("s2repoze.sessioninfo").get("ava")
+                and identity.get("user")
+                == environ.get("s2repoze.sessioninfo").get("ava")
             ):
                 return identity.get("login")
             tktuser = identity.get("repoze.who.plugins.auth_tkt.userid", None)
@@ -659,5 +689,7 @@ def make_plugin(
         virtual_organization=virtual_organization,
     )
 
-    plugin = SAML2Plugin(remember_name, conf, scl, wayf, cache, sid_store, discovery, idp_query_param)
+    plugin = SAML2Plugin(
+        remember_name, conf, scl, wayf, cache, sid_store, discovery, idp_query_param
+    )
     return plugin

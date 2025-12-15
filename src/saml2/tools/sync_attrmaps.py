@@ -62,7 +62,9 @@ class AMap:
                 print(f"# Added {self.mod.MAP['to'][val]}={key}")
                 self.mod.MAP["to"][val] = key
             except AssertionError:
-                raise Exception(f"Mismatch key:{key} '{val}' != '{self.mod.MAP['to'][val]}'")
+                raise Exception(
+                    f"Mismatch key:{key} '{val}' != '{self.mod.MAP['to'][val]}'"
+                )
 
         for val in self.mod.MAP["to"].values():
             if val not in self.mod.MAP["fro"]:

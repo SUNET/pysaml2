@@ -16,7 +16,12 @@ STATIC_ORG_INFO = [
     "schacHomeOrganizationType",
 ]
 
-OTHER = ["eduPersonPrincipalName", "eduPersonScopedAffiliation", "mail", "eduPersonAssurance"]
+OTHER = [
+    "eduPersonPrincipalName",
+    "eduPersonScopedAffiliation",
+    "mail",
+    "eduPersonAssurance",
+]
 
 R_AND_S = [
     "eduPersonPrincipalName",
@@ -85,8 +90,12 @@ REFEDS_ANONYMOUS_ACCESS = [
 
 
 # These give you access to information
-RESEARCH_AND_EDUCATION = "http://www.swamid.se/category/research-and-education"  # Deprecated from 2021-03-31
-SFS_1993_1153 = "http://www.swamid.se/category/sfs-1993-1153"  # Deprecated from 2021-03-31
+RESEARCH_AND_EDUCATION = (
+    "http://www.swamid.se/category/research-and-education"  # Deprecated from 2021-03-31
+)
+SFS_1993_1153 = (
+    "http://www.swamid.se/category/sfs-1993-1153"  # Deprecated from 2021-03-31
+)
 RESEARCH_AND_SCHOLARSHIP = "http://refeds.org/category/research-and-scholarship"
 COCOv1 = "http://www.geant.net/uri/dataprotection-code-of-conduct/v1"
 COCOv2 = "https://refeds.org/category/code-of-conduct/v2"
@@ -96,7 +105,9 @@ PSEUDONYMOUS = "https://refeds.org/category/pseudonymous"
 ANONYMOUS = "https://refeds.org/category/anonymous"
 
 # presently these don't by themselves
-EU = "http://www.swamid.se/category/eu-adequate-protection"  # Deprecated from 2021-03-31
+EU = (
+    "http://www.swamid.se/category/eu-adequate-protection"  # Deprecated from 2021-03-31
+)
 NREN = "http://www.swamid.se/category/nren-service"  # Deprecated from 2021-03-31
 HEI = "http://www.swamid.se/category/hei-service"  # Deprecated from 2021-03-31
 

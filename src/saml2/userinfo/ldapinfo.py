@@ -6,7 +6,16 @@ from saml2.userinfo import UserInfo
 
 class UserInfoLDAP(UserInfo):
     def __init__(
-        self, uri, base, filter_pattern, scope=SCOPE_SUBTREE, tls=False, user="", passwd="", attr=None, attrsonly=False
+        self,
+        uri,
+        base,
+        filter_pattern,
+        scope=SCOPE_SUBTREE,
+        tls=False,
+        user="",
+        passwd="",
+        attr=None,
+        attrsonly=False,
     ):
         UserInfo.__init__(self)
         self.ldapuri = uri
@@ -21,9 +30,16 @@ class UserInfoLDAP(UserInfo):
         self.ld.simple_bind_s(user, passwd)
 
     def __call__(
-        self, userid, base="", filter_pattern="", scope=SCOPE_SUBTREE, tls=False, attr=None, attrsonly=False, **kwargs
+        self,
+        userid,
+        base="",
+        filter_pattern="",
+        scope=SCOPE_SUBTREE,
+        tls=False,
+        attr=None,
+        attrsonly=False,
+        **kwargs,
     ):
-
         if filter_pattern:
             _filter = filter_pattern % userid
         else:

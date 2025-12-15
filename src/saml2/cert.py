@@ -1,9 +1,9 @@
 __author__ = "haho0032"
 
 import base64
-import datetime
 from os import remove
 from os.path import join
+from datetime import datetime, timezone, timedelta
 
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
@@ -11,7 +11,6 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 import dateutil.parser
-import pytz
 
 import saml2.cryptography.pki
 
@@ -145,32 +144,39 @@ class OpenSSLWrapper:
 
         if len(cert_info["country_code"]) != 2:
             raise WrongInput("Country code must be two letters!")
-        subject_name = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME,
-                               cert_info["country_code"]),
-            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME,
-                               cert_info["state"]),
-            x509.NameAttribute(NameOID.LOCALITY_NAME,
-                               cert_info["city"]),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME,
-                               cert_info["organization"]),
-            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME,
-                               cert_info["organization_unit"]),
-            x509.NameAttribute(NameOID.COMMON_NAME, cn),
-        ])
+        subject_name = x509.Name(
+            [
+                x509.NameAttribute(NameOID.COUNTRY_NAME, cert_info["country_code"]),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, cert_info["state"]),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, cert_info["city"]),
+                x509.NameAttribute(
+                    NameOID.ORGANIZATION_NAME, cert_info["organization"]
+                ),
+                x509.NameAttribute(
+                    NameOID.ORGANIZATIONAL_UNIT_NAME, cert_info["organization_unit"]
+                ),
+                x509.NameAttribute(NameOID.COMMON_NAME, cn),
+            ]
+        )
         builder = builder.subject_name(subject_name)
         if not request:
-            now = datetime.datetime.now(datetime.timezone.utc)
-            builder = builder.serial_number(
-                sn,
-            ).not_valid_before(
-                now + datetime.timedelta(seconds=valid_from),
-            ).not_valid_after(
-                now + datetime.timedelta(seconds=valid_to),
-            ).issuer_name(
-                subject_name,
-            ).public_key(
-                k.public_key(),
+            now = datetime.now(timezone.utc)
+            builder = (
+                builder.serial_number(
+                    sn,
+                )
+                .not_valid_before(
+                    now + timedelta(seconds=valid_from),
+                )
+                .not_valid_after(
+                    now + timedelta(seconds=valid_to),
+                )
+                .issuer_name(
+                    subject_name,
+                )
+                .public_key(
+                    k.public_key(),
+                )
             )
         cert = builder.sign(k, hashes.SHA256())
 
@@ -223,7 +229,6 @@ class OpenSSLWrapper:
         sn=1,
         passphrase=None,
     ):
-
         """
         Will sign a certificate request with a give certificate.
         :param sign_cert_str:     This certificate will be used to sign with.
@@ -257,24 +262,32 @@ class OpenSSLWrapper:
         if isinstance(sign_cert_str, str):
             sign_cert_str = sign_cert_str.encode("utf-8")
         ca_cert = x509.load_pem_x509_certificate(sign_cert_str)
-        ca_key = serialization.load_pem_private_key(
-            sign_key_str, password=passphrase)
+        ca_key = serialization.load_pem_private_key(sign_key_str, password=passphrase)
         req_cert = x509.load_pem_x509_csr(request_cert_str)
 
-        now = datetime.datetime.now(datetime.timezone.utc)
-        cert = x509.CertificateBuilder().subject_name(
-            req_cert.subject,
-        ).serial_number(
-            sn,
-        ).not_valid_before(
-            now + datetime.timedelta(seconds=valid_from),
-        ).not_valid_after(
-            now + datetime.timedelta(seconds=valid_to),
-        ).issuer_name(
-            ca_cert.subject,
-        ).public_key(
-            req_cert.public_key(),
-        ).sign(ca_key, hashes.SHA256())
+        now = datetime.now(timezone.utc)
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(
+                req_cert.subject,
+            )
+            .serial_number(
+                sn,
+            )
+            .not_valid_before(
+                now + timedelta(seconds=valid_from),
+            )
+            .not_valid_after(
+                now + timedelta(seconds=valid_to),
+            )
+            .issuer_name(
+                ca_cert.subject,
+            )
+            .public_key(
+                req_cert.public_key(),
+            )
+            .sign(ca_key, hashes.SHA256())
+        )
 
         return cert.public_bytes(serialization.Encoding.PEM).decode("utf-8")
 
@@ -293,7 +306,10 @@ class OpenSSLWrapper:
                 return False, message
             else:
                 cert_str = tmp_cert_str
-            return (True, "Signed certificate is valid and correctly signed by CA " "certificate.")
+            return (
+                True,
+                "Signed certificate is valid and correctly signed by CA certificate.",
+            )
 
     def verify(self, signing_cert_str, cert_str):
         """
@@ -321,7 +337,7 @@ class OpenSSLWrapper:
                 cert_str = cert_str.encode("utf-8")
             ca_cert = x509.load_pem_x509_certificate(signing_cert_str)
             cert = x509.load_pem_x509_certificate(cert_str)
-            now = datetime.datetime.now(datetime.timezone.utc)
+            now = datetime.now(timezone.utc)
 
             if ca_cert.not_valid_before_utc >= now:
                 return False, "CA certificate is not valid yet."
@@ -335,13 +351,19 @@ class OpenSSLWrapper:
             if cert.not_valid_before_utc >= now:
                 return False, "The signed certificate is not valid yet."
 
-            if ca_cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME) == \
-               cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME):
-                return False, ("CN may not be equal for CA certificate and the " "signed certificate.")
+            if ca_cert.subject.get_attributes_for_oid(
+                NameOID.COMMON_NAME
+            ) == cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME):
+                return False, (
+                    "CN may not be equal for CA certificate and the signed certificate."
+                )
 
             try:
                 cert.verify_directly_issued_by(ca_cert)
-                return True, "Signed certificate is valid and correctly signed by CA certificate."
+                return (
+                    True,
+                    "Signed certificate is valid and correctly signed by CA certificate.",
+                )
             except (ValueError, TypeError, InvalidSignature) as e:
                 return False, f"Certificate is incorrectly signed: {str(e)}"
         except Exception as e:

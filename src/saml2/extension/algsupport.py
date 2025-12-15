@@ -23,9 +23,18 @@ class DigestMethodType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_attributes["Algorithm"] = ("algorithm", "anyURI", True)
 
-    def __init__(self, algorithm=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        algorithm=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.algorithm = algorithm
 
@@ -58,7 +67,10 @@ class SigningMethodType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.algorithm = algorithm
         self.min_key_size = min_key_size

@@ -40,7 +40,9 @@ def main():
         if args.cert and args.xmlsec:
             crypto = _get_xmlsec_cryptobackend(args.xmlsec)
             sc = SecurityContext(crypto)
-            metad = MetaDataFile(args.item, args.item, cert=args.cert, security=sc, **kwargs)
+            metad = MetaDataFile(
+                args.item, args.item, cert=args.cert, security=sc, **kwargs
+            )
         else:
             metad = MetaDataFile(args.item, args.item, **kwargs)
     elif args.type == "external":
@@ -48,7 +50,9 @@ def main():
         httpc = HTTPBase()
         crypto = _get_xmlsec_cryptobackend(args.xmlsec)
         sc = SecurityContext(crypto)
-        metad = MetaDataExtern(ATTRCONV, args.url, sc, cert=args.cert, http=httpc, **kwargs)
+        metad = MetaDataExtern(
+            ATTRCONV, args.url, sc, cert=args.cert, http=httpc, **kwargs
+        )
 
     if metad:
         metad.load()

@@ -32,7 +32,10 @@ class SPCertEncType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         if key_info:
             self.key_info = key_info

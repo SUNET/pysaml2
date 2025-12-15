@@ -4,6 +4,7 @@
 """
 Suppport for the client part of the SAML2.0 SOAP binding.
 """
+
 import logging
 import re
 from xml.etree import ElementTree as ElementTree
@@ -92,7 +93,10 @@ def parse_soap_enveloped_saml_assertion_id_request(text):
 
 
 def parse_soap_enveloped_saml_assertion_id_response(text):
-    tags = ["{%s}Response" % SAMLP_NAMESPACE, "{%s}AssertionIDResponse" % SAMLP_NAMESPACE]
+    tags = [
+        "{%s}Response" % SAMLP_NAMESPACE,
+        "{%s}AssertionIDResponse" % SAMLP_NAMESPACE,
+    ]
     return parse_soap_enveloped_saml_thingy(text, tags)
 
 
@@ -128,7 +132,9 @@ def parse_soap_enveloped_saml_thingy(text, expected_tags):
 
     envelope_tag = "{%s}Envelope" % soapenv.NAMESPACE
     if envelope.tag != envelope_tag:
-        raise ValueError(f"Invalid envelope tag '{envelope.tag}' should be '{envelope_tag}'")
+        raise ValueError(
+            f"Invalid envelope tag '{envelope.tag}' should be '{envelope_tag}'"
+        )
 
     if len(envelope) < 1:
         raise Exception("No items in envelope.")
@@ -183,7 +189,9 @@ def class_instances_from_soap_enveloped_saml_thingies(text, modules):
 
     envelope_tag = "{%s}Envelope" % soapenv.NAMESPACE
     if envelope.tag != envelope_tag:
-        raise ValueError(f"Invalid envelope tag '{envelope.tag}' should be '{envelope_tag}'")
+        raise ValueError(
+            f"Invalid envelope tag '{envelope.tag}' should be '{envelope_tag}'"
+        )
 
     if len(envelope) < 1:
         raise Exception("No items in envelope.")
@@ -215,7 +223,9 @@ def open_soap_envelope(text):
 
     envelope_tag = "{%s}Envelope" % soapenv.NAMESPACE
     if envelope.tag != envelope_tag:
-        raise ValueError(f"Invalid envelope tag '{envelope.tag}' should be '{envelope_tag}'")
+        raise ValueError(
+            f"Invalid envelope tag '{envelope.tag}' should be '{envelope_tag}'"
+        )
 
     if len(envelope) < 1:
         raise Exception("No items in envelope.")

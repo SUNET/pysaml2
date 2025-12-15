@@ -18,8 +18,9 @@ from typing import Union
 from warnings import warn as _warn
 
 from pydantic import BaseModel
+from pydantic import ConfigDict
 from pydantic import ValidationError
-from pydantic import validator
+from pydantic import field_validator
 
 from saml2 import saml
 from saml2 import xmlenc
@@ -51,14 +52,20 @@ class EntityCategoryMatcher(BaseModel):
     Decides, based on a list of entity categories for an SP, if this rule applies to the SP or not.
     """
 
-    required: List[str]  # List of entity category URIs that must be present in the SP's entity categories
-    conflicts: List[str] = []  # List of entity category URIs that must not be present in the SP's entity categories
+    required: List[
+        str
+    ]  # List of entity category URIs that must be present in the SP's entity categories
+    conflicts: List[
+        str
+    ] = []  # List of entity category URIs that must not be present in the SP's entity categories
 
     def matches(self, sp_ecs: List[str]) -> bool:
         """Return True if all our entity categories is present in the list of SP entity categories"""
         _conflicts = self._conflicts(sp_ecs)
         if _conflicts:
-            extra_logger.debug(f"Not matching, SP entity categories in conflict with {self.conflicts}")
+            extra_logger.debug(
+                f"Not matching, SP entity categories in conflict with {self.conflicts}"
+            )
             return False
         if self.required == [""]:
             # A rule with this matching criteria results in attributes always being released
@@ -75,9 +82,12 @@ class EntityCategoryRule(BaseModel):
 
     match: EntityCategoryMatcher
     attributes: List[str]  # attributes to release if this rule matches (friendly names)
-    only_required: bool = False  # If this rule matches, only include the required attributes for the SP
+    only_required: bool = (
+        False  # If this rule matches, only include the required attributes for the SP
+    )
 
-    @validator("attributes")
+    @field_validator("attributes")
+    @classmethod
     def lowercase_attribute_names(cls, v: List[str]):
         """Make sure all attribute names are lower case, for easier comparison later."""
         return [x.lower() for x in v]
@@ -89,7 +99,9 @@ AllowedAttributeValue = re.Pattern[str]
 AttributeRestrictions = dict[str, Optional[list[AllowedAttributeValue]]]
 
 
-def _filter_values(values: list[str], allowed_values: list[str], must: bool = False) -> list[str]:
+def _filter_values(
+    values: list[str], allowed_values: list[str], must: bool = False
+) -> list[str]:
     """Removes values from *values* that does not appear in allowed_values.
 
     :param vals: The values that are to be filtered
@@ -158,7 +170,9 @@ def filter_on_attributes(
         res = _filter_values(values, allowed_values, must)
         return res
 
-    def _identify_attribute(attr: AttributeAsDict, ava: AttributeValues) -> Optional[str]:
+    def _identify_attribute(
+        attr: AttributeAsDict, ava: AttributeValues
+    ) -> Optional[str]:
         """Find and identify `attr' in `ava'.
 
         The attribute we want to work with might be identified by its name, name_format,
@@ -177,11 +191,16 @@ def filter_on_attributes(
         return _fn
 
     def _apply_attr_value_restrictions(
-        friendly_name: str, attr: AttributeAsDict, res: AttributeValuesStrict, must: bool = False
+        friendly_name: str,
+        attr: AttributeAsDict,
+        res: AttributeValuesStrict,
+        must: bool = False,
     ):
         """Add the attribute `friendly_name` to `res`, filtering its values if necessary."""
         _av_list = attr.get("attribute_value", [])
-        assert _av_list is not None  # please mypy, the get() above defaults to empty list
+        assert (
+            _av_list is not None
+        )  # please mypy, the get() above defaults to empty list
         allowed_values = [av["text"] for av in _av_list]
 
         _values = _filter_value_or_values(ava[friendly_name], allowed_values, must)
@@ -248,7 +267,9 @@ def filter_on_demands(ava, required=None, optional=None):
             if vals:
                 for val in vals:
                     if val not in ava[lava[attr]]:
-                        raise MissingValue(f"Required attribute value missing: {attr},{val}")
+                        raise MissingValue(
+                            f"Required attribute value missing: {attr},{val}"
+                        )
         else:
             raise MissingValue(f"Required attribute missing: {attr}")
 
@@ -375,7 +396,9 @@ class EntityCategoryPolicy(BaseModel):
         return f"<{self.__class__.__name__}: {self.categories.keys()}>"
 
     @classmethod
-    def from_module_names(cls: Type["EntityCategoryPolicy"], entity_categories: List[str]) -> "EntityCategoryPolicy":
+    def from_module_names(
+        cls: Type["EntityCategoryPolicy"], entity_categories: List[str]
+    ) -> "EntityCategoryPolicy":
         """Load a list of rules for a category.
 
         In the current implementation, the rules are loaded from a module - one module per category.
@@ -409,7 +432,9 @@ class EntityCategoryPolicy(BaseModel):
 
                 rules.append(
                     EntityCategoryRule(
-                        match=EntityCategoryMatcher(required=_key_as_list, conflicts=[]),
+                        match=EntityCategoryMatcher(
+                            required=_key_as_list, conflicts=[]
+                        ),
                         attributes=alist,
                         only_required=_only_required,
                     )
@@ -431,7 +456,9 @@ class EntityCategoryPolicy(BaseModel):
         self,
         acs: List[AttributeConverter],
         sp_entity_id: Optional[str] = None,
-        mds: Optional[MetadataStore] = None,  # TODO: Possibly a 'MetaData' instance (parent of MetadataStore)
+        mds: Optional[
+            MetadataStore
+        ] = None,  # TODO: Possibly a 'MetaData' instance (parent of MetadataStore)
         required: Optional[List[AttributeAsDict]] = None,
     ) -> AttributeRestrictions:
         """
@@ -454,7 +481,9 @@ class EntityCategoryPolicy(BaseModel):
                 # See the documentation of the RequiredAttribute type.
                 _friendly_name: Optional[str] = d.get("friendly_name")
                 if not _friendly_name:
-                    _friendly_name = get_local_name(acs=acs, attr=d["name"], name_format=d["name_format"])
+                    _friendly_name = get_local_name(
+                        acs=acs, attr=d["name"], name_format=d["name_format"]
+                    )
                 assert isinstance(_friendly_name, str)
                 required_friendly_names.append(_friendly_name.lower())
 
@@ -466,7 +495,9 @@ class EntityCategoryPolicy(BaseModel):
         extra_logger.debug(
             f"Compiling attributes to release based on SP {sp_entity_id} entity categories: {sp_categories}"
         )
-        extra_logger.debug(f"Required attributes for this SP: {required_friendly_names}")
+        extra_logger.debug(
+            f"Required attributes for this SP: {required_friendly_names}"
+        )
 
         for rule_set in self.categories.values():
             for this_rule in rule_set:
@@ -474,9 +505,19 @@ class EntityCategoryPolicy(BaseModel):
                 extra_logger.debug(f"Rule {this_rule.match}, matches: {_matches}")
                 if _matches:
                     if this_rule.only_required:
-                        attrs = [a for a in this_rule.attributes if a in required_friendly_names]
-                        _not_adding = [a for a in this_rule.attributes if a not in required_friendly_names]
-                        extra_logger.debug(f"Adding only required attributes: {attrs}, not adding: {_not_adding}")
+                        attrs = [
+                            a
+                            for a in this_rule.attributes
+                            if a in required_friendly_names
+                        ]
+                        _not_adding = [
+                            a
+                            for a in this_rule.attributes
+                            if a not in required_friendly_names
+                        ]
+                        extra_logger.debug(
+                            f"Adding only required attributes: {attrs}, not adding: {_not_adding}"
+                        )
                     else:
                         attrs = this_rule.attributes
                         extra_logger.debug(f"Adding attributes: {attrs}")
@@ -500,11 +541,14 @@ class PolicyConfigValue(BaseModel):
     name_form: Optional[str]
     nameid_format: Optional[str]
     entity_categories: EntityCategoryPolicy
-    sign: Optional[Union[Literal["response"], Literal["assertion"], Literal["on_demand"]]]
+    sign: Optional[
+        Union[Literal["response"], Literal["assertion"], Literal["on_demand"]]
+    ]
     fail_on_missing_requested: Optional[bool]
 
-    class Config:
-        arbitrary_types_allowed = True  # allow re.Pattern as type in AttributeRestrictions
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True
+    )  # allow re.Pattern as type in AttributeRestrictions
 
 
 PolicyConfig = dict[PolicyConfigKey, PolicyConfigValue]
@@ -513,13 +557,19 @@ PolicyConfig = dict[PolicyConfigKey, PolicyConfigValue]
 class Policy:
     """Handles restrictions on assertions."""
 
-    def __init__(self, restrictions: Optional[Mapping[str, Any]] = None, mds: Optional[MetadataStore] = None):
+    def __init__(
+        self,
+        restrictions: Optional[Mapping[str, Any]] = None,
+        mds: Optional[MetadataStore] = None,
+    ):
         self.metadata_store = mds
         self._restrictions = self.setup_restrictions(restrictions)
         logger.debug("policy restrictions: %s", self._restrictions)
         self.acs: list[AttributeConverter] = []
 
-    def setup_restrictions(self, restrictions: Optional[Mapping[str, Any]] = None) -> Optional[PolicyConfig]:
+    def setup_restrictions(
+        self, restrictions: Optional[Mapping[str, Any]] = None
+    ) -> Optional[PolicyConfig]:
         if restrictions is None:
             return None
 
@@ -548,14 +598,20 @@ class Policy:
                 spec = {}
 
             entity_categories: list[str] = spec.get("entity_categories", [])
-            _new_entity_categories = EntityCategoryPolicy.from_module_names(entity_categories)
+            _new_entity_categories = EntityCategoryPolicy.from_module_names(
+                entity_categories
+            )
 
-            attribute_restrictions: Mapping[str, list[str]] = spec.get("attribute_restrictions") or {}
+            attribute_restrictions: Mapping[str, list[str]] = (
+                spec.get("attribute_restrictions") or {}
+            )
             _attribute_restrictions: AttributeRestrictions = {}
             for key, values in attribute_restrictions.items():
                 lkey = key.lower()
                 values = [] if not values else values
-                _attribute_restrictions[lkey] = [re.compile(value) for value in values] or None
+                _attribute_restrictions[lkey] = [
+                    re.compile(value) for value in values
+                ] or None
             _new_attribute_restrictions = _attribute_restrictions or None
 
             config[who] = PolicyConfigValue(
@@ -588,7 +644,9 @@ class Policy:
 
         sp_restrictions = self._restrictions.get(sp_entity_id)
         ra_restrictions = self._restrictions.get(ra_entity_id)
-        default_restrictions = self._restrictions.get("default") or self._restrictions.get("")
+        default_restrictions = self._restrictions.get(
+            "default"
+        ) or self._restrictions.get("")
         restrictions: Optional[PolicyConfigValue] = (
             sp_restrictions
             if sp_restrictions is not None
@@ -627,7 +685,9 @@ class Policy:
         # default is a hour
         return self.get("lifetime", sp_entity_id, {"hours": 1})
 
-    def get_attribute_restrictions(self, sp_entity_id: str) -> Optional[AttributeRestrictions]:
+    def get_attribute_restrictions(
+        self, sp_entity_id: str
+    ) -> Optional[AttributeRestrictions]:
         """Return the attribute restriction for SP that want the information
 
         :param sp_entity_id: The SP entity ID
@@ -658,7 +718,10 @@ class Policy:
         return self.get("sign", sp_entity_id, default=[])
 
     def _get_restrictions_for_entity_categories(
-        self, sp_entity_id: str, mds: Optional[MetadataStore] = None, required: Optional[List[AttributeAsDict]] = None
+        self,
+        sp_entity_id: str,
+        mds: Optional[MetadataStore] = None,
+        required: Optional[List[AttributeAsDict]] = None,
     ) -> AttributeRestrictions:
         """
 
@@ -676,7 +739,9 @@ class Policy:
             logger.warning(warn_msg)
             _warn(warn_msg, DeprecationWarning)
 
-        result1: Optional[EntityCategoryPolicy] = self.get("entity_categories", sp_entity_id)
+        result1: Optional[EntityCategoryPolicy] = self.get(
+            "entity_categories", sp_entity_id
+        )
         if result1 is None or not result1.categories:
             return {}
 
@@ -784,7 +849,9 @@ class Policy:
             )
 
         # entity category restrictions
-        _ent_rest = self._get_restrictions_for_entity_categories(sp_entity_id, mds=mdstore, required=required)
+        _ent_rest = self._get_restrictions_for_entity_categories(
+            sp_entity_id, mds=mdstore, required=required
+        )
         if _ent_rest:
             subject_ava = filter_attribute_value_assertions(subject_ava, _ent_rest)
         elif required or optional:
@@ -803,7 +870,12 @@ class Policy:
 
         return subject_ava or {}
 
-    def restrict(self, ava: AttributeValues, sp_entity_id: str, metadata: Optional[MetadataStore] = None):
+    def restrict(
+        self,
+        ava: AttributeValues,
+        sp_entity_id: str,
+        metadata: Optional[MetadataStore] = None,
+    ):
         """Identity attribute names are expected to be expressed as FriendlyNames
 
         :return: A filtered ava according to the IdPs/AAs rules and
@@ -820,10 +892,18 @@ class Policy:
             _warn(warn_msg, DeprecationWarning)
 
         metadata_store = metadata or self.metadata_store
-        spec = metadata_store.attribute_requirement(sp_entity_id) or {} if metadata_store else {}
+        spec = (
+            metadata_store.attribute_requirement(sp_entity_id) or {}
+            if metadata_store
+            else {}
+        )
         required_attributes = spec.get("required") or []
         optional_attributes = spec.get("optional") or []
-        requirements_subject_id = metadata_store.subject_id_requirement(sp_entity_id) if metadata_store else []
+        requirements_subject_id = (
+            metadata_store.subject_id_requirement(sp_entity_id)
+            if metadata_store
+            else []
+        )
         for r in requirements_subject_id:
             if r not in required_attributes:
                 required_attributes.append(r)
@@ -870,7 +950,9 @@ def _authn_context_class_ref(authn_class, authn_auth=None):
         return factory(
             saml.AuthnContext,
             authn_context_class_ref=cntx_class,
-            authenticating_authority=factory(saml.AuthenticatingAuthority, text=authn_auth),
+            authenticating_authority=factory(
+                saml.AuthenticatingAuthority, text=authn_auth
+            ),
         )
     else:
         return factory(saml.AuthnContext, authn_context_class_ref=cntx_class)
@@ -1059,7 +1141,9 @@ class Assertion(dict):
 
         _name_format = policy.get_name_form(sp_entity_id)
 
-        attr_statement = saml.AttributeStatement(attribute=from_local(attrconvs, self, _name_format))
+        attr_statement = saml.AttributeStatement(
+            attribute=from_local(attrconvs, self, _name_format)
+        )
 
         if encrypt == "attributes":
             for attr in attr_statement.attribute:
@@ -1089,7 +1173,9 @@ class Assertion(dict):
         else:
             _authn_statement = None
 
-        subject = do_subject(policy.not_on_or_after(sp_entity_id), name_id, **farg["subject"])
+        subject = do_subject(
+            policy.not_on_or_after(sp_entity_id), name_id, **farg["subject"]
+        )
         _ass = assertion_factory(issuer=issuer, conditions=conds, subject=subject)
 
         if _authn_statement:
@@ -1121,5 +1207,7 @@ class Assertion(dict):
 
 
 def compile(restrictions: Mapping[str, Any]) -> PolicyConfig:
-    _warn("compile() is believe to be unused as an exported function and will be removed, use Policy() instead")
+    _warn(
+        "compile() is believe to be unused as an exported function and will be removed, use Policy() instead"
+    )
     return Policy._compile_restrictions(restrictions)

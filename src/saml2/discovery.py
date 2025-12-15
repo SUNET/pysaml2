@@ -39,7 +39,9 @@ class DiscoveryServer(Entity):
                 qp = parse.parse_qs(part.query)
                 if "returnIDParam" in dsr:
                     if dsr["returnIDParam"] in qp.keys():
-                        raise Exception("returnIDParam value should not be in the query params")
+                        raise Exception(
+                            "returnIDParam value should not be in the query params"
+                        )
                 else:
                     if "entityID" in qp.keys():
                         raise Exception("entityID should not be in the query params")
@@ -67,7 +69,9 @@ class DiscoveryServer(Entity):
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def create_discovery_service_response(return_url=None, returnIDParam="entityID", entity_id=None, **kwargs):
+    def create_discovery_service_response(
+        return_url=None, returnIDParam="entityID", entity_id=None, **kwargs
+    ):
         if return_url is None:
             return_url = kwargs["return"]
 

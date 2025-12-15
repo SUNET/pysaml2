@@ -134,7 +134,10 @@ class Cache:
         :param entity_id: The identifier of the entity_id of the assertion
         :return:
         """
-        self._cache.update({"subject_id": subject_id, "entity_id": entity_id}, {"$set": {"info": {}, "timestamp": 0}})
+        self._cache.update(
+            {"subject_id": subject_id, "entity_id": entity_id},
+            {"$set": {"info": {}, "timestamp": 0}},
+        )
 
     def entities(self, subject_id):
         """Returns all the entities of assertions for a subject, disregarding
@@ -144,7 +147,9 @@ class Cache:
         :return: A possibly empty list of entity identifiers
         """
         try:
-            return [i["entity_id"] for i in self._cache.find({"subject_id": subject_id})]
+            return [
+                i["entity_id"] for i in self._cache.find({"subject_id": subject_id})
+            ]
         except ValueError:
             return []
 
@@ -183,11 +188,16 @@ class Cache:
         item = self._cache.find_one({"subject_id": subject_id, "entity_id": entity_id})
         info = item["info"]
         info["ava"].update(ava)
-        self._cache.update({"subject_id": subject_id, "entity_id": entity_id}, {"$set": {"info": info}})
+        self._cache.update(
+            {"subject_id": subject_id, "entity_id": entity_id}, {"$set": {"info": info}}
+        )
 
     def valid_to(self, subject_id, entity_id, newtime):
         """ """
-        self._cache.update({"subject_id": subject_id, "entity_id": entity_id}, {"$set": {"timestamp": newtime}})
+        self._cache.update(
+            {"subject_id": subject_id, "entity_id": entity_id},
+            {"$set": {"timestamp": newtime}},
+        )
 
     def clear(self):
         self._cache.delete_many({})

@@ -73,7 +73,9 @@ class Client(Entity):
         """
         if not config:
             config = Config()
-            config.disable_ssl_certificate_validation = disable_ssl_certificate_validation
+            config.disable_ssl_certificate_validation = (
+                disable_ssl_certificate_validation
+            )
             config.key_file = key_file
             config.cert_file = cert_file
             config.ca_certs = ca_certs
@@ -87,7 +89,12 @@ class Client(Entity):
         self._verbose = verbose
 
         if metadata_file:
-            self._metadata = MetadataStore([saml, samlp], None, config, http_client_timeout=config.http_client_timeout)
+            self._metadata = MetadataStore(
+                [saml, samlp],
+                None,
+                config,
+                http_client_timeout=config.http_client_timeout,
+            )
             self._metadata.load("local", metadata_file)
             logger.debug("Loaded metadata from '%s'", metadata_file)
         else:
@@ -122,9 +129,13 @@ class Client(Entity):
         :return: The response from the IdP
         """
 
-        _, destination = self.pick_binding("single_sign_on_service", [BINDING_SOAP], "idpsso", entity_id=idp_entity_id)
+        _, destination = self.pick_binding(
+            "single_sign_on_service", [BINDING_SOAP], "idpsso", entity_id=idp_entity_id
+        )
 
-        ht_args = self.apply_binding(BINDING_SOAP, authn_request, destination, sign=sign, sigalg=sign_alg)
+        ht_args = self.apply_binding(
+            BINDING_SOAP, authn_request, destination, sign=sign, sigalg=sign_alg
+        )
 
         if headers:
             ht_args["headers"].extend(headers)
@@ -137,7 +148,9 @@ class Client(Entity):
         logger.debug("[P2] Got IdP response: %s", response)
 
         if response.status_code != 200:
-            raise SAMLError(f"Request to IdP failed ({response.status_code}): {response.text}")
+            raise SAMLError(
+                f"Request to IdP failed ({response.status_code}): {response.text}"
+            )
 
         # SAMLP response in a SOAP envelope body, ecp response in headers
         respdict = self.parse_soap_message(response.text)
@@ -269,7 +282,10 @@ class Client(Entity):
                 del headers["accept"]
             headers = dict2set_list(headers)
         else:
-            headers = [("Accept", f"text/html; {MIME_PAOS}"), ("PAOS", PAOS_HEADER_INFO)]
+            headers = [
+                ("Accept", f"text/html; {MIME_PAOS}"),
+                ("PAOS", PAOS_HEADER_INFO),
+            ]
 
         return headers
 

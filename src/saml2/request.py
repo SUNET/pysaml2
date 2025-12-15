@@ -19,7 +19,9 @@ def _dummy(data, **_arg):
 
 
 class Request:
-    def __init__(self, sec_context, receiver_addrs, attribute_converters=None, timeslack=0):
+    def __init__(
+        self, sec_context, receiver_addrs, attribute_converters=None, timeslack=0
+    ):
         self.sec = sec_context
         self.receiver_addrs = receiver_addrs
         self.timeslack = timeslack
@@ -52,7 +54,11 @@ class Request:
         # own copy
         self.xmlstr = xmldata[:]
         logger.debug(
-            "xmlstr: %s, relay_state: %s, sigalg: %s, signature: %s", self.xmlstr, relay_state, sigalg, signature
+            "xmlstr: %s, relay_state: %s, sigalg: %s, signature: %s",
+            self.xmlstr,
+            relay_state,
+            sigalg,
+            signature,
         )
 
         sign_redirect = must and binding == BINDING_HTTP_REDIRECT
@@ -110,14 +116,21 @@ class Request:
         issuer = self.sender()
         certs = self.sec.metadata.certs(issuer, "any", "signing")
         logger.debug("Certs to verify request sig: %s, _saml_msg: %s", certs, _saml_msg)
-        verified = any(verify_redirect_signature(_saml_msg, self.sec.sec_backend, cert) for cert_name, cert in certs)
+        verified = any(
+            verify_redirect_signature(_saml_msg, self.sec.sec_backend, cert)
+            for cert_name, cert in certs
+        )
         logger.debug("Redirect request signature check: %s", verified)
         return verified
 
     def issue_instant_ok(self):
         """Check that the request was issued at a reasonable time"""
-        upper = time_util.shift_time(time_util.time_in_a_while(days=1), self.timeslack).timetuple()
-        lower = time_util.shift_time(time_util.time_a_while_ago(days=1), -self.timeslack).timetuple()
+        upper = time_util.shift_time(
+            time_util.time_in_a_while(days=1), self.timeslack
+        ).timetuple()
+        lower = time_util.shift_time(
+            time_util.time_a_while_ago(days=1), -self.timeslack
+        ).timetuple()
         # print("issue_instant: %s" % self.message.issue_instant)
         # print("%s < x < %s" % (lower, upper))
         issued_at = time_util.str_to_time(self.message.issue_instant)
@@ -126,9 +139,15 @@ class Request:
     def _verify(self):
         valid_version = "2.0"
         if self.message.version != valid_version:
-            raise VersionMismatch(f"Invalid version {self.message.version} should be {valid_version}")
+            raise VersionMismatch(
+                f"Invalid version {self.message.version} should be {valid_version}"
+            )
 
-        if self.message.destination and self.receiver_addrs and self.message.destination not in self.receiver_addrs:
+        if (
+            self.message.destination
+            and self.receiver_addrs
+            and self.message.destination not in self.receiver_addrs
+        ):
             logger.error("%s not in %s", self.message.destination, self.receiver_addrs)
             raise OtherError("Not destined for me!")
 
@@ -191,8 +210,12 @@ class Request:
 class LogoutRequest(Request):
     msgtype = "logout_request"
 
-    def __init__(self, sec_context, receiver_addrs, attribute_converters=None, timeslack=0):
-        Request.__init__(self, sec_context, receiver_addrs, attribute_converters, timeslack)
+    def __init__(
+        self, sec_context, receiver_addrs, attribute_converters=None, timeslack=0
+    ):
+        Request.__init__(
+            self, sec_context, receiver_addrs, attribute_converters, timeslack
+        )
         self.signature_check = self.sec.correctly_signed_logout_request
 
     @property
@@ -203,8 +226,12 @@ class LogoutRequest(Request):
 class AttributeQuery(Request):
     msgtype = "attribute_query"
 
-    def __init__(self, sec_context, receiver_addrs, attribute_converters=None, timeslack=0):
-        Request.__init__(self, sec_context, receiver_addrs, attribute_converters, timeslack)
+    def __init__(
+        self, sec_context, receiver_addrs, attribute_converters=None, timeslack=0
+    ):
+        Request.__init__(
+            self, sec_context, receiver_addrs, attribute_converters, timeslack
+        )
         self.signature_check = self.sec.correctly_signed_attribute_query
 
     def attribute(self):
@@ -216,7 +243,9 @@ class AuthnRequest(Request):
     msgtype = "authn_request"
 
     def __init__(self, sec_context, receiver_addrs, attribute_converters, timeslack=0):
-        Request.__init__(self, sec_context, receiver_addrs, attribute_converters, timeslack)
+        Request.__init__(
+            self, sec_context, receiver_addrs, attribute_converters, timeslack
+        )
         self.signature_check = self.sec.correctly_signed_authn_request
 
     def attributes(self):
@@ -227,7 +256,9 @@ class AuthnQuery(Request):
     msgtype = "authn_query"
 
     def __init__(self, sec_context, receiver_addrs, attribute_converters, timeslack=0):
-        Request.__init__(self, sec_context, receiver_addrs, attribute_converters, timeslack)
+        Request.__init__(
+            self, sec_context, receiver_addrs, attribute_converters, timeslack
+        )
         self.signature_check = self.sec.correctly_signed_authn_query
 
     def attributes(self):
@@ -238,7 +269,9 @@ class AssertionIDRequest(Request):
     msgtype = "assertion_id_request"
 
     def __init__(self, sec_context, receiver_addrs, attribute_converters, timeslack=0):
-        Request.__init__(self, sec_context, receiver_addrs, attribute_converters, timeslack)
+        Request.__init__(
+            self, sec_context, receiver_addrs, attribute_converters, timeslack
+        )
         self.signature_check = self.sec.correctly_signed_assertion_id_request
 
     def attributes(self):
@@ -248,8 +281,12 @@ class AssertionIDRequest(Request):
 class AuthzDecisionQuery(Request):
     msgtype = "authz_decision_query"
 
-    def __init__(self, sec_context, receiver_addrs, attribute_converters=None, timeslack=0):
-        Request.__init__(self, sec_context, receiver_addrs, attribute_converters, timeslack)
+    def __init__(
+        self, sec_context, receiver_addrs, attribute_converters=None, timeslack=0
+    ):
+        Request.__init__(
+            self, sec_context, receiver_addrs, attribute_converters, timeslack
+        )
         self.signature_check = self.sec.correctly_signed_authz_decision_query
 
     def action(self):
@@ -266,7 +303,9 @@ class NameIDMappingRequest(Request):
     msgtype = "name_id_mapping_request"
 
     def __init__(self, sec_context, receiver_addrs, attribute_converters, timeslack=0):
-        Request.__init__(self, sec_context, receiver_addrs, attribute_converters, timeslack)
+        Request.__init__(
+            self, sec_context, receiver_addrs, attribute_converters, timeslack
+        )
         self.signature_check = self.sec.correctly_signed_name_id_mapping_request
 
 
@@ -274,7 +313,9 @@ class ManageNameIDRequest(Request):
     msgtype = "manage_name_id_request"
 
     def __init__(self, sec_context, receiver_addrs, attribute_converters, timeslack=0):
-        Request.__init__(self, sec_context, receiver_addrs, attribute_converters, timeslack)
+        Request.__init__(
+            self, sec_context, receiver_addrs, attribute_converters, timeslack
+        )
         self.signature_check = self.sec.correctly_signed_manage_name_id_request
 
 

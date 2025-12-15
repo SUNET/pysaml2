@@ -24,11 +24,25 @@ class RequestType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Issuer"] = ("issuer", saml.Issuer)
-    c_children["{urn:oasis:names:tc:SAML:2.0:protocol}IDPList"] = ("idp_list", samlp.IDPList)
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Issuer"] = (
+        "issuer",
+        saml.Issuer,
+    )
+    c_children["{urn:oasis:names:tc:SAML:2.0:protocol}IDPList"] = (
+        "idp_list",
+        samlp.IDPList,
+    )
     c_cardinality["idp_list"] = {"min": 0, "max": 1}
-    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}mustUnderstand"] = ("must_understand", "None", True)
-    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}actor"] = ("actor", "None", True)
+    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}mustUnderstand"] = (
+        "must_understand",
+        "None",
+        True,
+    )
+    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}actor"] = (
+        "actor",
+        "None",
+        True,
+    )
     c_attributes["ProviderName"] = ("provider_name", "string", False)
     c_attributes["IsPassive"] = ("is_passive", "boolean", False)
     c_child_order.extend(["issuer", "idp_list"])
@@ -72,9 +86,21 @@ class ResponseType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}mustUnderstand"] = ("must_understand", "None", True)
-    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}actor"] = ("actor", "None", True)
-    c_attributes["AssertionConsumerServiceURL"] = ("assertion_consumer_service_url", "anyURI", True)
+    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}mustUnderstand"] = (
+        "must_understand",
+        "None",
+        True,
+    )
+    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}actor"] = (
+        "actor",
+        "None",
+        True,
+    )
+    c_attributes["AssertionConsumerServiceURL"] = (
+        "assertion_consumer_service_url",
+        "anyURI",
+        True,
+    )
 
     def __init__(
         self,
@@ -110,8 +136,16 @@ class RelayStateType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}mustUnderstand"] = ("must_understand", "string", True)
-    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}actor"] = ("actor", "string", True)
+    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}mustUnderstand"] = (
+        "must_understand",
+        "string",
+        True,
+    )
+    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}actor"] = (
+        "actor",
+        "string",
+        True,
+    )
 
     def __init__(
         self,

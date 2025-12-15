@@ -36,7 +36,9 @@ class Fernet:
         :param key: byte data representing the encyption/decryption key
         """
         if key:
-            fernet_key_error = SymmetricCryptographyError("Fernet key must be 32 url-safe base64-encoded bytes.")
+            fernet_key_error = SymmetricCryptographyError(
+                "Fernet key must be 32 url-safe base64-encoded bytes."
+            )
             try:
                 raw_key = _base64.b64decode(key)
             except Exception as e:
@@ -159,7 +161,14 @@ class AESCipher:
 
         return cipher, iv
 
-    def encrypt(self, msg, alg="aes_128_cbc", padding="PKCS#7", b64enc=True, block_size=AES_BLOCK_SIZE):
+    def encrypt(
+        self,
+        msg,
+        alg="aes_128_cbc",
+        padding="PKCS#7",
+        b64enc=True,
+        block_size=AES_BLOCK_SIZE,
+    ):
         """
         :param key: The encryption key
         :param msg: Message to be encrypted

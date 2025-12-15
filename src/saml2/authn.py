@@ -179,7 +179,9 @@ class UsernamePasswordMako(UserAuthnMethod):
             info = self.symmetric.encrypt(msg.encode())
             self.active[info] = timestamp
             cookie = make_cookie(self.cookie_name, info, self.srv.seed)
-            return_to = create_return_url(self.return_to, _dict["query"][0], **{self.query_param: "true"})
+            return_to = create_return_url(
+                self.return_to, _dict["query"][0], **{self.query_param: "true"}
+            )
             resp = Redirect(return_to, headers=[cookie])
         except (ValueError, KeyError):
             resp = Unauthorized("Unknown user or wrong password")
@@ -240,14 +242,18 @@ try:
     import ldap
 
     class LDAPAuthn(UsernamePasswordMako):
-        def __init__(self, srv, ldapsrv, return_to, dn_pattern, mako_template, template_lookup):
+        def __init__(
+            self, srv, ldapsrv, return_to, dn_pattern, mako_template, template_lookup
+        ):
             """
             :param srv: The server instance
             :param ldapsrv: Which LDAP server to us
             :param return_to: Where to send the user after authentication
             :return:
             """
-            UsernamePasswordMako.__init__(self, srv, mako_template, template_lookup, None, return_to)
+            UsernamePasswordMako.__init__(
+                self, srv, mako_template, template_lookup, None, return_to
+            )
 
             self.ldap = ldap.initialize(ldapsrv)
             self.ldap.protocol_version = 3

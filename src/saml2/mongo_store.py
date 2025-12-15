@@ -1,6 +1,7 @@
-import datetime
-from hashlib import sha1
 import logging
+from hashlib import sha1
+from datetime import datetime
+from datetime import timezone
 
 from pymongo import MongoClient
 import pymongo.errors
@@ -59,7 +60,12 @@ class SessionStorageMDB:
     def get_assertion(self, cid):
         res = []
         for item in self.assertion.find({"assertion_id": cid}):
-            res.append({"assertion": from_dict(item["assertion"], ONTS, True), "to_sign": item["to_sign"]})
+            res.append(
+                {
+                    "assertion": from_dict(item["assertion"], ONTS, True),
+                    "to_sign": item["to_sign"],
+                }
+            )
         if len(res) == 1:
             return res[0]
         elif res is []:
@@ -67,7 +73,9 @@ class SessionStorageMDB:
         else:
             raise SystemError("More then one assertion with the same ID")
 
-    def get_assertions_by_subject(self, name_id=None, session_index=None, requested_context=None):
+    def get_assertions_by_subject(
+        self, name_id=None, session_index=None, requested_context=None
+    ):
         """
 
         :param name_id: One of name_id or key can be used to get the authn
@@ -108,7 +116,12 @@ class SessionStorageMDB:
         :param requested_context:
         :return:
         """
-        return [k.authn_statement for k in self.get_assertions_by_subject(name_id, session_index, requested_context)]
+        return [
+            k.authn_statement
+            for k in self.get_assertions_by_subject(
+                name_id, session_index, requested_context
+            )
+        ]
 
 
 class IdentMDB(IdentDB):
@@ -133,7 +146,13 @@ class IdentMDB(IdentDB):
         self.mdb.store(ident, name_id=to_dict(name_id, MMODS, True))
 
     def find_nameid(
-        self, userid, nformat=None, sp_name_qualifier=None, name_qualifier=None, sp_provided_id=None, **kwargs
+        self,
+        userid,
+        nformat=None,
+        sp_name_qualifier=None,
+        name_qualifier=None,
+        sp_provided_id=None,
+        **kwargs,
     ):
         # reset passed for compatibility kwargs for next usage
         kwargs = {}
@@ -205,7 +224,7 @@ class MDB:
         doc.update(kwargs)
         # Add timestamp to all documents to allow external garbage collecting
         if "created_at" not in doc:
-            doc["created_at"] = datetime.datetime.utcnow()
+            doc["created_at"] = datetime.now(timezone.utc)
         _ = self.db.insert_one(doc)
 
     def get(self, value=None, **kwargs):

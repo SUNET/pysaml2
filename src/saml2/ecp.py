@@ -4,6 +4,7 @@
 """
 Contains classes used in the SAML ECP profile
 """
+
 import logging
 
 from saml2 import BINDING_PAOS
@@ -37,7 +38,9 @@ def ecp_capable(headers):
 
 
 # noinspection PyUnusedLocal
-def ecp_auth_request(cls, entityid=None, relay_state="", sign=None, sign_alg=None, digest_alg=None):
+def ecp_auth_request(
+    cls, entityid=None, relay_state="", sign=None, sign_alg=None, digest_alg=None
+):
     """Makes an authentication request.
 
     :param entityid: The entity ID of the IdP to send the request to
@@ -128,14 +131,18 @@ def ecp_auth_request(cls, entityid=None, relay_state="", sign=None, sign_alg=Non
 
 
 def handle_ecp_authn_response(cls, soap_message, outstanding=None):
-    rdict = soap.class_instances_from_soap_enveloped_saml_thingies(soap_message, [paos, ecp, samlp])
+    rdict = soap.class_instances_from_soap_enveloped_saml_thingies(
+        soap_message, [paos, ecp, samlp]
+    )
 
     _relay_state = None
     for item in rdict["header"]:
         if item.c_tag == "RelayState" and item.c_namespace == ecp.NAMESPACE:
             _relay_state = item
 
-    response = authn_response(cls.config, cls.service_urls(), outstanding, allow_unsolicited=True)
+    response = authn_response(
+        cls.config, cls.service_urls(), outstanding, allow_unsolicited=True
+    )
 
     response.loads(f"{rdict['body']}", False, soap_message)
     response.verify()
@@ -145,7 +152,6 @@ def handle_ecp_authn_response(cls, soap_message, outstanding=None):
 
 
 def ecp_response(target_url, response):
-
     # ----------------------------------------
     # <ecp:Response
     # ----------------------------------------
@@ -179,7 +185,6 @@ class ECPServer(Server):
         pass
 
     def ecp_response(self):
-
         # ----------------------------------------
         # <ecp:Response
         # ----------------------------------------

@@ -21,7 +21,10 @@ class RequestedAttributeType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AttributeValue"] = ("attribute_value", [saml.AttributeValue])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AttributeValue"] = (
+        "attribute_value",
+        [saml.AttributeValue],
+    )
     c_cardinality["attribute_value"] = {"min": 0}
     c_attributes["Name"] = ("name", "None", True)
     c_attributes["NameFormat"] = ("name_format", "None", True)

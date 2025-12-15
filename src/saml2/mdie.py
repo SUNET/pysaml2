@@ -31,12 +31,20 @@ def _eval(val, onts, mdb_safe):
             return None
         else:
             return val
-    elif isinstance(val, dict) or isinstance(val, SamlBase) or isinstance(val, ExtensionElement):
+    elif (
+        isinstance(val, dict)
+        or isinstance(val, SamlBase)
+        or isinstance(val, ExtensionElement)
+    ):
         return to_dict(val, onts, mdb_safe)
     elif isinstance(val, list):
         lv = []
         for v in val:
-            if isinstance(v, dict) or isinstance(v, SamlBase) or isinstance(v, ExtensionElement):
+            if (
+                isinstance(v, dict)
+                or isinstance(v, SamlBase)
+                or isinstance(v, ExtensionElement)
+            ):
                 lv.append(to_dict(v, onts, mdb_safe))
             else:
                 lv.append(v)
@@ -113,7 +121,11 @@ def _kwa(val, onts, mdb_safe=False):
     else:
         _skip = ["_id"]
         _skip.extend(EXP_SKIP)
-        return {k.replace("__", "."): from_dict(v, onts) for k, v in val.items() if k not in _skip}
+        return {
+            k.replace("__", "."): from_dict(v, onts)
+            for k, v in val.items()
+            if k not in _skip
+        }
 
 
 def from_dict(val, onts, mdb_safe=False):

@@ -21,7 +21,9 @@ def main():
 
     start = time.time()
     for i in range(1, 10):
-        mdf = MetaDataFile(ac_factory("../tests/attributemaps"), "../tests/swamid-2.0.xml")
+        mdf = MetaDataFile(
+            ac_factory("../tests/attributemaps"), "../tests/swamid-2.0.xml"
+        )
         mdf.load()
         _ = mdf.keys()
 

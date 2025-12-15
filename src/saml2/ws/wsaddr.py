@@ -61,7 +61,10 @@ class RelationshipType_(SamlBase):
 
     c_tag = "RelationshipType"
     c_namespace = NAMESPACE
-    c_value_type = {"base": "xs:anyURI", "enumeration": ["http://www.w3.org/2005/08/addressing/reply"]}
+    c_value_type = {
+        "base": "xs:anyURI",
+        "enumeration": ["http://www.w3.org/2005/08/addressing/reply"],
+    }
     c_children = SamlBase.c_children.copy()
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
@@ -182,7 +185,6 @@ def problem_iri_from_string(xml_string):
 
 
 class EndpointReferenceType_Address(AttributedURIType_):
-
     c_tag = "Address"
     c_namespace = NAMESPACE
     c_children = AttributedURIType_.c_children.copy()
@@ -250,7 +252,11 @@ class RelatesToType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_attributes["RelationshipType"] = ("relationship_type", RelationshipTypeOpenEnum_, False)
+    c_attributes["RelationshipType"] = (
+        "relationship_type",
+        RelationshipTypeOpenEnum_,
+        False,
+    )
 
     def __init__(
         self,
@@ -333,7 +339,6 @@ def problem_header_q_name_from_string(xml_string):
 
 
 class ProblemActionType_SoapAction(SamlBase):
-
     c_tag = "SoapAction"
     c_namespace = NAMESPACE
     c_value_type = {"base": "anyURI"}
@@ -358,7 +363,10 @@ class ProblemActionType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_children["{http://www.w3.org/2005/08/addressing}Action"] = ("action", Action)
     c_cardinality["action"] = {"min": 0, "max": 1}
-    c_children["{http://www.w3.org/2005/08/addressing}SoapAction"] = ("soap_action", ProblemActionType_SoapAction)
+    c_children["{http://www.w3.org/2005/08/addressing}SoapAction"] = (
+        "soap_action",
+        ProblemActionType_SoapAction,
+    )
     c_cardinality["soap_action"] = {"min": 0, "max": 1}
     c_child_order.extend(["action", "soap_action"])
 
@@ -393,13 +401,19 @@ class EndpointReferenceType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://www.w3.org/2005/08/addressing}Address"] = ("address", EndpointReferenceType_Address)
+    c_children["{http://www.w3.org/2005/08/addressing}Address"] = (
+        "address",
+        EndpointReferenceType_Address,
+    )
     c_children["{http://www.w3.org/2005/08/addressing}ReferenceParameters"] = (
         "reference_parameters",
         ReferenceParameters,
     )
     c_cardinality["reference_parameters"] = {"min": 0, "max": 1}
-    c_children["{http://www.w3.org/2005/08/addressing}Metadata"] = ("metadata", Metadata)
+    c_children["{http://www.w3.org/2005/08/addressing}Metadata"] = (
+        "metadata",
+        Metadata,
+    )
     c_cardinality["metadata"] = {"min": 0, "max": 1}
     c_child_order.extend(["address", "reference_parameters", "metadata"])
 

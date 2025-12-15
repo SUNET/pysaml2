@@ -27,7 +27,6 @@ def t_documentation__from_string(xml_string):
 
 
 class TDocumented_documentation(TDocumentation_):
-
     c_tag = "documentation"
     c_namespace = NAMESPACE
     c_children = TDocumentation_.c_children.copy()
@@ -49,7 +48,10 @@ class TDocumented_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://schemas.xmlsoap.org/wsdl/}documentation"] = ("documentation", TDocumented_documentation)
+    c_children["{http://schemas.xmlsoap.org/wsdl/}documentation"] = (
+        "documentation",
+        TDocumented_documentation,
+    )
     c_cardinality["documentation"] = {"min": 0, "max": 1}
     c_child_order.extend(["documentation"])
 
@@ -360,7 +362,6 @@ def t_binding_operation_fault__from_string(xml_string):
 
 
 class TBindingOperation_input(TBindingOperationMessage_):
-
     c_tag = "input"
     c_namespace = NAMESPACE
     c_children = TBindingOperationMessage_.c_children.copy()
@@ -374,7 +375,6 @@ def t_binding_operation_input_from_string(xml_string):
 
 
 class TBindingOperation_output(TBindingOperationMessage_):
-
     c_tag = "output"
     c_namespace = NAMESPACE
     c_children = TBindingOperationMessage_.c_children.copy()
@@ -388,7 +388,6 @@ def t_binding_operation_output_from_string(xml_string):
 
 
 class TBindingOperation_fault(TBindingOperationFault_):
-
     c_tag = "fault"
     c_namespace = NAMESPACE
     c_children = TBindingOperationFault_.c_children.copy()
@@ -410,11 +409,20 @@ class TBindingOperation_(TExtensibleDocumented_):
     c_attributes = TExtensibleDocumented_.c_attributes.copy()
     c_child_order = TExtensibleDocumented_.c_child_order[:]
     c_cardinality = TExtensibleDocumented_.c_cardinality.copy()
-    c_children["{http://schemas.xmlsoap.org/wsdl/}input"] = ("input", TBindingOperation_input)
+    c_children["{http://schemas.xmlsoap.org/wsdl/}input"] = (
+        "input",
+        TBindingOperation_input,
+    )
     c_cardinality["input"] = {"min": 0, "max": 1}
-    c_children["{http://schemas.xmlsoap.org/wsdl/}output"] = ("output", TBindingOperation_output)
+    c_children["{http://schemas.xmlsoap.org/wsdl/}output"] = (
+        "output",
+        TBindingOperation_output,
+    )
     c_cardinality["output"] = {"min": 0, "max": 1}
-    c_children["{http://schemas.xmlsoap.org/wsdl/}fault"] = ("fault", [TBindingOperation_fault])
+    c_children["{http://schemas.xmlsoap.org/wsdl/}fault"] = (
+        "fault",
+        [TBindingOperation_fault],
+    )
     c_cardinality["fault"] = {"min": 0}
     c_attributes["name"] = ("name", "NCName", True)
     c_child_order.extend(["input", "output", "fault"])
@@ -541,7 +549,6 @@ def types_from_string(xml_string):
 
 
 class TMessage_part(TPart_):
-
     c_tag = "part"
     c_namespace = NAMESPACE
     c_children = TPart_.c_children.copy()
@@ -593,7 +600,6 @@ def t_message__from_string(xml_string):
 
 
 class TPortType_operation(TOperation_):
-
     c_tag = "operation"
     c_namespace = NAMESPACE
     c_children = TOperation_.c_children.copy()
@@ -615,7 +621,10 @@ class TPortType_(TExtensibleAttributesDocumented_):
     c_attributes = TExtensibleAttributesDocumented_.c_attributes.copy()
     c_child_order = TExtensibleAttributesDocumented_.c_child_order[:]
     c_cardinality = TExtensibleAttributesDocumented_.c_cardinality.copy()
-    c_children["{http://schemas.xmlsoap.org/wsdl/}operation"] = ("operation", [TPortType_operation])
+    c_children["{http://schemas.xmlsoap.org/wsdl/}operation"] = (
+        "operation",
+        [TPortType_operation],
+    )
     c_cardinality["operation"] = {"min": 0}
     c_attributes["name"] = ("name", "NCName", True)
     c_child_order.extend(["operation"])
@@ -645,7 +654,6 @@ def t_port_type__from_string(xml_string):
 
 
 class TBinding_operation(TBindingOperation_):
-
     c_tag = "operation"
     c_namespace = NAMESPACE
     c_children = TBindingOperation_.c_children.copy()
@@ -667,7 +675,10 @@ class TBinding_(TExtensibleDocumented_):
     c_attributes = TExtensibleDocumented_.c_attributes.copy()
     c_child_order = TExtensibleDocumented_.c_child_order[:]
     c_cardinality = TExtensibleDocumented_.c_cardinality.copy()
-    c_children["{http://schemas.xmlsoap.org/wsdl/}operation"] = ("operation", [TBinding_operation])
+    c_children["{http://schemas.xmlsoap.org/wsdl/}operation"] = (
+        "operation",
+        [TBinding_operation],
+    )
     c_cardinality["operation"] = {"min": 0}
     c_attributes["name"] = ("name", "NCName", True)
     c_attributes["type"] = ("type", "QName", True)
@@ -700,7 +711,6 @@ def t_binding__from_string(xml_string):
 
 
 class TService_port(TPort_):
-
     c_tag = "port"
     c_namespace = NAMESPACE
     c_children = TPort_.c_children.copy()
@@ -834,7 +844,9 @@ class TDefinitions_(TExtensibleDocumented_):
     c_cardinality["service"] = {"min": 0, "max": 1}
     c_attributes["targetNamespace"] = ("target_namespace", "anyURI", False)
     c_attributes["name"] = ("name", "NCName", False)
-    c_child_order.extend(["import", "types", "message", "port_type", "binding", "service"])
+    c_child_order.extend(
+        ["import", "types", "message", "port_type", "binding", "service"]
+    )
 
     def __init__(
         self,

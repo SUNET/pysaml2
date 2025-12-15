@@ -29,7 +29,6 @@ def key_size_type__from_string(xml_string):
 
 
 class CipherValue(SamlBase):
-
     c_tag = "CipherValue"
     c_namespace = NAMESPACE
     c_value_type = {"base": "base64Binary"}
@@ -52,7 +51,10 @@ class TransformsType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://www.w3.org/2000/09/xmldsig#}Transform"] = ("transform", [ds.Transform])
+    c_children["{http://www.w3.org/2000/09/xmldsig#}Transform"] = (
+        "transform",
+        [ds.Transform],
+    )
     c_cardinality["transform"] = {"min": 1}
     c_child_order.extend(["transform"])
 
@@ -77,7 +79,6 @@ def transforms_type__from_string(xml_string):
 
 
 class KA_Nonce(SamlBase):
-
     c_tag = "KA_Nonce"
     c_namespace = NAMESPACE
     c_value_type = {"base": "base64Binary"}
@@ -92,7 +93,6 @@ def k_a__nonce_from_string(xml_string):
 
 
 class OriginatorKeyInfo(ds.KeyInfo):
-
     c_tag = "OriginatorKeyInfo"
     c_namespace = NAMESPACE
     c_children = ds.KeyInfo.c_children.copy()
@@ -106,7 +106,6 @@ def originator_key_info_from_string(xml_string):
 
 
 class RecipientKeyInfo(ds.KeyInfo):
-
     c_tag = "RecipientKeyInfo"
     c_namespace = NAMESPACE
     c_children = ds.KeyInfo.c_children.copy()
@@ -130,9 +129,15 @@ class AgreementMethodType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_children["{http://www.w3.org/2001/04/xmlenc#}KA_Nonce"] = ("k_a__nonce", KA_Nonce)
     c_cardinality["k_a__nonce"] = {"min": 0, "max": 1}
-    c_children["{http://www.w3.org/2001/04/xmlenc#}OriginatorKeyInfo"] = ("originator_key_info", OriginatorKeyInfo)
+    c_children["{http://www.w3.org/2001/04/xmlenc#}OriginatorKeyInfo"] = (
+        "originator_key_info",
+        OriginatorKeyInfo,
+    )
     c_cardinality["originator_key_info"] = {"min": 0, "max": 1}
-    c_children["{http://www.w3.org/2001/04/xmlenc#}RecipientKeyInfo"] = ("recipient_key_info", RecipientKeyInfo)
+    c_children["{http://www.w3.org/2001/04/xmlenc#}RecipientKeyInfo"] = (
+        "recipient_key_info",
+        RecipientKeyInfo,
+    )
     c_cardinality["recipient_key_info"] = {"min": 0, "max": 1}
     c_attributes["Algorithm"] = ("algorithm", "anyURI", True)
     c_child_order.extend(["k_a__nonce", "originator_key_info", "recipient_key_info"])
@@ -229,7 +234,6 @@ def encryption_property_type__from_string(xml_string):
 
 
 class KeySize(KeySizeType_):
-
     c_tag = "KeySize"
     c_namespace = NAMESPACE
     c_children = KeySizeType_.c_children.copy()
@@ -243,7 +247,6 @@ def key_size_from_string(xml_string):
 
 
 class OAEPparams(SamlBase):
-
     c_tag = "OAEPparams"
     c_namespace = NAMESPACE
     c_value_type = {"base": "base64Binary"}
@@ -268,7 +271,10 @@ class EncryptionMethodType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_children["{http://www.w3.org/2001/04/xmlenc#}KeySize"] = ("key_size", KeySize)
     c_cardinality["key_size"] = {"min": 0, "max": 1}
-    c_children["{http://www.w3.org/2001/04/xmlenc#}OAEPparams"] = ("oae_pparams", OAEPparams)
+    c_children["{http://www.w3.org/2001/04/xmlenc#}OAEPparams"] = (
+        "oae_pparams",
+        OAEPparams,
+    )
     c_cardinality["oae_pparams"] = {"min": 0, "max": 1}
     c_attributes["Algorithm"] = ("algorithm", "anyURI", True)
     c_child_order.extend(["key_size", "oae_pparams"])
@@ -298,7 +304,6 @@ def encryption_method_type__from_string(xml_string):
 
 
 class Transforms(TransformsType_):
-
     c_tag = "Transforms"
     c_namespace = NAMESPACE
     c_children = TransformsType_.c_children.copy()
@@ -320,7 +325,10 @@ class CipherReferenceType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://www.w3.org/2001/04/xmlenc#}Transforms"] = ("transforms", Transforms)
+    c_children["{http://www.w3.org/2001/04/xmlenc#}Transforms"] = (
+        "transforms",
+        Transforms,
+    )
     c_cardinality["transforms"] = {"min": 0, "max": 1}
     c_attributes["URI"] = ("uri", "anyURI", True)
     c_child_order.extend(["transforms"])
@@ -348,7 +356,6 @@ def cipher_reference_type__from_string(xml_string):
 
 
 class EncryptionMethod(EncryptionMethodType_):
-
     c_tag = "EncryptionMethod"
     c_namespace = NAMESPACE
     c_children = EncryptionMethodType_.c_children.copy()
@@ -377,7 +384,6 @@ def agreement_method_from_string(xml_string):
 
 
 class DataReference(ReferenceType_):
-
     c_tag = "DataReference"
     c_namespace = NAMESPACE
     c_children = ReferenceType_.c_children.copy()
@@ -391,7 +397,6 @@ def data_reference_from_string(xml_string):
 
 
 class KeyReference(ReferenceType_):
-
     c_tag = "KeyReference"
     c_namespace = NAMESPACE
     c_children = ReferenceType_.c_children.copy()
@@ -413,9 +418,15 @@ class ReferenceList(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://www.w3.org/2001/04/xmlenc#}DataReference"] = ("data_reference", [DataReference])
+    c_children["{http://www.w3.org/2001/04/xmlenc#}DataReference"] = (
+        "data_reference",
+        [DataReference],
+    )
     c_cardinality["data_reference"] = {"min": 0}
-    c_children["{http://www.w3.org/2001/04/xmlenc#}KeyReference"] = ("key_reference", [KeyReference])
+    c_children["{http://www.w3.org/2001/04/xmlenc#}KeyReference"] = (
+        "key_reference",
+        [KeyReference],
+    )
     c_cardinality["key_reference"] = {"min": 0}
     c_child_order.extend(["data_reference", "key_reference"])
 
@@ -480,7 +491,10 @@ class EncryptionPropertiesType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://www.w3.org/2001/04/xmlenc#}EncryptionProperty"] = ("encryption_property", [EncryptionProperty])
+    c_children["{http://www.w3.org/2001/04/xmlenc#}EncryptionProperty"] = (
+        "encryption_property",
+        [EncryptionProperty],
+    )
     c_cardinality["encryption_property"] = {"min": 1}
     c_attributes["Id"] = ("id", "ID", False)
     c_child_order.extend(["encryption_property"])
@@ -516,9 +530,15 @@ class CipherDataType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://www.w3.org/2001/04/xmlenc#}CipherValue"] = ("cipher_value", CipherValue)
+    c_children["{http://www.w3.org/2001/04/xmlenc#}CipherValue"] = (
+        "cipher_value",
+        CipherValue,
+    )
     c_cardinality["cipher_value"] = {"min": 0, "max": 1}
-    c_children["{http://www.w3.org/2001/04/xmlenc#}CipherReference"] = ("cipher_reference", CipherReference)
+    c_children["{http://www.w3.org/2001/04/xmlenc#}CipherReference"] = (
+        "cipher_reference",
+        CipherReference,
+    )
     c_cardinality["cipher_reference"] = {"min": 0, "max": 1}
     c_child_order.extend(["cipher_value", "cipher_reference"])
 
@@ -583,11 +603,17 @@ class EncryptedType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://www.w3.org/2001/04/xmlenc#}EncryptionMethod"] = ("encryption_method", EncryptionMethod)
+    c_children["{http://www.w3.org/2001/04/xmlenc#}EncryptionMethod"] = (
+        "encryption_method",
+        EncryptionMethod,
+    )
     c_cardinality["encryption_method"] = {"min": 0, "max": 1}
     c_children["{http://www.w3.org/2000/09/xmldsig#}KeyInfo"] = ("key_info", ds.KeyInfo)
     c_cardinality["key_info"] = {"min": 0, "max": 1}
-    c_children["{http://www.w3.org/2001/04/xmlenc#}CipherData"] = ("cipher_data", CipherData)
+    c_children["{http://www.w3.org/2001/04/xmlenc#}CipherData"] = (
+        "cipher_data",
+        CipherData,
+    )
     c_children["{http://www.w3.org/2001/04/xmlenc#}EncryptionProperties"] = (
         "encryption_properties",
         EncryptionProperties,
@@ -597,7 +623,9 @@ class EncryptedType_(SamlBase):
     c_attributes["Type"] = ("type", "anyURI", False)
     c_attributes["MimeType"] = ("mime_type", "string", False)
     c_attributes["Encoding"] = ("encoding", "anyURI", False)
-    c_child_order.extend(["encryption_method", "key_info", "cipher_data", "encryption_properties"])
+    c_child_order.extend(
+        ["encryption_method", "key_info", "cipher_data", "encryption_properties"]
+    )
 
     def __init__(
         self,
@@ -645,7 +673,6 @@ def encrypted_data_type__from_string(xml_string):
 
 
 class CarriedKeyName(SamlBase):
-
     c_tag = "CarriedKeyName"
     c_namespace = NAMESPACE
     c_value_type = {"base": "string"}
@@ -668,9 +695,15 @@ class EncryptedKeyType_(EncryptedType_):
     c_attributes = EncryptedType_.c_attributes.copy()
     c_child_order = EncryptedType_.c_child_order[:]
     c_cardinality = EncryptedType_.c_cardinality.copy()
-    c_children["{http://www.w3.org/2001/04/xmlenc#}ReferenceList"] = ("reference_list", ReferenceList)
+    c_children["{http://www.w3.org/2001/04/xmlenc#}ReferenceList"] = (
+        "reference_list",
+        ReferenceList,
+    )
     c_cardinality["reference_list"] = {"min": 0, "max": 1}
-    c_children["{http://www.w3.org/2001/04/xmlenc#}CarriedKeyName"] = ("carried_key_name", CarriedKeyName)
+    c_children["{http://www.w3.org/2001/04/xmlenc#}CarriedKeyName"] = (
+        "carried_key_name",
+        CarriedKeyName,
+    )
     c_cardinality["carried_key_name"] = {"min": 0, "max": 1}
     c_attributes["Recipient"] = ("recipient", "string", False)
     c_child_order.extend(["reference_list", "carried_key_name"])
@@ -745,7 +778,10 @@ def encrypted_key_from_string(xml_string):
     return saml2.create_class_from_xml_string(EncryptedKey, xml_string)
 
 
-ds.KeyInfo.c_children["{http://www.w3.org/2000/09/xmlenc#}EncryptedKey"] = ("encrypted_key", EncryptedKey)
+ds.KeyInfo.c_children["{http://www.w3.org/2000/09/xmlenc#}EncryptedKey"] = (
+    "encrypted_key",
+    EncryptedKey,
+)
 
 
 ELEMENT_FROM_STRING = {

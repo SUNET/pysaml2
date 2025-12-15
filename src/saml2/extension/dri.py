@@ -185,7 +185,9 @@ class RegistrationInfoType_(SamlBase):
         RegistrationPolicy,
     )
     c_cardinality["registration_policy"] = {"min": 0, "max": 1}
-    c_child_order.extend(["registration_authority", "registration_instant", "registration_policy"])
+    c_child_order.extend(
+        ["registration_authority", "registration_instant", "registration_policy"]
+    )
 
     def __init__(
         self,
@@ -220,7 +222,10 @@ class PublishersType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:metadata:dri}Publisher"] = ("publisher", [Publisher])
+    c_children["{urn:oasis:names:tc:SAML:2.0:metadata:dri}Publisher"] = (
+        "publisher",
+        [Publisher],
+    )
     c_cardinality["publisher"] = {"min": 0}
     c_child_order.extend(["publisher"])
 
@@ -283,15 +288,29 @@ class DocumentInfoType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:metadata:dri}CreationInstant"] = ("creation_instant", CreationInstant)
+    c_children["{urn:oasis:names:tc:SAML:2.0:metadata:dri}CreationInstant"] = (
+        "creation_instant",
+        CreationInstant,
+    )
     c_cardinality["creation_instant"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:metadata:dri}SerialNumber"] = ("serial_number", SerialNumber)
+    c_children["{urn:oasis:names:tc:SAML:2.0:metadata:dri}SerialNumber"] = (
+        "serial_number",
+        SerialNumber,
+    )
     c_cardinality["serial_number"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:metadata:dri}UsagePolicy"] = ("usage_policy", UsagePolicy)
+    c_children["{urn:oasis:names:tc:SAML:2.0:metadata:dri}UsagePolicy"] = (
+        "usage_policy",
+        UsagePolicy,
+    )
     c_cardinality["usage_policy"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:metadata:dri}Publishers"] = ("publishers", Publishers)
+    c_children["{urn:oasis:names:tc:SAML:2.0:metadata:dri}Publishers"] = (
+        "publishers",
+        Publishers,
+    )
     c_cardinality["publishers"] = {"min": 0, "max": 1}
-    c_child_order.extend(["creation_instant", "serial_number", "usage_policy", "publishers"])
+    c_child_order.extend(
+        ["creation_instant", "serial_number", "usage_policy", "publishers"]
+    )
 
     def __init__(
         self,

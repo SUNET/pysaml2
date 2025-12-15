@@ -129,7 +129,9 @@ class RequestSecurityTokenResponseType_(SamlBase):
 
 
 def request_security_token_response_type__from_string(xml_string):
-    return saml2.create_class_from_xml_string(RequestSecurityTokenResponseType_, xml_string)
+    return saml2.create_class_from_xml_string(
+        RequestSecurityTokenResponseType_, xml_string
+    )
 
 
 class RequestedSecurityTokenType_(SamlBase):
@@ -240,12 +242,16 @@ class LifetimeType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Created"] = (
+    c_children[
+        "{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Created"
+    ] = (
         "created",
         wsu.Created,
     )
     c_cardinality["created"] = {"min": 0, "max": 1}
-    c_children["{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Expires"] = (
+    c_children[
+        "{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Expires"
+    ] = (
         "expires",
         wsu.Expires,
     )
@@ -274,8 +280,9 @@ def lifetime_type__from_string(xml_string):
     return saml2.create_class_from_xml_string(LifetimeType_, xml_string)
 
 
-class RequestSecurityTokenCollectionType_RequestSecurityToken(RequestSecurityTokenType_):
-
+class RequestSecurityTokenCollectionType_RequestSecurityToken(
+    RequestSecurityTokenType_
+):
     c_tag = "RequestSecurityToken"
     c_namespace = NAMESPACE
     c_children = RequestSecurityTokenType_.c_children.copy()
@@ -284,8 +291,12 @@ class RequestSecurityTokenCollectionType_RequestSecurityToken(RequestSecurityTok
     c_cardinality = RequestSecurityTokenType_.c_cardinality.copy()
 
 
-def request_security_token_collection_type__request_security_token_from_string(xml_string):
-    return saml2.create_class_from_xml_string(RequestSecurityTokenCollectionType_RequestSecurityToken, xml_string)
+def request_security_token_collection_type__request_security_token_from_string(
+    xml_string,
+):
+    return saml2.create_class_from_xml_string(
+        RequestSecurityTokenCollectionType_RequestSecurityToken, xml_string
+    )
 
 
 class RequestSecurityTokenCollectionType_(SamlBase):
@@ -297,7 +308,9 @@ class RequestSecurityTokenCollectionType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}RequestSecurityToken"] = (
+    c_children[
+        "{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}RequestSecurityToken"
+    ] = (
         "request_security_token",
         [RequestSecurityTokenCollectionType_RequestSecurityToken],
     )
@@ -321,7 +334,9 @@ class RequestSecurityTokenCollectionType_(SamlBase):
 
 
 def request_security_token_collection_type__from_string(xml_string):
-    return saml2.create_class_from_xml_string(RequestSecurityTokenCollectionType_, xml_string)
+    return saml2.create_class_from_xml_string(
+        RequestSecurityTokenCollectionType_, xml_string
+    )
 
 
 class ComputedKeyEnum_(SamlBase):
@@ -1137,7 +1152,9 @@ class RequestSecurityTokenCollection(RequestSecurityTokenCollectionType_):
 
 
 def request_security_token_collection_from_string(xml_string):
-    return saml2.create_class_from_xml_string(RequestSecurityTokenCollection, xml_string)
+    return saml2.create_class_from_xml_string(
+        RequestSecurityTokenCollection, xml_string
+    )
 
 
 class RequestSecurityTokenResponseCollectionType_(SamlBase):
@@ -1149,7 +1166,9 @@ class RequestSecurityTokenResponseCollectionType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}RequestSecurityTokenResponse"] = (
+    c_children[
+        "{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}RequestSecurityTokenResponse"
+    ] = (
         "request_security_token_response",
         [RequestSecurityTokenResponse],
     )
@@ -1173,7 +1192,9 @@ class RequestSecurityTokenResponseCollectionType_(SamlBase):
 
 
 def request_security_token_response_collection_type__from_string(xml_string):
-    return saml2.create_class_from_xml_string(RequestSecurityTokenResponseCollectionType_, xml_string)
+    return saml2.create_class_from_xml_string(
+        RequestSecurityTokenResponseCollectionType_, xml_string
+    )
 
 
 class ComputedKey(ComputedKeyOpenEnum_):
@@ -1342,7 +1363,6 @@ def validate_target_from_string(xml_string):
 
 
 class StatusType_Code(StatusCodeOpenEnum_):
-
     c_tag = "Code"
     c_namespace = NAMESPACE
     c_children = StatusCodeOpenEnum_.c_children.copy()
@@ -1356,7 +1376,6 @@ def status_type__code_from_string(xml_string):
 
 
 class StatusType_Reason(SamlBase):
-
     c_tag = "Reason"
     c_namespace = NAMESPACE
     c_value_type = {"base": "string"}
@@ -1379,8 +1398,14 @@ class StatusType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}Code"] = ("code", StatusType_Code)
-    c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}Reason"] = ("reason", StatusType_Reason)
+    c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}Code"] = (
+        "code",
+        StatusType_Code,
+    )
+    c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}Reason"] = (
+        "reason",
+        StatusType_Reason,
+    )
     c_cardinality["reason"] = {"min": 0, "max": 1}
     c_child_order.extend(["code", "reason"])
 
@@ -1415,7 +1440,10 @@ class SignChallengeType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}Challenge"] = ("challenge", Challenge)
+    c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}Challenge"] = (
+        "challenge",
+        Challenge,
+    )
     c_child_order.extend(["challenge"])
 
     def __init__(
@@ -1492,7 +1520,10 @@ class AuthenticatorType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}CombinedHash"] = ("combined_hash", CombinedHash)
+    c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}CombinedHash"] = (
+        "combined_hash",
+        CombinedHash,
+    )
     c_cardinality["combined_hash"] = {"min": 0, "max": 1}
     c_child_order.extend(["combined_hash"])
 
@@ -1607,7 +1638,6 @@ def delegate_to_from_string(xml_string):
 
 
 class ParticipantsType_Primary(ParticipantType_):
-
     c_tag = "Primary"
     c_namespace = NAMESPACE
     c_children = ParticipantType_.c_children.copy()
@@ -1621,7 +1651,6 @@ def participants_type__primary_from_string(xml_string):
 
 
 class ParticipantsType_Participant(ParticipantType_):
-
     c_tag = "Participant"
     c_namespace = NAMESPACE
     c_children = ParticipantType_.c_children.copy()
@@ -1643,7 +1672,10 @@ class ParticipantsType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}Primary"] = ("primary", ParticipantsType_Primary)
+    c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}Primary"] = (
+        "primary",
+        ParticipantsType_Primary,
+    )
     c_cardinality["primary"] = {"min": 0, "max": 1}
     c_children["{http://docs.oasis-open.org/ws-sx/ws-trust/200512/}Participant"] = (
         "participant",
@@ -1689,7 +1721,9 @@ def binary_secret_from_string(xml_string):
     return saml2.create_class_from_xml_string(BinarySecret, xml_string)
 
 
-class RequestSecurityTokenResponseCollection(RequestSecurityTokenResponseCollectionType_):
+class RequestSecurityTokenResponseCollection(
+    RequestSecurityTokenResponseCollectionType_
+):
     """The http://docs.oasis-open.org/ws-sx/ws-trust/200512/:RequestSecurityTokenResponseCollection element"""
 
     c_tag = "RequestSecurityTokenResponseCollection"
@@ -1701,7 +1735,9 @@ class RequestSecurityTokenResponseCollection(RequestSecurityTokenResponseCollect
 
 
 def request_security_token_response_collection_from_string(xml_string):
-    return saml2.create_class_from_xml_string(RequestSecurityTokenResponseCollection, xml_string)
+    return saml2.create_class_from_xml_string(
+        RequestSecurityTokenResponseCollection, xml_string
+    )
 
 
 class Status(StatusType_):

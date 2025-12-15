@@ -25,8 +25,16 @@ class RequestType_(SamlBase):
     c_attributes["responseConsumerURL"] = ("response_consumer_url", "anyURI", True)
     c_attributes["service"] = ("service", "anyURI", True)
     c_attributes["messageID"] = ("message_id", "None", False)
-    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}mustUnderstand"] = ("must_understand", "None", True)
-    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}actor"] = ("actor", "None", True)
+    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}mustUnderstand"] = (
+        "must_understand",
+        "None",
+        True,
+    )
+    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}actor"] = (
+        "actor",
+        "None",
+        True,
+    )
 
     def __init__(
         self,
@@ -66,8 +74,16 @@ class ResponseType_(SamlBase):
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
     c_attributes["refToMessageID"] = ("ref_to_message_id", "None", False)
-    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}mustUnderstand"] = ("must_understand", "None", True)
-    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}actor"] = ("actor", "None", True)
+    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}mustUnderstand"] = (
+        "must_understand",
+        "None",
+        True,
+    )
+    c_attributes["{http://schemas.xmlsoap.org/soap/envelope/}actor"] = (
+        "actor",
+        "None",
+        True,
+    )
 
     def __init__(
         self,

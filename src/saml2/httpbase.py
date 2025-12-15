@@ -45,7 +45,11 @@ ATTRS = {
     "rfc2109": True,
 }
 
-PAIRS = {"port": "port_specified", "domain": "domain_specified", "path": "path_specified"}
+PAIRS = {
+    "port": "port_specified",
+    "domain": "domain_specified",
+    "path": "path_specified",
+}
 
 
 class ConnectionError(SAMLError):
@@ -69,7 +73,9 @@ def _since_epoch(cdate):
         if len(cdate) < 5:
             return utc_now()
 
-    cdate = cdate[5:]  # assume short weekday, i.e. do not support obsolete RFC 1036 date format
+    cdate = cdate[
+        5:
+    ]  # assume short weekday, i.e. do not support obsolete RFC 1036 date format
     t = -1
     for time_format in TIME_FORMAT:
         try:
@@ -95,7 +101,14 @@ def dict2set_list(dic):
 
 
 class HTTPBase:
-    def __init__(self, verify=True, ca_bundle=None, key_file=None, cert_file=None, http_client_timeout=None):
+    def __init__(
+        self,
+        verify=True,
+        ca_bundle=None,
+        key_file=None,
+        cert_file=None,
+        http_client_timeout=None,
+    ):
         self.request_args = {"allow_redirects": False}
         # self.cookies = {}
         self.cookiejar = http_cookiejar.CookieJar()
@@ -193,12 +206,20 @@ class HTTPBase:
 
             if morsel["max-age"] == 0:
                 try:
-                    self.cookiejar.clear(domain=std_attr["domain"], path=std_attr["path"], name=std_attr["name"])
+                    self.cookiejar.clear(
+                        domain=std_attr["domain"],
+                        path=std_attr["path"],
+                        name=std_attr["name"],
+                    )
                 except ValueError:
                     pass
             elif std_attr["expires"] and std_attr["expires"] < utc_now():
                 try:
-                    self.cookiejar.clear(domain=std_attr["domain"], path=std_attr["path"], name=std_attr["name"])
+                    self.cookiejar.clear(
+                        domain=std_attr["domain"],
+                        path=std_attr["path"],
+                        name=std_attr["name"],
+                    )
                 except ValueError:
                     pass
             else:
@@ -280,7 +301,9 @@ class HTTPBase:
 
         return info
 
-    def use_soap(self, request, destination="", soap_headers=None, sign=False, **kwargs):
+    def use_soap(
+        self, request, destination="", soap_headers=None, sign=False, **kwargs
+    ):
         """
         Construct the necessary information for using SOAP+POST
 
@@ -297,10 +320,17 @@ class HTTPBase:
         logger.debug("SOAP message: %s", soap_message)
 
         if sign and self.sec:
-            _signed = self.sec.sign_statement(soap_message, node_name=class_name(request), node_id=request.id)
+            _signed = self.sec.sign_statement(
+                soap_message, node_name=class_name(request), node_id=request.id
+            )
             soap_message = _signed
 
-        return {"url": destination, "method": "POST", "data": soap_message, "headers": headers}
+        return {
+            "url": destination,
+            "method": "POST",
+            "data": soap_message,
+            "headers": headers,
+        }
 
     def send_using_soap(self, request, destination, headers=None, sign=False):
         """

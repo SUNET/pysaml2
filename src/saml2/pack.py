@@ -8,14 +8,9 @@ Bindings normally consists of three parts:
 """
 
 import base64
-
-
-try:
-    import html
-except Exception:
-    import cgi as html  # type: ignore[no-redef]
-
+import html
 import logging
+
 from urllib.parse import urlencode
 from urllib.parse import urlparse
 from xml.etree import ElementTree as ElementTree
@@ -63,7 +58,9 @@ def _html_escape(payload):
     return html.escape(payload, quote=True)
 
 
-def http_form_post_message(message, location, relay_state="", typ="SAMLRequest", **kwargs):
+def http_form_post_message(
+    message, location, relay_state="", typ="SAMLRequest", **kwargs
+):
     """The HTTP POST binding defines a mechanism by which SAML protocol
     messages may be transmitted within the base64-encoded content of a
     HTML form control.
@@ -84,7 +81,9 @@ def http_form_post_message(message, location, relay_state="", typ="SAMLRequest",
         _msg = message
     _msg = _msg.decode("ascii")
 
-    saml_response_input = HTML_INPUT_ELEMENT_SPEC.format(name=_html_escape(typ), val=_html_escape(_msg), type="hidden")
+    saml_response_input = HTML_INPUT_ELEMENT_SPEC.format(
+        name=_html_escape(typ), val=_html_escape(_msg), type="hidden"
+    )
 
     relay_state_input = ""
     if relay_state:
@@ -93,7 +92,9 @@ def http_form_post_message(message, location, relay_state="", typ="SAMLRequest",
         )
 
     response = HTML_FORM_SPEC.format(
-        saml_response_input=saml_response_input, relay_state_input=relay_state_input, action=location
+        saml_response_input=saml_response_input,
+        relay_state_input=relay_state_input,
+        action=location,
     )
 
     return {"headers": [("Content-type", "text/html")], "data": response, "status": 200}
@@ -121,7 +122,11 @@ def http_post_message(message, relay_state="", typ="SAMLRequest", **kwargs):
     if relay_state:
         part["RelayState"] = relay_state
 
-    return {"headers": [("Content-type", "application/x-www-form-urlencoded")], "data": urlencode(part), "status": 200}
+    return {
+        "headers": [("Content-type", "application/x-www-form-urlencoded")],
+        "data": urlencode(part),
+        "status": 200,
+    }
 
 
 def http_redirect_message(
@@ -271,7 +276,9 @@ def parse_soap_enveloped_saml(text, body_class, header_class=None):
 
     envelope_tag = "{%s}Envelope" % NAMESPACE
     if envelope.tag != envelope_tag:
-        raise ValueError(f"Invalid envelope tag '{envelope.tag}' should be '{envelope_tag}'")
+        raise ValueError(
+            f"Invalid envelope tag '{envelope.tag}' should be '{envelope_tag}'"
+        )
 
     # print(len(envelope))
     body = None
@@ -293,7 +300,9 @@ def parse_soap_enveloped_saml(text, body_class, header_class=None):
                 for klass in header_class:
                     # print("?{%s}%s" % (klass.c_namespace,klass.c_tag))
                     if sub.tag == f"{{{klass.c_namespace}}}{klass.c_tag}":
-                        header[sub.tag] = saml2.create_class_from_element_tree(klass, sub)
+                        header[sub.tag] = saml2.create_class_from_element_tree(
+                            klass, sub
+                        )
                         break
 
     return body, header

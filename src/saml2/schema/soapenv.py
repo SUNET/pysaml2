@@ -57,7 +57,6 @@ def encoding_style__from_string(xml_string):
 
 
 class Fault_faultcode(SamlBase):
-
     c_tag = "faultcode"
     c_namespace = NAMESPACE
     c_value_type = {"base": "QName"}
@@ -72,7 +71,6 @@ def fault_faultcode_from_string(xml_string):
 
 
 class Fault_faultstring(SamlBase):
-
     c_tag = "faultstring"
     c_namespace = NAMESPACE
     c_value_type = {"base": "string"}
@@ -87,7 +85,6 @@ def fault_faultstring_from_string(xml_string):
 
 
 class Fault_faultactor(SamlBase):
-
     c_tag = "faultactor"
     c_namespace = NAMESPACE
     c_value_type = {"base": "anyURI"}
@@ -125,7 +122,10 @@ class Envelope_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://schemas.xmlsoap.org/soap/envelope/}Header"] = ("header", Header_)
+    c_children["{http://schemas.xmlsoap.org/soap/envelope/}Header"] = (
+        "header",
+        Header_,
+    )
     c_cardinality["header"] = {"min": 0, "max": 1}
     c_children["{http://schemas.xmlsoap.org/soap/envelope/}Body"] = ("body", Body_)
     c_child_order.extend(["header", "body"])
@@ -183,7 +183,6 @@ def body_from_string(xml_string):
 
 
 class Fault_detail(Detail_):
-
     c_tag = "detail"
     c_namespace = NAMESPACE
     c_children = Detail_.c_children.copy()
@@ -205,11 +204,23 @@ class Fault_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://schemas.xmlsoap.org/soap/envelope/}faultcode"] = ("faultcode", Fault_faultcode)
-    c_children["{http://schemas.xmlsoap.org/soap/envelope/}faultstring"] = ("faultstring", Fault_faultstring)
-    c_children["{http://schemas.xmlsoap.org/soap/envelope/}faultactor"] = ("faultactor", Fault_faultactor)
+    c_children["{http://schemas.xmlsoap.org/soap/envelope/}faultcode"] = (
+        "faultcode",
+        Fault_faultcode,
+    )
+    c_children["{http://schemas.xmlsoap.org/soap/envelope/}faultstring"] = (
+        "faultstring",
+        Fault_faultstring,
+    )
+    c_children["{http://schemas.xmlsoap.org/soap/envelope/}faultactor"] = (
+        "faultactor",
+        Fault_faultactor,
+    )
     c_cardinality["faultactor"] = {"min": 0, "max": 1}
-    c_children["{http://schemas.xmlsoap.org/soap/envelope/}detail"] = ("detail", Fault_detail)
+    c_children["{http://schemas.xmlsoap.org/soap/envelope/}detail"] = (
+        "detail",
+        Fault_detail,
+    )
     c_cardinality["detail"] = {"min": 0, "max": 1}
     c_child_order.extend(["faultcode", "faultstring", "faultactor", "detail"])
 

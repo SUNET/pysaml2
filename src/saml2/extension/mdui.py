@@ -97,11 +97,20 @@ class KeywordsType_(ListOfStrings_):
     c_attributes = ListOfStrings_.c_attributes.copy()
     c_child_order = ListOfStrings_.c_child_order[:]
     c_cardinality = ListOfStrings_.c_cardinality.copy()
-    c_attributes["{http://www.w3.org/XML/1998/namespace}lang"] = ("lang", "mdui:listOfStrings", True)
+    c_attributes["{http://www.w3.org/XML/1998/namespace}lang"] = (
+        "lang",
+        "mdui:listOfStrings",
+        True,
+    )
 
-    def __init__(self, lang=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self, lang=None, text=None, extension_elements=None, extension_attributes=None
+    ):
         ListOfStrings_.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.lang = lang
 
@@ -122,13 +131,26 @@ class LogoType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_attributes["height"] = ("height", "positiveInteger", True)
     c_attributes["width"] = ("width", "positiveInteger", True)
-    c_attributes["{http://www.w3.org/XML/1998/namespace}lang"] = ("lang", "anyURI", False)
+    c_attributes["{http://www.w3.org/XML/1998/namespace}lang"] = (
+        "lang",
+        "anyURI",
+        False,
+    )
 
     def __init__(
-        self, height=None, width=None, lang=None, text=None, extension_elements=None, extension_attributes=None
+        self,
+        height=None,
+        width=None,
+        lang=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.height = height
         self.width = width
@@ -228,9 +250,15 @@ class DiscoHintsType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_children["{urn:oasis:names:tc:SAML:metadata:ui}IPHint"] = ("ip_hint", [IPHint])
     c_cardinality["ip_hint"] = {"min": 0}
-    c_children["{urn:oasis:names:tc:SAML:metadata:ui}DomainHint"] = ("domain_hint", [DomainHint])
+    c_children["{urn:oasis:names:tc:SAML:metadata:ui}DomainHint"] = (
+        "domain_hint",
+        [DomainHint],
+    )
     c_cardinality["domain_hint"] = {"min": 0}
-    c_children["{urn:oasis:names:tc:SAML:metadata:ui}GeolocationHint"] = ("geolocation_hint", [GeolocationHint])
+    c_children["{urn:oasis:names:tc:SAML:metadata:ui}GeolocationHint"] = (
+        "geolocation_hint",
+        [GeolocationHint],
+    )
     c_cardinality["geolocation_hint"] = {"min": 0}
     c_child_order.extend(["ip_hint", "domain_hint", "geolocation_hint"])
 
@@ -244,7 +272,10 @@ class DiscoHintsType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.ip_hint = ip_hint or []
         self.domain_hint = domain_hint or []
@@ -264,15 +295,27 @@ class UIInfoType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:metadata:ui}DisplayName"] = ("display_name", [DisplayName])
+    c_children["{urn:oasis:names:tc:SAML:metadata:ui}DisplayName"] = (
+        "display_name",
+        [DisplayName],
+    )
     c_cardinality["display_name"] = {"min": 0}
-    c_children["{urn:oasis:names:tc:SAML:metadata:ui}Description"] = ("description", [Description])
+    c_children["{urn:oasis:names:tc:SAML:metadata:ui}Description"] = (
+        "description",
+        [Description],
+    )
     c_cardinality["description"] = {"min": 0}
-    c_children["{urn:oasis:names:tc:SAML:metadata:ui}Keywords"] = ("keywords", [Keywords])
+    c_children["{urn:oasis:names:tc:SAML:metadata:ui}Keywords"] = (
+        "keywords",
+        [Keywords],
+    )
     c_cardinality["keywords"] = {"min": 0}
     c_children["{urn:oasis:names:tc:SAML:metadata:ui}Logo"] = ("logo", [Logo])
     c_cardinality["logo"] = {"min": 0}
-    c_children["{urn:oasis:names:tc:SAML:metadata:ui}InformationURL"] = ("information_url", [InformationURL])
+    c_children["{urn:oasis:names:tc:SAML:metadata:ui}InformationURL"] = (
+        "information_url",
+        [InformationURL],
+    )
     c_cardinality["information_url"] = {"min": 0}
     c_children["{urn:oasis:names:tc:SAML:metadata:ui}PrivacyStatementURL"] = (
         "privacy_statement_url",
@@ -280,7 +323,14 @@ class UIInfoType_(SamlBase):
     )
     c_cardinality["privacy_statement_url"] = {"min": 0}
     c_child_order.extend(
-        ["display_name", "description", "keywords", "logo", "information_url", "privacy_statement_url"]
+        [
+            "display_name",
+            "description",
+            "keywords",
+            "logo",
+            "information_url",
+            "privacy_statement_url",
+        ]
     )
 
     def __init__(
@@ -296,7 +346,10 @@ class UIInfoType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.display_name = display_name or []
         self.description = description or []

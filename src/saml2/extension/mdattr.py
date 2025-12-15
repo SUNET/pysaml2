@@ -21,9 +21,15 @@ class EntityAttributesType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Attribute"] = ("attribute", [saml.Attribute])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Attribute"] = (
+        "attribute",
+        [saml.Attribute],
+    )
     c_cardinality["attribute"] = {"min": 0}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Assertion"] = ("assertion", [saml.Assertion])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Assertion"] = (
+        "assertion",
+        [saml.Assertion],
+    )
     c_cardinality["assertion"] = {"min": 0}
     c_child_order.extend(["attribute", "assertion"])
 

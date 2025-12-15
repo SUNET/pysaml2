@@ -23,9 +23,18 @@ class PhysicalVerification(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_attributes["credentialLevel"] = ("credential_level", "None", False)
 
-    def __init__(self, credential_level=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        credential_level=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.credential_level = credential_level
 
@@ -46,9 +55,18 @@ class Generation(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_attributes["mechanism"] = ("mechanism", "None", True)
 
-    def __init__(self, mechanism=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        mechanism=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.mechanism = mechanism
 
@@ -63,7 +81,10 @@ class NymType_(SamlBase):
 
     c_tag = "nymType"
     c_namespace = NAMESPACE
-    c_value_type = {"base": "xs:NMTOKEN", "enumeration": ["anonymity", "verinymity", "pseudonymity"]}
+    c_value_type = {
+        "base": "xs:NMTOKEN",
+        "enumeration": ["anonymity", "verinymity", "pseudonymity"],
+    }
     c_children = SamlBase.c_children.copy()
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
@@ -86,9 +107,18 @@ class GoverningAgreementRefType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_attributes["governingAgreementRef"] = ("governing_agreement_ref", "anyURI", True)
 
-    def __init__(self, governing_agreement_ref=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        governing_agreement_ref=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.governing_agreement_ref = governing_agreement_ref
 
@@ -109,9 +139,18 @@ class KeySharingType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_attributes["sharing"] = ("sharing", "boolean", True)
 
-    def __init__(self, sharing=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        sharing=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.sharing = sharing
 
@@ -133,9 +172,19 @@ class RestrictedLengthType_(SamlBase):
     c_attributes["min"] = ("min", "None", True)
     c_attributes["max"] = ("max", "integer", False)
 
-    def __init__(self, min=None, max=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        min=None,
+        max=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.min = min
         self.max = max
@@ -229,9 +278,18 @@ class ActivationLimitDurationType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_attributes["duration"] = ("duration", "duration", True)
 
-    def __init__(self, duration=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        duration=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.duration = duration
 
@@ -252,9 +310,14 @@ class ActivationLimitUsagesType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_attributes["number"] = ("number", "integer", True)
 
-    def __init__(self, number=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self, number=None, text=None, extension_elements=None, extension_attributes=None
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.number = number
 
@@ -292,9 +355,19 @@ class LengthType_(SamlBase):
     c_attributes["min"] = ("min", "integer", True)
     c_attributes["max"] = ("max", "integer", False)
 
-    def __init__(self, min=None, max=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        min=None,
+        max=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.min = min
         self.max = max
@@ -312,7 +385,13 @@ class MediumType_(SamlBase):
     c_namespace = NAMESPACE
     c_value_type = {
         "base": "xs:NMTOKEN",
-        "enumeration": ["memory", "smartcard", "token", "MobileDevice", "MobileAuthCard"],
+        "enumeration": [
+            "memory",
+            "smartcard",
+            "token",
+            "MobileDevice",
+            "MobileAuthCard",
+        ],
     }
     c_children = SamlBase.c_children.copy()
     c_attributes = SamlBase.c_attributes.copy()
@@ -336,9 +415,14 @@ class KeyStorageType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_attributes["medium"] = ("medium", MediumType_, True)
 
-    def __init__(self, medium=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self, medium=None, text=None, extension_elements=None, extension_attributes=None
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.medium = medium
 
@@ -387,7 +471,10 @@ class TimeSyncTokenType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.device_type = device_type
         self.seed_length = seed_length
@@ -486,7 +573,9 @@ class GoverningAgreementsType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}GoverningAgreementRef"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}GoverningAgreementRef"
+    ] = (
         "governing_agreement_ref",
         [GoverningAgreementRef],
     )
@@ -610,11 +699,16 @@ class TokenType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}TimeSyncToken"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}TimeSyncToken"
+    ] = (
         "time_sync_token",
         TimeSyncToken,
     )
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["time_sync_token", "extension"])
 
@@ -664,7 +758,10 @@ class SharedSecretChallengeResponseType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["method"] = ("method", "anyURI", False)
     c_child_order.extend(["extension"])
@@ -688,7 +785,9 @@ class SharedSecretChallengeResponseType_(SamlBase):
 
 
 def shared_secret_challenge_response_type__from_string(xml_string):
-    return saml2.create_class_from_xml_string(SharedSecretChallengeResponseType_, xml_string)
+    return saml2.create_class_from_xml_string(
+        SharedSecretChallengeResponseType_, xml_string
+    )
 
 
 class PublicKeyType_(SamlBase):
@@ -700,7 +799,10 @@ class PublicKeyType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["keyValidation"] = ("key_validation", "None", False)
     c_child_order.extend(["extension"])
@@ -751,13 +853,25 @@ class PasswordType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Length"] = ("length", Length)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Length"] = (
+        "length",
+        Length,
+    )
     c_cardinality["length"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Alphabet"] = ("alphabet", Alphabet)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Alphabet"] = (
+        "alphabet",
+        Alphabet,
+    )
     c_cardinality["alphabet"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Generation"] = ("generation", Generation)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Generation"] = (
+        "generation",
+        Generation,
+    )
     c_cardinality["generation"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["ExternalVerification"] = ("external_verification", "anyURI", False)
     c_child_order.extend(["length", "alphabet", "generation", "extension"])
@@ -803,9 +917,15 @@ class RestrictedPasswordType_(SamlBase):
         "length",
         RestrictedPasswordType_Length,
     )
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Generation"] = ("generation", Generation)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Generation"] = (
+        "generation",
+        Generation,
+    )
     c_cardinality["generation"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["ExternalVerification"] = ("external_verification", "anyURI", False)
     c_child_order.extend(["length", "generation", "extension"])
@@ -845,22 +965,34 @@ class ActivationLimitType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ActivationLimitDuration"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ActivationLimitDuration"
+    ] = (
         "activation_limit_duration",
         ActivationLimitDuration,
     )
     c_cardinality["activation_limit_duration"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ActivationLimitUsages"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ActivationLimitUsages"
+    ] = (
         "activation_limit_usages",
         ActivationLimitUsages,
     )
     c_cardinality["activation_limit_usages"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ActivationLimitSession"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ActivationLimitSession"
+    ] = (
         "activation_limit_session",
         ActivationLimitSession,
     )
     c_cardinality["activation_limit_session"] = {"min": 0, "max": 1}
-    c_child_order.extend(["activation_limit_duration", "activation_limit_usages", "activation_limit_session"])
+    c_child_order.extend(
+        [
+            "activation_limit_duration",
+            "activation_limit_usages",
+            "activation_limit_session",
+        ]
+    )
 
     def __init__(
         self,
@@ -895,7 +1027,10 @@ class ExtensionOnlyType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["extension"])
 
@@ -928,7 +1063,10 @@ class PrincipalAuthenticationMechanismType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Token"] = ("token", Token)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Token"] = (
+        "token",
+        Token,
+    )
     c_child_order.extend(["token"])
 
     def __init__(
@@ -948,7 +1086,9 @@ class PrincipalAuthenticationMechanismType_(SamlBase):
 
 
 def principal_authentication_mechanism_type__from_string(xml_string):
-    return saml2.create_class_from_xml_string(PrincipalAuthenticationMechanismType_, xml_string)
+    return saml2.create_class_from_xml_string(
+        PrincipalAuthenticationMechanismType_, xml_string
+    )
 
 
 class WrittenConsent(ExtensionOnlyType_):
@@ -1053,7 +1193,9 @@ class PrincipalAuthenticationMechanism(PrincipalAuthenticationMechanismType_):
 
 
 def principal_authentication_mechanism_from_string(xml_string):
-    return saml2.create_class_from_xml_string(PrincipalAuthenticationMechanism, xml_string)
+    return saml2.create_class_from_xml_string(
+        PrincipalAuthenticationMechanism, xml_string
+    )
 
 
 class PreviousSession(ExtensionOnlyType_):
@@ -1278,7 +1420,9 @@ class MobileNetworkEndToEndEncryption(ExtensionOnlyType_):
 
 
 def mobile_network_end_to_end_encryption_from_string(xml_string):
-    return saml2.create_class_from_xml_string(MobileNetworkEndToEndEncryption, xml_string)
+    return saml2.create_class_from_xml_string(
+        MobileNetworkEndToEndEncryption, xml_string
+    )
 
 
 class SSL(ExtensionOnlyType_):
@@ -1380,25 +1524,41 @@ class IdentificationType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}PhysicalVerification"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}PhysicalVerification"
+    ] = (
         "physical_verification",
         PhysicalVerification,
     )
     c_cardinality["physical_verification"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}WrittenConsent"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}WrittenConsent"
+    ] = (
         "written_consent",
         WrittenConsent,
     )
     c_cardinality["written_consent"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}GoverningAgreements"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}GoverningAgreements"
+    ] = (
         "governing_agreements",
         GoverningAgreements,
     )
     c_cardinality["governing_agreements"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["nym"] = ("nym", NymType_, False)
-    c_child_order.extend(["physical_verification", "written_consent", "governing_agreements", "extension"])
+    c_child_order.extend(
+        [
+            "physical_verification",
+            "written_consent",
+            "governing_agreements",
+            "extension",
+        ]
+    )
 
     def __init__(
         self,
@@ -1437,36 +1597,66 @@ class AuthenticatorTransportProtocolType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}HTTP"] = ("http", HTTP)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}HTTP"] = (
+        "http",
+        HTTP,
+    )
     c_cardinality["http"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SSL"] = ("ssl", SSL)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SSL"] = (
+        "ssl",
+        SSL,
+    )
     c_cardinality["ssl"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}MobileNetworkNoEncryption"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}MobileNetworkNoEncryption"
+    ] = (
         "mobile_network_no_encryption",
         MobileNetworkNoEncryption,
     )
     c_cardinality["mobile_network_no_encryption"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}MobileNetworkRadioEncryption"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}MobileNetworkRadioEncryption"
+    ] = (
         "mobile_network_radio_encryption",
         MobileNetworkRadioEncryption,
     )
     c_cardinality["mobile_network_radio_encryption"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}MobileNetworkEndToEndEncryption"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}MobileNetworkEndToEndEncryption"
+    ] = (
         "mobile_network_end_to_end_encryption",
         MobileNetworkEndToEndEncryption,
     )
     c_cardinality["mobile_network_end_to_end_encryption"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}WTLS"] = ("wtls", WTLS)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}WTLS"] = (
+        "wtls",
+        WTLS,
+    )
     c_cardinality["wtls"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}IPSec"] = ("ip_sec", IPSec)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}IPSec"] = (
+        "ip_sec",
+        IPSec,
+    )
     c_cardinality["ip_sec"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}PSTN"] = ("pstn", PSTN)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}PSTN"] = (
+        "pstn",
+        PSTN,
+    )
     c_cardinality["pstn"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ISDN"] = ("isdn", ISDN)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ISDN"] = (
+        "isdn",
+        ISDN,
+    )
     c_cardinality["isdn"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ADSL"] = ("adsl", ADSL)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ADSL"] = (
+        "adsl",
+        ADSL,
+    )
     c_cardinality["adsl"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(
         [
@@ -1521,7 +1711,9 @@ class AuthenticatorTransportProtocolType_(SamlBase):
 
 
 def authenticator_transport_protocol_type__from_string(xml_string):
-    return saml2.create_class_from_xml_string(AuthenticatorTransportProtocolType_, xml_string)
+    return saml2.create_class_from_xml_string(
+        AuthenticatorTransportProtocolType_, xml_string
+    )
 
 
 class RestrictedPassword(RestrictedPasswordType_):
@@ -1548,20 +1740,36 @@ class ActivationPinType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Length"] = ("length", Length)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Length"] = (
+        "length",
+        Length,
+    )
     c_cardinality["length"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Alphabet"] = ("alphabet", Alphabet)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Alphabet"] = (
+        "alphabet",
+        Alphabet,
+    )
     c_cardinality["alphabet"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Generation"] = ("generation", Generation)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Generation"] = (
+        "generation",
+        Generation,
+    )
     c_cardinality["generation"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ActivationLimit"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ActivationLimit"
+    ] = (
         "activation_limit",
         ActivationLimit,
     )
     c_cardinality["activation_limit"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
-    c_child_order.extend(["length", "alphabet", "generation", "activation_limit", "extension"])
+    c_child_order.extend(
+        ["length", "alphabet", "generation", "activation_limit", "extension"]
+    )
 
     def __init__(
         self,
@@ -1600,9 +1808,15 @@ class SecurityAuditType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SwitchAudit"] = ("switch_audit", SwitchAudit)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SwitchAudit"] = (
+        "switch_audit",
+        SwitchAudit,
+    )
     c_cardinality["switch_audit"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["switch_audit", "extension"])
 
@@ -1670,7 +1884,9 @@ class AuthenticatorTransportProtocol(AuthenticatorTransportProtocolType_):
 
 
 def authenticator_transport_protocol_from_string(xml_string):
-    return saml2.create_class_from_xml_string(AuthenticatorTransportProtocol, xml_string)
+    return saml2.create_class_from_xml_string(
+        AuthenticatorTransportProtocol, xml_string
+    )
 
 
 class SecurityAudit(SecurityAuditType_):
@@ -1697,17 +1913,24 @@ class OperationalProtectionType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SecurityAudit"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SecurityAudit"
+    ] = (
         "security_audit",
         SecurityAudit,
     )
     c_cardinality["security_audit"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}DeactivationCallCenter"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}DeactivationCallCenter"
+    ] = (
         "deactivation_call_center",
         DeactivationCallCenter,
     )
     c_cardinality["deactivation_call_center"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["security_audit", "deactivation_call_center", "extension"])
 
@@ -1744,12 +1967,17 @@ class KeyActivationType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ActivationPin"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ActivationPin"
+    ] = (
         "activation_pin",
         ActivationPin,
     )
     c_cardinality["activation_pin"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["activation_pin", "extension"])
 
@@ -1814,16 +2042,27 @@ class PrivateKeyProtectionType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}KeyActivation"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}KeyActivation"
+    ] = (
         "key_activation",
         KeyActivation,
     )
     c_cardinality["key_activation"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}KeyStorage"] = ("key_storage", KeyStorage)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}KeyStorage"] = (
+        "key_storage",
+        KeyStorage,
+    )
     c_cardinality["key_storage"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}KeySharing"] = ("key_sharing", KeySharing)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}KeySharing"] = (
+        "key_sharing",
+        KeySharing,
+    )
     c_cardinality["key_sharing"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["key_activation", "key_storage", "key_sharing", "extension"])
 
@@ -1862,14 +2101,22 @@ class SecretKeyProtectionType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}KeyActivation"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}KeyActivation"
+    ] = (
         "key_activation",
         KeyActivation,
     )
     c_cardinality["key_activation"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}KeyStorage"] = ("key_storage", KeyStorage)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}KeyStorage"] = (
+        "key_storage",
+        KeyStorage,
+    )
     c_cardinality["key_storage"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["key_activation", "key_storage", "extension"])
 
@@ -1936,19 +2183,28 @@ class TechnicalProtectionBaseType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}PrivateKeyProtection"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}PrivateKeyProtection"
+    ] = (
         "private_key_protection",
         PrivateKeyProtection,
     )
     c_cardinality["private_key_protection"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SecretKeyProtection"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SecretKeyProtection"
+    ] = (
         "secret_key_protection",
         SecretKeyProtection,
     )
     c_cardinality["secret_key_protection"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
-    c_child_order.extend(["private_key_protection", "secret_key_protection", "extension"])
+    c_child_order.extend(
+        ["private_key_protection", "secret_key_protection", "extension"]
+    )
 
     def __init__(
         self,
@@ -2000,61 +2256,94 @@ class ComplexAuthenticatorType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}PreviousSession"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}PreviousSession"
+    ] = (
         "previous_session",
         PreviousSession,
     )
     c_cardinality["previous_session"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ResumeSession"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ResumeSession"
+    ] = (
         "resume_session",
         ResumeSession,
     )
     c_cardinality["resume_session"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}DigSig"] = ("dig_sig", DigSig)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}DigSig"] = (
+        "dig_sig",
+        DigSig,
+    )
     c_cardinality["dig_sig"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Password"] = ("password", Password)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Password"] = (
+        "password",
+        Password,
+    )
     c_cardinality["password"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}RestrictedPassword"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}RestrictedPassword"
+    ] = (
         "restricted_password",
         RestrictedPassword,
     )
     c_cardinality["restricted_password"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ZeroKnowledge"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ZeroKnowledge"
+    ] = (
         "zero_knowledge",
         ZeroKnowledge,
     )
     c_cardinality["zero_knowledge"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SharedSecretChallengeResponse"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SharedSecretChallengeResponse"
+    ] = (
         "shared_secret_challenge_response",
         SharedSecretChallengeResponse,
     )
     c_cardinality["shared_secret_challenge_response"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SharedSecretDynamicPlaintext"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SharedSecretDynamicPlaintext"
+    ] = (
         "shared_secret_dynamic_plaintext",
         SharedSecretDynamicPlaintext,
     )
     c_cardinality["shared_secret_dynamic_plaintext"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}IPAddress"] = ("ip_address", IPAddress)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}IPAddress"] = (
+        "ip_address",
+        IPAddress,
+    )
     c_cardinality["ip_address"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}AsymmetricDecryption"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}AsymmetricDecryption"
+    ] = (
         "asymmetric_decryption",
         AsymmetricDecryption,
     )
     c_cardinality["asymmetric_decryption"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}AsymmetricKeyAgreement"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}AsymmetricKeyAgreement"
+    ] = (
         "asymmetric_key_agreement",
         AsymmetricKeyAgreement,
     )
     c_cardinality["asymmetric_key_agreement"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SubscriberLineNumber"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SubscriberLineNumber"
+    ] = (
         "subscriber_line_number",
         SubscriberLineNumber,
     )
     c_cardinality["subscriber_line_number"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}UserSuffix"] = ("user_suffix", UserSuffix)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}UserSuffix"] = (
+        "user_suffix",
+        UserSuffix,
+    )
     c_cardinality["user_suffix"] = {"min": 0, "max": 1}
     c_cardinality["complex_authenticator"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(
         [
@@ -2148,65 +2437,100 @@ class AuthenticatorBaseType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}PreviousSession"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}PreviousSession"
+    ] = (
         "previous_session",
         PreviousSession,
     )
     c_cardinality["previous_session"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ResumeSession"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ResumeSession"
+    ] = (
         "resume_session",
         ResumeSession,
     )
     c_cardinality["resume_session"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}DigSig"] = ("dig_sig", DigSig)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}DigSig"] = (
+        "dig_sig",
+        DigSig,
+    )
     c_cardinality["dig_sig"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Password"] = ("password", Password)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Password"] = (
+        "password",
+        Password,
+    )
     c_cardinality["password"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}RestrictedPassword"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}RestrictedPassword"
+    ] = (
         "restricted_password",
         RestrictedPassword,
     )
     c_cardinality["restricted_password"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ZeroKnowledge"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ZeroKnowledge"
+    ] = (
         "zero_knowledge",
         ZeroKnowledge,
     )
     c_cardinality["zero_knowledge"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SharedSecretChallengeResponse"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SharedSecretChallengeResponse"
+    ] = (
         "shared_secret_challenge_response",
         SharedSecretChallengeResponse,
     )
     c_cardinality["shared_secret_challenge_response"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SharedSecretDynamicPlaintext"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SharedSecretDynamicPlaintext"
+    ] = (
         "shared_secret_dynamic_plaintext",
         SharedSecretDynamicPlaintext,
     )
     c_cardinality["shared_secret_dynamic_plaintext"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}IPAddress"] = ("ip_address", IPAddress)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}IPAddress"] = (
+        "ip_address",
+        IPAddress,
+    )
     c_cardinality["ip_address"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}AsymmetricDecryption"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}AsymmetricDecryption"
+    ] = (
         "asymmetric_decryption",
         AsymmetricDecryption,
     )
     c_cardinality["asymmetric_decryption"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}AsymmetricKeyAgreement"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}AsymmetricKeyAgreement"
+    ] = (
         "asymmetric_key_agreement",
         AsymmetricKeyAgreement,
     )
     c_cardinality["asymmetric_key_agreement"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SubscriberLineNumber"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}SubscriberLineNumber"
+    ] = (
         "subscriber_line_number",
         SubscriberLineNumber,
     )
     c_cardinality["subscriber_line_number"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}UserSuffix"] = ("user_suffix", UserSuffix)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}UserSuffix"] = (
+        "user_suffix",
+        UserSuffix,
+    )
     c_cardinality["user_suffix"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ComplexAuthenticator"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ComplexAuthenticator"
+    ] = (
         "complex_authenticator",
         ComplexAuthenticator,
     )
     c_cardinality["complex_authenticator"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(
         [
@@ -2300,21 +2624,35 @@ class AuthnMethodBaseType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}PrincipalAuthenticationMechanism"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}PrincipalAuthenticationMechanism"
+    ] = (
         "principal_authentication_mechanism",
         PrincipalAuthenticationMechanism,
     )
     c_cardinality["principal_authentication_mechanism"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Authenticator"] = ("authenticator", Authenticator)
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}AuthenticatorTransportProtocol"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Authenticator"
+    ] = ("authenticator", Authenticator)
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}AuthenticatorTransportProtocol"
+    ] = (
         "authenticator_transport_protocol",
         AuthenticatorTransportProtocol,
     )
     c_cardinality["authenticator_transport_protocol"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(
-        ["principal_authentication_mechanism", "authenticator", "authenticator_transport_protocol", "extension"]
+        [
+            "principal_authentication_mechanism",
+            "authenticator",
+            "authenticator_transport_protocol",
+            "extension",
+        ]
     )
 
     def __init__(
@@ -2367,28 +2705,42 @@ class AuthnContextDeclarationBaseType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Identification"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Identification"
+    ] = (
         "identification",
         Identification,
     )
     c_cardinality["identification"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}TechnicalProtection"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}TechnicalProtection"
+    ] = (
         "technical_protection",
         TechnicalProtection,
     )
     c_cardinality["technical_protection"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}OperationalProtection"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}OperationalProtection"
+    ] = (
         "operational_protection",
         OperationalProtection,
     )
     c_cardinality["operational_protection"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}AuthnMethod"] = ("authn_method", AuthnMethod)
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}GoverningAgreements"] = (
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}AuthnMethod"] = (
+        "authn_method",
+        AuthnMethod,
+    )
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}GoverningAgreements"
+    ] = (
         "governing_agreements",
         GoverningAgreements,
     )
     c_cardinality["governing_agreements"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["ID"] = ("id", "ID", False)
     c_child_order.extend(
@@ -2431,7 +2783,9 @@ class AuthnContextDeclarationBaseType_(SamlBase):
 
 
 def authn_context_declaration_base_type__from_string(xml_string):
-    return saml2.create_class_from_xml_string(AuthnContextDeclarationBaseType_, xml_string)
+    return saml2.create_class_from_xml_string(
+        AuthnContextDeclarationBaseType_, xml_string
+    )
 
 
 class AuthenticationContextDeclaration(AuthnContextDeclarationBaseType_):
@@ -2446,15 +2800,21 @@ class AuthenticationContextDeclaration(AuthnContextDeclarationBaseType_):
 
 
 def authentication_context_declaration_from_string(xml_string):
-    return saml2.create_class_from_xml_string(AuthenticationContextDeclaration, xml_string)
+    return saml2.create_class_from_xml_string(
+        AuthenticationContextDeclaration, xml_string
+    )
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-ComplexAuthenticatorType_.c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ComplexAuthenticator"] = (
+ComplexAuthenticatorType_.c_children[
+    "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ComplexAuthenticator"
+] = (
     "complex_authenticator",
     ComplexAuthenticator,
 )
-ComplexAuthenticator.c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ComplexAuthenticator"] = (
+ComplexAuthenticator.c_children[
+    "{urn:oasis:names:tc:SAML:2.0:ac:classes:TimeSyncToken}ComplexAuthenticator"
+] = (
     "complex_authenticator",
     ComplexAuthenticator,
 )

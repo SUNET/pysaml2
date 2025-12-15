@@ -1,4 +1,3 @@
-import cgi
 import hashlib
 import hmac
 from http.cookies import SimpleCookie
@@ -151,7 +150,7 @@ class ServiceError(Response):
 class NotImplemented(Response):
     _status = "501 Not Implemented"
     # override template since we need an environment variable
-    template = "The request method %s is not implemented " "for this server.\r\n%s"
+    template = "The request method %s is not implemented for this server.\r\n%s"
 
 
 class BadGateway(Response):
@@ -182,7 +181,10 @@ def extract(environ, empty=False, err=False):
     :param empty: Stops on empty fields (default: Fault)
     :param err: Stops on errors in fields (default: Fault)
     """
-    formdata = cgi.parse(environ["wsgi.input"], environ, empty, err)
+    input_stream = environ["wsgi.input"]
+    content_length = int(environ.get("CONTENT_LENGTH", 0))
+    input_data = input_stream.read(content_length).decode("utf-8")
+    formdata = parse_qs(input_data)
     # Remove single entries from lists
     for key, value in iter(formdata.items()):
         if len(value) == 1:
@@ -221,7 +223,9 @@ def geturl(environ, query=True, path=True, use_server_name=False):
 
 def getpath(environ):
     """Builds a path."""
-    return "".join([quote(environ.get("SCRIPT_NAME", "")), quote(environ.get("PATH_INFO", ""))])
+    return "".join(
+        [quote(environ.get("SCRIPT_NAME", "")), quote(environ.get("PATH_INFO", ""))]
+    )
 
 
 def get_post(environ):

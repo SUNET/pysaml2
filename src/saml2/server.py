@@ -4,11 +4,12 @@
 """Contains classes and functions that a SAML2.0 Identity provider (IdP)
 or attribute authority (AA) may use to conclude its tasks.
 """
-import dbm
+
 import importlib
 import logging
 import shelve
 import threading
+from dbm import error as DbmError
 
 from saml2 import BINDING_HTTP_REDIRECT
 from saml2 import class_name
@@ -58,13 +59,8 @@ AUTHN_DICT_MAP = {
 def _shelve_compat(name, *args, **kwargs):
     try:
         return shelve.open(name, *args, **kwargs)
-    except dbm.error[0]:
-        # Python 3 whichdb needs to try .db to determine type
-        if name.endswith(".db"):
-            name = name.rsplit(".db", 1)[0]
-            return shelve.open(name, *args, **kwargs)
-        else:
-            raise
+    except DbmError:
+        return shelve.open(name.removesuffix(".db"), *args, **kwargs)
 
 
 class Server(Entity):
@@ -222,7 +218,12 @@ class Server(Entity):
     # -------------------------------------------------------------------------
 
     def parse_authn_request(
-        self, enc_request, binding=BINDING_HTTP_REDIRECT, relay_state=None, sigalg=None, signature=None
+        self,
+        enc_request,
+        binding=BINDING_HTTP_REDIRECT,
+        relay_state=None,
+        sigalg=None,
+        signature=None,
     ):
         """Parse a Authentication Request
 
@@ -253,7 +254,9 @@ class Server(Entity):
         :return: A query instance
         """
 
-        return self._parse_request(xml_string, AttributeQuery, "attribute_service", binding)
+        return self._parse_request(
+            xml_string, AttributeQuery, "attribute_service", binding
+        )
 
     def parse_authz_decision_query(self, xml_string, binding):
         """Parse an authorization decision query
@@ -263,7 +266,9 @@ class Server(Entity):
         :return: Query instance
         """
 
-        return self._parse_request(xml_string, AuthzDecisionQuery, "authz_service", binding)
+        return self._parse_request(
+            xml_string, AuthzDecisionQuery, "authz_service", binding
+        )
 
     def parse_assertion_id_request(self, xml_string, binding):
         """Parse an assertion id query
@@ -273,7 +278,9 @@ class Server(Entity):
         :return: Query instance
         """
 
-        return self._parse_request(xml_string, AssertionIDRequest, "assertion_id_request_service", binding)
+        return self._parse_request(
+            xml_string, AssertionIDRequest, "assertion_id_request_service", binding
+        )
 
     def parse_authn_query(self, xml_string, binding):
         """Parse an authn query
@@ -283,7 +290,9 @@ class Server(Entity):
         :return: Query instance
         """
 
-        return self._parse_request(xml_string, AuthnQuery, "authn_query_service", binding)
+        return self._parse_request(
+            xml_string, AuthnQuery, "authn_query_service", binding
+        )
 
     def parse_name_id_mapping_request(self, xml_string, binding):
         """Parse a nameid mapping request
@@ -293,12 +302,23 @@ class Server(Entity):
         :return: Query instance
         """
 
-        return self._parse_request(xml_string, NameIDMappingRequest, "name_id_mapping_service", binding)
+        return self._parse_request(
+            xml_string, NameIDMappingRequest, "name_id_mapping_service", binding
+        )
 
     @staticmethod
     def update_farg(in_response_to, consumer_url, farg=None):
         if not farg:
-            farg = add_path({}, ["assertion", "subject", "subject_confirmation", "method", saml.SCM_BEARER])
+            farg = add_path(
+                {},
+                [
+                    "assertion",
+                    "subject",
+                    "subject_confirmation",
+                    "method",
+                    saml.SCM_BEARER,
+                ],
+            )
             add_path(
                 farg["assertion"]["subject"]["subject_confirmation"],
                 ["subject_confirmation_data", "in_response_to", in_response_to],
@@ -308,10 +328,28 @@ class Server(Entity):
                 ["subject_confirmation_data", "recipient", consumer_url],
             )
         else:
-            if not is_set(farg, ["assertion", "subject", "subject_confirmation", "method"]):
-                add_path(farg, ["assertion", "subject", "subject_confirmation", "method", saml.SCM_BEARER])
             if not is_set(
-                farg, ["assertion", "subject", "subject_confirmation", "subject_confirmation_data", "in_response_to"]
+                farg, ["assertion", "subject", "subject_confirmation", "method"]
+            ):
+                add_path(
+                    farg,
+                    [
+                        "assertion",
+                        "subject",
+                        "subject_confirmation",
+                        "method",
+                        saml.SCM_BEARER,
+                    ],
+                )
+            if not is_set(
+                farg,
+                [
+                    "assertion",
+                    "subject",
+                    "subject_confirmation",
+                    "subject_confirmation_data",
+                    "in_response_to",
+                ],
             ):
                 add_path(
                     farg,
@@ -325,7 +363,14 @@ class Server(Entity):
                     ],
                 )
             if not is_set(
-                farg, ["assertion", "subject", "subject_confirmation", "subject_confirmation_data", "recipient"]
+                farg,
+                [
+                    "assertion",
+                    "subject",
+                    "subject_confirmation",
+                    "subject_confirmation_data",
+                    "recipient",
+                ],
             ):
                 add_path(
                     farg,
@@ -401,7 +446,9 @@ class Server(Entity):
 
         if authn:  # expected to be a dictionary
             # Would like to use dict comprehension but ...
-            authn_args = {AUTHN_DICT_MAP[k]: v for k, v in authn.items() if k in AUTHN_DICT_MAP}
+            authn_args = {
+                AUTHN_DICT_MAP[k]: v for k, v in authn.items() if k in AUTHN_DICT_MAP
+            }
             authn_args.update(kwargs)
 
             assertion = ast.construct(
@@ -696,7 +743,9 @@ class Server(Entity):
             **kwargs,
         )
 
-    def gather_authn_response_args(self, sp_entity_id, name_id_policy, userid, **kwargs):
+    def gather_authn_response_args(
+        self, sp_entity_id, name_id_policy, userid, **kwargs
+    ):
         kwargs["policy"] = kwargs.get("release_policy")
 
         # collect args and return them
@@ -718,20 +767,37 @@ class Server(Entity):
         for param, val_default in param_defaults.items():
             val_kw = kwargs.get(param)
             val_config = self.config.getattr(param, "idp")
-            args[param] = val_kw if val_kw is not None else val_config if val_config is not None else val_default
+            args[param] = (
+                val_kw
+                if val_kw is not None
+                else val_config
+                if val_config is not None
+                else val_default
+            )
 
         for arg, attr, eca, pefim in [
-            ("encrypted_advice_attributes", "verify_encrypt_cert_advice", "encrypt_cert_advice", kwargs["pefim"]),
-            ("encrypt_assertion", "verify_encrypt_cert_assertion", "encrypt_cert_assertion", False),
+            (
+                "encrypted_advice_attributes",
+                "verify_encrypt_cert_advice",
+                "encrypt_cert_advice",
+                kwargs["pefim"],
+            ),
+            (
+                "encrypt_assertion",
+                "verify_encrypt_cert_assertion",
+                "encrypt_cert_assertion",
+                False,
+            ),
         ]:
-
             if args[arg] or pefim:
                 _enc_cert = self.config.getattr(attr, "idp")
 
                 if _enc_cert is not None:
                     if kwargs[eca] is None:
                         raise CertificateError(
-                            "No SPCertEncType certificate for encryption " "contained in authentication " "request."
+                            "No SPCertEncType certificate for encryption "
+                            "contained in authentication "
+                            "request."
                         )
                     if not _enc_cert(kwargs[eca]):
                         raise CertificateError("Invalid certificate for encryption!")
@@ -761,7 +827,9 @@ class Server(Entity):
             if _nids:
                 args["name_id"] = _nids[0]
             else:
-                args["name_id"] = self.ident.construct_nameid(userid, args["policy"], sp_entity_id, name_id_policy)
+                args["name_id"] = self.ident.construct_nameid(
+                    userid, args["policy"], sp_entity_id, name_id_policy
+                )
                 logger.debug("construct_nameid: %s => %s", userid, args["name_id"])
         else:
             args["name_id"] = kwargs["name_id"]
@@ -921,7 +989,9 @@ class Server(Entity):
 
     # XXX DONE calls pre_signature_part
     # XXX DONE idp create > [...]
-    def create_assertion_id_request_response(self, assertion_id, sign=None, sign_alg=None, digest_alg=None, **kwargs):
+    def create_assertion_id_request_response(
+        self, assertion_id, sign=None, sign_alg=None, digest_alg=None, **kwargs
+    ):
         try:
             (assertion, to_sign) = self.session_db.get_assertion(assertion_id)
         except KeyError:
@@ -978,7 +1048,9 @@ class Server(Entity):
 
         ms_args = self.message_args()
 
-        _resp = NameIDMappingResponse(name_id, encrypted_id, in_response_to=in_response_to, **ms_args)
+        _resp = NameIDMappingResponse(
+            name_id, encrypted_id, in_response_to=in_response_to, **ms_args
+        )
 
         if sign_response:
             return self.sign(_resp, sign_alg=sign_alg, digest_alg=digest_alg)
@@ -1010,7 +1082,9 @@ class Server(Entity):
         margs = self.message_args()
         asserts = [
             saml.Assertion(authn_statement=statement, subject=subject, **margs)
-            for statement in self.session_db.get_authn_statements(subject.name_id, session_index, requested_context)
+            for statement in self.session_db.get_authn_statements(
+                subject.name_id, session_index, requested_context
+            )
         ]
 
         if asserts:
@@ -1054,7 +1128,6 @@ class Server(Entity):
         digest_alg=None,
         **kwargs,
     ):
-
         # ----------------------------------------
         # <ecp:Response
         # ----------------------------------------

@@ -7,7 +7,6 @@ from zope.interface import implements
 
 
 class EntitlementMetadataProvider:
-
     implements(IMetadataProvider)
 
     def __init__(self, filename, key_attribute):

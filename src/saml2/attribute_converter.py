@@ -101,7 +101,11 @@ def _find_maps_in_module(module):
     for key, item in module.__dict__.items():
         if key.startswith("__"):
             continue
-        if isinstance(item, dict) and "identifier" in item and ("to" in item or "fro" in item):
+        if (
+            isinstance(item, dict)
+            and "identifier" in item
+            and ("to" in item or "fro" in item)
+        ):
             yield item
 
 
@@ -287,7 +291,10 @@ class AttributeConverter:
         """
         result = {}
         for attribute in statement.attribute:
-            if attribute.name_format and attribute.name_format != NAME_FORMAT_UNSPECIFIED:
+            if (
+                attribute.name_format
+                and attribute.name_format != NAME_FORMAT_UNSPECIFIED
+            ):
                 continue
             try:
                 name = attribute.friendly_name.strip()
@@ -351,7 +358,11 @@ class AttributeConverter:
 
         result = {}
         for attribute in statement.attribute:
-            if attribute.name_format and self.name_format and attribute.name_format != self.name_format:
+            if (
+                attribute.name_format
+                and self.name_format
+                and attribute.name_format != self.name_format
+            ):
                 continue
 
             try:
@@ -379,7 +390,12 @@ class AttributeConverter:
                 _attr = ""
 
         if _attr:
-            return factory(saml.Attribute, name=_attr, name_format=self.name_format, friendly_name=attr)
+            return factory(
+                saml.Attribute,
+                name=_attr,
+                name_format=self.name_format,
+                friendly_name=attr,
+            )
         else:
             return factory(saml.Attribute, name=attr)
 
@@ -448,7 +464,9 @@ class AttributeConverter:
                     )
                 )
             else:
-                attributes.append(factory(saml.Attribute, name=key, attribute_value=do_ava(value)))
+                attributes.append(
+                    factory(saml.Attribute, name=key, attribute_value=do_ava(value))
+                )
 
         return attributes
 
@@ -481,10 +499,15 @@ class AttributeConverter:
                 if isinstance(value, dict)
                 else {"Format": NAMEID_FORMAT_PERSISTENT}
             )
-            element = ExtensionElement("NameID", NAMESPACE, attributes=attributes, text=text)
+            element = ExtensionElement(
+                "NameID", NAMESPACE, attributes=attributes, text=text
+            )
             return element
 
-        attribute_values = [saml.AttributeValue(extension_elements=[_create_nameid_ext_el(v)]) for v in values]
+        attribute_values = [
+            saml.AttributeValue(extension_elements=[_create_nameid_ext_el(v)])
+            for v in values
+        ]
         return attribute_values
 
 
@@ -504,7 +527,12 @@ class AttributeConverterNOOP(AttributeConverter):
         for key, value in attrvals.items():
             key = key.lower()
             attributes.append(
-                factory(saml.Attribute, name=key, name_format=self.name_format, attribute_value=do_ava(value))
+                factory(
+                    saml.Attribute,
+                    name=key,
+                    name_format=self.name_format,
+                    attribute_value=do_ava(value),
+                )
             )
 
         return attributes

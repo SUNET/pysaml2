@@ -6,11 +6,9 @@ from zope.interface import implements
 
 
 class INIMetadataProvider:
-
     implements(IMetadataProvider)
 
     def __init__(self, ini_file, key_attribute):
-
         self.users = ConfigParser.ConfigParser()
         self.users.readfp(open(ini_file))
         self.key_attribute = key_attribute

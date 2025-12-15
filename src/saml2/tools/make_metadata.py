@@ -20,15 +20,30 @@ from saml2.validate import valid_instance
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-v", dest="valid", help="How long, in days, the metadata is valid from the time of creation")
+    parser.add_argument(
+        "-v",
+        dest="valid",
+        help="How long, in days, the metadata is valid from the time of creation",
+    )
     parser.add_argument("-c", dest="cert", help="certificate")
-    parser.add_argument("-e", dest="ed", action="store_true", help="Wrap the whole thing in an EntitiesDescriptor")
+    parser.add_argument(
+        "-e",
+        dest="ed",
+        action="store_true",
+        help="Wrap the whole thing in an EntitiesDescriptor",
+    )
     parser.add_argument("-i", dest="id", help="The ID of the entities descriptor")
-    parser.add_argument("-k", dest="keyfile", help="A file with a key to sign the metadata with")
+    parser.add_argument(
+        "-k", dest="keyfile", help="A file with a key to sign the metadata with"
+    )
     parser.add_argument("-n", dest="name", default="")
     parser.add_argument("-p", dest="path", help="path to the configuration file")
-    parser.add_argument("-s", dest="sign", action="store_true", help="sign the metadata")
-    parser.add_argument("-x", dest="xmlsec", help="xmlsec binaries to be used for the signing")
+    parser.add_argument(
+        "-s", dest="sign", action="store_true", help="sign the metadata"
+    )
+    parser.add_argument(
+        "-x", dest="xmlsec", help="xmlsec binaries to be used for the signing"
+    )
     parser.add_argument("-w", dest="wellknown", help="Use wellknown namespace prefixes")
     parser.add_argument(dest="config", nargs="+")
     args = parser.parse_args()
@@ -61,7 +76,9 @@ def main():
     secc = security_context(conf)
 
     if args.id:
-        desc, xmldoc = entities_descriptor(eds, valid_for, args.name, args.id, args.sign, secc)
+        desc, xmldoc = entities_descriptor(
+            eds, valid_for, args.name, args.id, args.sign, secc
+        )
         valid_instance(desc)
         xmldoc = metadata_tostring_fix(desc, nspair, xmldoc)
         print(xmldoc.decode("utf-8"))

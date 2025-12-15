@@ -64,7 +64,9 @@ def main():
             httpc = HTTPBase()
             crypto = _get_xmlsec_cryptobackend(args.xmlsec)
             sc = SecurityContext(crypto, key_type="", cert_type="")
-            metad = MetaDataExtern(ATTRCONV, spec[1], sc, cert=spec[2], http=httpc, **kwargs)
+            metad = MetaDataExtern(
+                ATTRCONV, spec[1], sc, cert=spec[2], http=httpc, **kwargs
+            )
 
         if metad is not None:
             metad.load()

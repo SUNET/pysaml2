@@ -104,7 +104,11 @@ class TFaultRes_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_attributes["{http://schemas.xmlsoap.org/wsdl/}required"] = ("required", "None", False)
+    c_attributes["{http://schemas.xmlsoap.org/wsdl/}required"] = (
+        "required",
+        "None",
+        False,
+    )
     c_attributes["parts"] = ("parts", "NMTOKENS", False)
     c_attributes["encodingStyle"] = ("encoding_style", EncodingStyle_, False)
     c_attributes["use"] = ("use", UseChoice_, False)
@@ -428,7 +432,10 @@ class THeader_(wsdl.TExtensibilityElement_):
     c_attributes = wsdl.TExtensibilityElement_.c_attributes.copy()
     c_child_order = wsdl.TExtensibilityElement_.c_child_order[:]
     c_cardinality = wsdl.TExtensibilityElement_.c_cardinality.copy()
-    c_children["{http://schemas.xmlsoap.org/wsdl/soap/}headerfault"] = ("headerfault", [Headerfault])
+    c_children["{http://schemas.xmlsoap.org/wsdl/soap/}headerfault"] = (
+        "headerfault",
+        [Headerfault],
+    )
     c_cardinality["headerfault"] = {"min": 0}
     c_attributes["message"] = ("message", "QName", True)
     c_attributes["part"] = ("part", "NMTOKEN", True)

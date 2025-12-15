@@ -8,7 +8,9 @@ import saml2
 from saml2 import SamlBase
 
 
-NAMESPACE = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+NAMESPACE = (
+    "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+)
 
 
 class AttributedString_(SamlBase):
@@ -21,7 +23,9 @@ class AttributedString_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_attributes["{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Id"] = (
+    c_attributes[
+        "{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Id"
+    ] = (
         "Id",
         "string",
         False,
@@ -114,7 +118,6 @@ def encoded_string__from_string(xml_string):
 
 
 class UsernameTokenType_Username(AttributedString_):
-
     c_tag = "Username"
     c_namespace = NAMESPACE
     c_children = AttributedString_.c_children.copy()
@@ -136,11 +139,15 @@ class UsernameTokenType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd}Username"] = (
+    c_children[
+        "{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd}Username"
+    ] = (
         "username",
         UsernameTokenType_Username,
     )
-    c_attributes["{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Id"] = (
+    c_attributes[
+        "{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Id"
+    ] = (
         "Id",
         "None",
         False,
@@ -328,7 +335,9 @@ class SecurityTokenReferenceType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_attributes["{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Id"] = (
+    c_attributes[
+        "{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Id"
+    ] = (
         "Id",
         "None",
         False,

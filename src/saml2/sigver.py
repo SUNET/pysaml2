@@ -1,37 +1,26 @@
-""" Functions connected to signing and verifying.
+"""Functions connected to signing and verifying.
 Based on the use of xmlsec1 binaries and not the python xmlsec module.
 """
 
 import base64
-import datetime
 import hashlib
 import itertools
 import logging
 import os
 import re
+from datetime import datetime
+from datetime import timezone
+from importlib.resources import files as _resource_files
 from subprocess import PIPE
 from subprocess import Popen
-import sys
 from tempfile import NamedTemporaryFile
 from time import mktime
 from typing import AnyStr
 from typing import Optional
+from urllib import parse
 from uuid import uuid4 as gen_random_key
 
 import dateutil
-
-
-# importlib.resources was introduced in python 3.7
-# files API from importlib.resources introduced in python 3.9
-if sys.version_info[:2] >= (3, 9):
-    from importlib.resources import files as _resource_files
-else:
-    from importlib_resources import files as _resource_files
-
-from urllib import parse
-
-from cryptography import x509
-import pytz
 
 from saml2 import ExtensionElement
 from saml2 import SamlBase
@@ -223,7 +212,16 @@ ENC_NODE_NAME = "urn:oasis:names:tc:SAML:2.0:assertion:EncryptedAssertion"
 ENC_KEY_CLASS = "EncryptedKey"
 
 
-def _make_vals(val, klass, seccont, klass_inst=None, prop=None, part=False, base64encode=False, elements_to_sign=None):
+def _make_vals(
+    val,
+    klass,
+    seccont,
+    klass_inst=None,
+    prop=None,
+    part=False,
+    base64encode=False,
+    elements_to_sign=None,
+):
     """
     Creates a class instance with a specified value, the specified
     class instance may be a value on a property in a defined class instance.
@@ -240,14 +238,29 @@ def _make_vals(val, klass, seccont, klass_inst=None, prop=None, part=False, base
     cinst = None
 
     if isinstance(val, dict):
-        cinst = _instance(klass, val, seccont, base64encode=base64encode, elements_to_sign=elements_to_sign)
+        cinst = _instance(
+            klass,
+            val,
+            seccont,
+            base64encode=base64encode,
+            elements_to_sign=elements_to_sign,
+        )
     else:
         try:
             cinst = klass().set_text(val)
         except ValueError:
             if not part:
                 cis = [
-                    _make_vals(sval, klass, seccont, klass_inst, prop, True, base64encode, elements_to_sign)
+                    _make_vals(
+                        sval,
+                        klass,
+                        seccont,
+                        klass_inst,
+                        prop,
+                        True,
+                        base64encode,
+                        elements_to_sign,
+                    )
                     for sval in val
                 ]
                 setattr(klass_inst, prop, cis)
@@ -291,12 +304,23 @@ def _instance(klass, ava, seccont, base64encode=False, elements_to_sign=None):
                     elements_to_sign=elements_to_sign,
                 )
             else:
-                cis = _make_vals(ava[prop], klassdef, seccont, instance, prop, True, base64encode, elements_to_sign)
+                cis = _make_vals(
+                    ava[prop],
+                    klassdef,
+                    seccont,
+                    instance,
+                    prop,
+                    True,
+                    base64encode,
+                    elements_to_sign,
+                )
                 setattr(instance, prop, cis)
 
     if "extension_elements" in ava:
         for item in ava["extension_elements"]:
-            instance.extension_elements.append(ExtensionElement(item["tag"]).loadd(item))
+            instance.extension_elements.append(
+                ExtensionElement(item["tag"]).loadd(item)
+            )
 
     if "extension_attributes" in ava:
         for key, val in ava["extension_attributes"].items():
@@ -329,8 +353,10 @@ def signed_instance_factory(instance, seccont, elements_to_sign=None):
     if not isinstance(instance, str):
         signed_xml = instance.to_string()
 
-    for (node_name, nodeid) in elements_to_sign:
-        signed_xml = seccont.sign_statement(signed_xml, node_name=node_name, node_id=nodeid)
+    for node_name, nodeid in elements_to_sign:
+        signed_xml = seccont.sign_statement(
+            signed_xml, node_name=node_name, node_id=nodeid
+        )
 
     return signed_xml
 
@@ -353,7 +379,9 @@ def make_temp(content, suffix="", decode=True, delete_tmpfiles=True):
         close the file) and filename (which is for instance needed by the
         xmlsec function).
     """
-    content_encoded = content.encode("utf-8") if not isinstance(content, bytes) else content
+    content_encoded = (
+        content.encode("utf-8") if not isinstance(content, bytes) else content
+    )
     content_raw = base64.b64decode(content_encoded) if decode else content_encoded
     ntf = NamedTemporaryFile(suffix=suffix, delete=delete_tmpfiles)
     ntf.write(content_raw)
@@ -389,7 +417,7 @@ def active_cert(key):
     except AttributeError:
         return False
 
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.now(timezone.utc)
     valid_from = cert.not_valid_before_utc
     valid_to = cert.not_valid_after_utc
     active = valid_from <= now < valid_to
@@ -463,7 +491,9 @@ def extract_rsa_key_from_x509_cert(pem):
 
 
 def pem_format(key):
-    return os.linesep.join(["-----BEGIN CERTIFICATE-----", key, "-----END CERTIFICATE-----"]).encode("ascii")
+    return os.linesep.join(
+        ["-----BEGIN CERTIFICATE-----", key, "-----END CERTIFICATE-----"]
+    ).encode("ascii")
 
 
 def import_rsa_key_from_file(filename):
@@ -488,9 +518,9 @@ def parse_xmlsec_verify_output(output, version=None):
                 raise XmlsecError(output)
     else:
         for line in output.splitlines():
-            if line == 'Verification status: OK':
+            if line == "Verification status: OK":
                 return True
-            elif line == 'Verification status: FAILED':
+            elif line == "Verification status: FAILED":
                 raise XmlsecError(output)
     raise XmlsecError(output)
 
@@ -523,7 +553,9 @@ class RSASigner(Signer):
         return saml2.cryptography.asymmetric.key_sign(key or self.key, msg, self.digest)
 
     def verify(self, msg, sig, key=None):
-        return saml2.cryptography.asymmetric.key_verify(key or self.key, sig, msg, self.digest)
+        return saml2.cryptography.asymmetric.key_verify(
+            key or self.key, sig, msg, self.digest
+        )
 
 
 SIGNER_ALGS = {
@@ -585,11 +617,15 @@ def verify_redirect_signature(saml_msg, crypto, cert=None, sigkey=None):
             elif "SAMLResponse" in saml_msg:
                 _order = RESP_ORDER
             else:
-                raise Unsupported("Verifying signature on something that should not be signed")
+                raise Unsupported(
+                    "Verifying signature on something that should not be signed"
+                )
 
             _args = saml_msg.copy()
             del _args["Signature"]  # everything but the signature
-            string = "&".join([parse.urlencode({k: _args[k]}) for k in _order if k in _args]).encode("ascii")
+            string = "&".join(
+                [parse.urlencode({k: _args[k]}) for k in _order if k in _args]
+            ).encode("ascii")
 
             if cert:
                 _key = extract_rsa_key_from_x509_cert(pem_format(cert))
@@ -630,7 +666,9 @@ class CryptoBackend:
         raise NotImplementedError()
 
 
-ASSERT_XPATH = "".join([f"/*[local-name()='{n}']" for n in ["Response", "EncryptedAssertion", "Assertion"]])
+ASSERT_XPATH = "".join(
+    [f"/*[local-name()='{n}']" for n in ["Response", "EncryptedAssertion", "Assertion"]]
+)
 
 
 class CryptoBackendXmlSec1(CryptoBackend):
@@ -697,7 +735,15 @@ class CryptoBackendXmlSec1(CryptoBackend):
 
         return output
 
-    def encrypt_assertion(self, statement, enc_key, template, key_type="des-192", node_xpath=None, node_id=None):
+    def encrypt_assertion(
+        self,
+        statement,
+        enc_key,
+        template,
+        key_type="des-192",
+        node_xpath=None,
+        node_id=None,
+    ):
         """
         Will encrypt an assertion
 
@@ -711,8 +757,12 @@ class CryptoBackendXmlSec1(CryptoBackend):
         if isinstance(statement, SamlBase):
             statement = pre_encrypt_assertion(statement)
 
-        tmp = make_temp(str(statement), decode=False, delete_tmpfiles=self.delete_tmpfiles)
-        tmp2 = make_temp(str(template), decode=False, delete_tmpfiles=self.delete_tmpfiles)
+        tmp = make_temp(
+            str(statement), decode=False, delete_tmpfiles=self.delete_tmpfiles
+        )
+        tmp2 = make_temp(
+            str(template), decode=False, delete_tmpfiles=self.delete_tmpfiles
+        )
 
         if not node_xpath:
             node_xpath = ASSERT_XPATH
@@ -780,7 +830,9 @@ class CryptoBackendXmlSec1(CryptoBackend):
         if isinstance(statement, SamlBase):
             statement = str(statement)
 
-        tmp = make_temp(statement, suffix=".xml", decode=False, delete_tmpfiles=self.delete_tmpfiles)
+        tmp = make_temp(
+            statement, suffix=".xml", decode=False, delete_tmpfiles=self.delete_tmpfiles
+        )
 
         com_list = [
             self.xmlsec,
@@ -820,7 +872,12 @@ class CryptoBackendXmlSec1(CryptoBackend):
         if not isinstance(signedtext, bytes):
             signedtext = signedtext.encode("utf-8")
 
-        tmp = make_temp(signedtext, suffix=".xml", decode=False, delete_tmpfiles=self.delete_tmpfiles)
+        tmp = make_temp(
+            signedtext,
+            suffix=".xml",
+            decode=False,
+            delete_tmpfiles=self.delete_tmpfiles,
+        )
 
         com_list = [
             self.xmlsec,
@@ -856,7 +913,7 @@ class CryptoBackendXmlSec1(CryptoBackend):
         with NamedTemporaryFile(suffix=".xml") as ntf:
             com_list.extend(["--output", ntf.name])
             if self.version_nums >= (1, 3):
-                com_list.extend(['--lax-key-search'])
+                com_list.extend(["--lax-key-search"])
             com_list += extra_args
 
             logger.debug("xmlsec command: %s", " ".join(com_list))
@@ -895,6 +952,7 @@ class CryptoBackendXMLSecurity(CryptoBackend):
     def version(self):
         try:
             import xmlsec
+
             return xmlsec.__version__
         except (ImportError, AttributeError):
             return "0.0.0"
@@ -917,7 +975,9 @@ class CryptoBackendXMLSecurity(CryptoBackend):
 
         xml = xmlsec.parse_xml(statement)
         signed = xmlsec.sign(xml, key_file)
-        signed_str = lxml.etree.tostring(signed, xml_declaration=False, encoding="UTF-8")
+        signed_str = lxml.etree.tostring(
+            signed, xml_declaration=False, encoding="UTF-8"
+        )
         if not isinstance(signed_str, str):
             signed_str = signed_str.decode("utf-8")
         return signed_str
@@ -981,7 +1041,9 @@ def security_context(conf):
             err_msg = err_msg.format(binary=xmlsec_binary)
             raise SigverError(err_msg)
 
-        crypto = _get_xmlsec_cryptobackend(xmlsec_binary, delete_tmpfiles=conf.delete_tmpfiles)
+        crypto = _get_xmlsec_cryptobackend(
+            xmlsec_binary, delete_tmpfiles=conf.delete_tmpfiles
+        )
 
         _file_name = conf.getattr("key_file", "")
         if _file_name:
@@ -1028,14 +1090,21 @@ def encrypt_cert_from_item(item):
     _encrypt_cert = None
     try:
         try:
-            _elem = extension_elements_to_elements(item.extensions.extension_elements, [pefim, ds])
+            _elem = extension_elements_to_elements(
+                item.extensions.extension_elements, [pefim, ds]
+            )
         except Exception:
-            _elem = extension_elements_to_elements(item.extension_elements[0].children, [pefim, ds])
+            _elem = extension_elements_to_elements(
+                item.extension_elements[0].children, [pefim, ds]
+            )
 
         for _tmp_elem in _elem:
             if isinstance(_tmp_elem, SPCertEnc):
                 for _tmp_key_info in _tmp_elem.key_info:
-                    if _tmp_key_info.x509_data is not None and len(_tmp_key_info.x509_data) > 0:
+                    if (
+                        _tmp_key_info.x509_data is not None
+                        and len(_tmp_key_info.x509_data) > 0
+                    ):
                         _encrypt_cert = _tmp_key_info.x509_data[0].x509_certificate.text
                         break
     except Exception:
@@ -1141,8 +1210,13 @@ class CertHandler:
             else:
                 return False
             self._last_validated_cert = cert_str
-            if self._cert_handler_extra_class is not None and self._cert_handler_extra_class.use_validate_cert_func():
-                self._cert_handler_extra_class.validate_cert(cert_str, self._cert_str, self._key_str)
+            if (
+                self._cert_handler_extra_class is not None
+                and self._cert_handler_extra_class.use_validate_cert_func()
+            ):
+                self._cert_handler_extra_class.validate_cert(
+                    cert_str, self._cert_str, self._key_str
+                )
             else:
                 valid, mess = self._osw.verify(self._cert_str, cert_str)
                 logger.info("CertHandler.verify_cert: %s", mess)
@@ -1158,12 +1232,19 @@ class CertHandler:
                 self._tmp_cert_str = client_crt
                 # No private key for signing
                 self._tmp_key_str = ""
-            elif self._cert_handler_extra_class is not None and self._cert_handler_extra_class.use_generate_cert_func():
-                (self._tmp_cert_str, self._tmp_key_str) = self._cert_handler_extra_class.generate_cert(
-                    self._cert_info, self._cert_str, self._key_str
+            elif (
+                self._cert_handler_extra_class is not None
+                and self._cert_handler_extra_class.use_generate_cert_func()
+            ):
+                (self._tmp_cert_str, self._tmp_key_str) = (
+                    self._cert_handler_extra_class.generate_cert(
+                        self._cert_info, self._cert_str, self._key_str
+                    )
                 )
             else:
-                self._tmp_cert_str, self._tmp_key_str = self._osw.create_certificate(self._cert_info, request=True)
+                self._tmp_cert_str, self._tmp_key_str = self._osw.create_certificate(
+                    self._cert_info, request=True
+                )
                 self._tmp_cert_str = self._osw.create_cert_signed_certificate(
                     self._cert_str, self._key_str, self._tmp_cert_str
                 )
@@ -1208,7 +1289,6 @@ class SecurityContext:
         sec_backend=None,
         delete_tmpfiles=True,
     ):
-
         if not isinstance(crypto, CryptoBackend):
             raise ValueError("crypto should be of type CryptoBackend")
         self.crypto = crypto
@@ -1285,7 +1365,9 @@ class SecurityContext:
 
         return self.crypto.encrypt(text, recv_key, template, key_type)
 
-    def encrypt_assertion(self, statement, enc_key, template, key_type="des-192", node_xpath=None):
+    def encrypt_assertion(
+        self, statement, enc_key, template, key_type="des-192", node_xpath=None
+    ):
         """
         Will encrypt an assertion
 
@@ -1295,7 +1377,9 @@ class SecurityContext:
         :param key_type: The type of session key to use.
         :return: The encrypted text
         """
-        return self.crypto.encrypt_assertion(statement, enc_key, template, key_type, node_xpath)
+        return self.crypto.encrypt_assertion(
+            statement, enc_key, template, key_type, node_xpath
+        )
 
     def decrypt_keys(self, enctext, keys=None):
         """Decrypting an encrypted text by the use of a private key.
@@ -1310,8 +1394,14 @@ class SecurityContext:
             keys = [keys]
 
         keys_filtered = (key for key in keys if key)
-        keys_encoded = (key.encode("ascii") if not isinstance(key, bytes) else key for key in keys_filtered)
-        key_files = list(make_temp(key, decode=False, delete_tmpfiles=self.delete_tmpfiles) for key in keys_encoded)
+        keys_encoded = (
+            key.encode("ascii") if not isinstance(key, bytes) else key
+            for key in keys_filtered
+        )
+        key_files = list(
+            make_temp(key, decode=False, delete_tmpfiles=self.delete_tmpfiles)
+            for key in keys_encoded
+        )
         key_file_names = list(tmp.name for tmp in key_files)
 
         dectext = self.decrypt(enctext, key_file=key_file_names)
@@ -1326,7 +1416,9 @@ class SecurityContext:
         if not isinstance(key_file, list):
             key_file = [key_file]
 
-        key_files = [key for key in itertools.chain(key_file, self.enc_key_files) if key]
+        key_files = [
+            key for key in itertools.chain(key_file, self.enc_key_files) if key
+        ]
         for key_file in key_files:
             try:
                 dectext = self.crypto.decrypt(enctext, key_file)
@@ -1340,7 +1432,14 @@ class SecurityContext:
         errmsg = errmsg.format(keys=key_files)
         raise DecryptError(errmsg)
 
-    def verify_signature(self, signedtext, cert_file=None, cert_type="pem", node_name=NODE_NAME, node_id=None):
+    def verify_signature(
+        self,
+        signedtext,
+        cert_file=None,
+        cert_type="pem",
+        node_name=NODE_NAME,
+        node_id=None,
+    ):
         """Verifies the signature of a XML document.
 
         :param signedtext: The XML document as a string
@@ -1365,7 +1464,14 @@ class SecurityContext:
         )
 
     def _check_signature(
-        self, decoded_xml, item, node_name=NODE_NAME, origdoc=None, must=False, only_valid_cert=False, issuer=None
+        self,
+        decoded_xml,
+        item,
+        node_name=NODE_NAME,
+        origdoc=None,
+        must=False,
+        only_valid_cert=False,
+        issuer=None,
     ):
         try:
             _issuer = item.issuer.text.strip()
@@ -1389,7 +1495,12 @@ class SecurityContext:
             for cert_name, cert in _certs:
                 if isinstance(cert, str):
                     content = pem_format(cert)
-                    tmp = make_temp(content, suffix=".pem", decode=False, delete_tmpfiles=self.delete_tmpfiles)
+                    tmp = make_temp(
+                        content,
+                        suffix=".pem",
+                        decode=False,
+                        delete_tmpfiles=self.delete_tmpfiles,
+                    )
                     certs.append(tmp)
                 else:
                     certs.append(cert)
@@ -1399,7 +1510,12 @@ class SecurityContext:
         if not certs and not self.only_use_keys_in_metadata:
             logger.debug("==== Certs from instance ====")
             certs = [
-                make_temp(content=pem_format(cert), suffix=".pem", decode=False, delete_tmpfiles=self.delete_tmpfiles)
+                make_temp(
+                    content=pem_format(cert),
+                    suffix=".pem",
+                    decode=False,
+                    delete_tmpfiles=self.delete_tmpfiles,
+                )
                 for cert in cert_from_instance(item)
             ]
         else:
@@ -1432,8 +1548,9 @@ class SecurityContext:
         signed_info = item.signature.signed_info
         references = signed_info.reference
         signatures_must_have_a_single_reference_element = len(references) == 1
-        the_Reference_element_must_have_a_URI_attribute = signatures_must_have_a_single_reference_element and hasattr(
-            references[0], "uri"
+        the_Reference_element_must_have_a_URI_attribute = (
+            signatures_must_have_a_single_reference_element
+            and hasattr(references[0], "uri")
         )
         the_URI_attribute_contains_an_anchor = (
             the_Reference_element_must_have_a_URI_attribute
@@ -1446,7 +1563,9 @@ class SecurityContext:
 
         # SAML implementations SHOULD use Exclusive Canonicalization,
         # with or without comments
-        canonicalization_method_is_c14n = signed_info.canonicalization_method.algorithm in ALLOWED_CANONICALIZATIONS
+        canonicalization_method_is_c14n = (
+            signed_info.canonicalization_method.algorithm in ALLOWED_CANONICALIZATIONS
+        )
 
         # Signatures in SAML messages SHOULD NOT contain transforms other than the
         # - enveloped signature transform
@@ -1454,19 +1573,24 @@ class SecurityContext:
         # - or the exclusive canonicalization transforms
         #   (with the identifier http://www.w3.org/2001/10/xml-exc-c14n#
         #   or http://www.w3.org/2001/10/xml-exc-c14n#WithComments).
-        transform_algos = [transform.algorithm for transform in references[0].transforms.transform]
+        transform_algos = [
+            transform.algorithm for transform in references[0].transforms.transform
+        ]
         tranform_algos_valid = ALLOWED_TRANSFORMS.intersection(transform_algos)
         transform_algos_n = len(transform_algos)
         tranform_algos_valid_n = len(tranform_algos_valid)
 
         the_number_of_transforms_is_one_or_two = (
-            signatures_must_have_a_single_reference_element and 1 <= transform_algos_n <= 2
+            signatures_must_have_a_single_reference_element
+            and 1 <= transform_algos_n <= 2
         )
         all_transform_algs_are_allowed = (
-            the_number_of_transforms_is_one_or_two and transform_algos_n == tranform_algos_valid_n
+            the_number_of_transforms_is_one_or_two
+            and transform_algos_n == tranform_algos_valid_n
         )
         the_enveloped_signature_transform_is_defined = (
-            the_number_of_transforms_is_one_or_two and TRANSFORM_ENVELOPED in transform_algos
+            the_number_of_transforms_is_one_or_two
+            and TRANSFORM_ENVELOPED in transform_algos
         )
 
         # The <ds:Object> element is not defined for use with SAML signatures,
@@ -1476,16 +1600,26 @@ class SecurityContext:
         object_element_is_not_present = not item.signature.object
 
         validators = {
-            "signatures must have a single reference element": (signatures_must_have_a_single_reference_element),
-            "the Reference element must have a URI attribute": (the_Reference_element_must_have_a_URI_attribute),
-            "the URI attribute contains an anchor": (the_URI_attribute_contains_an_anchor),
+            "signatures must have a single reference element": (
+                signatures_must_have_a_single_reference_element
+            ),
+            "the Reference element must have a URI attribute": (
+                the_Reference_element_must_have_a_URI_attribute
+            ),
+            "the URI attribute contains an anchor": (
+                the_URI_attribute_contains_an_anchor
+            ),
             "the anchor points to the enclosing element ID attribute": (
                 the_anchor_points_to_the_enclosing_element_ID_attribute
             ),
             "canonicalization method is c14n": canonicalization_method_is_c14n,
-            "the number of transforms is one or two": (the_number_of_transforms_is_one_or_two),
+            "the number of transforms is one or two": (
+                the_number_of_transforms_is_one_or_two
+            ),
             "all transform algs are allowed": all_transform_algs_are_allowed,
-            "the enveloped signature transform is defined": (the_enveloped_signature_transform_is_defined),
+            "the enveloped signature transform is defined": (
+                the_enveloped_signature_transform_is_defined
+            ),
             "object element is not present": object_element_is_not_present,
         }
         if not all(validators.values()):
@@ -1528,7 +1662,9 @@ class SecurityContext:
 
         return item
 
-    def check_signature(self, item, node_name=NODE_NAME, origdoc=None, must=False, issuer=None):
+    def check_signature(
+        self, item, node_name=NODE_NAME, origdoc=None, must=False, issuer=None
+    ):
         """
 
         :param item: Parsed entity
@@ -1546,7 +1682,9 @@ class SecurityContext:
             issuer=issuer,
         )
 
-    def correctly_signed_message(self, decoded_xml, msgtype, must=False, origdoc=None, only_valid_cert=False):
+    def correctly_signed_message(
+        self, decoded_xml, msgtype, must=False, origdoc=None, only_valid_cert=False
+    ):
         """Check if a request is correctly signed, if we have metadata for
         the entity that sent the info use that, if not use the key that are in
         the message if any.
@@ -1575,73 +1713,118 @@ class SecurityContext:
                 return msg
 
         return self._check_signature(
-            decoded_xml, msg, class_name(msg), origdoc, must=must, only_valid_cert=only_valid_cert
+            decoded_xml,
+            msg,
+            class_name(msg),
+            origdoc,
+            must=must,
+            only_valid_cert=only_valid_cert,
         )
 
-    def correctly_signed_authn_request(self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs):
+    def correctly_signed_authn_request(
+        self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
+    ):
         return self.correctly_signed_message(
             decoded_xml, "authn_request", must, origdoc, only_valid_cert=only_valid_cert
         )
 
-    def correctly_signed_authn_query(self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs):
-        return self.correctly_signed_message(decoded_xml, "authn_query", must, origdoc, only_valid_cert)
+    def correctly_signed_authn_query(
+        self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
+    ):
+        return self.correctly_signed_message(
+            decoded_xml, "authn_query", must, origdoc, only_valid_cert
+        )
 
-    def correctly_signed_logout_request(self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs):
-        return self.correctly_signed_message(decoded_xml, "logout_request", must, origdoc, only_valid_cert)
+    def correctly_signed_logout_request(
+        self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
+    ):
+        return self.correctly_signed_message(
+            decoded_xml, "logout_request", must, origdoc, only_valid_cert
+        )
 
-    def correctly_signed_logout_response(self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs):
-        return self.correctly_signed_message(decoded_xml, "logout_response", must, origdoc, only_valid_cert)
+    def correctly_signed_logout_response(
+        self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
+    ):
+        return self.correctly_signed_message(
+            decoded_xml, "logout_response", must, origdoc, only_valid_cert
+        )
 
-    def correctly_signed_attribute_query(self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs):
-        return self.correctly_signed_message(decoded_xml, "attribute_query", must, origdoc, only_valid_cert)
+    def correctly_signed_attribute_query(
+        self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
+    ):
+        return self.correctly_signed_message(
+            decoded_xml, "attribute_query", must, origdoc, only_valid_cert
+        )
 
     def correctly_signed_authz_decision_query(
         self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
     ):
-        return self.correctly_signed_message(decoded_xml, "authz_decision_query", must, origdoc, only_valid_cert)
+        return self.correctly_signed_message(
+            decoded_xml, "authz_decision_query", must, origdoc, only_valid_cert
+        )
 
     def correctly_signed_authz_decision_response(
         self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
     ):
-        return self.correctly_signed_message(decoded_xml, "authz_decision_response", must, origdoc, only_valid_cert)
+        return self.correctly_signed_message(
+            decoded_xml, "authz_decision_response", must, origdoc, only_valid_cert
+        )
 
     def correctly_signed_name_id_mapping_request(
         self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
     ):
-        return self.correctly_signed_message(decoded_xml, "name_id_mapping_request", must, origdoc, only_valid_cert)
+        return self.correctly_signed_message(
+            decoded_xml, "name_id_mapping_request", must, origdoc, only_valid_cert
+        )
 
     def correctly_signed_name_id_mapping_response(
         self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
     ):
-        return self.correctly_signed_message(decoded_xml, "name_id_mapping_response", must, origdoc, only_valid_cert)
+        return self.correctly_signed_message(
+            decoded_xml, "name_id_mapping_response", must, origdoc, only_valid_cert
+        )
 
-    def correctly_signed_artifact_request(self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs):
-        return self.correctly_signed_message(decoded_xml, "artifact_request", must, origdoc, only_valid_cert)
+    def correctly_signed_artifact_request(
+        self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
+    ):
+        return self.correctly_signed_message(
+            decoded_xml, "artifact_request", must, origdoc, only_valid_cert
+        )
 
     def correctly_signed_artifact_response(
         self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
     ):
-        return self.correctly_signed_message(decoded_xml, "artifact_response", must, origdoc, only_valid_cert)
+        return self.correctly_signed_message(
+            decoded_xml, "artifact_response", must, origdoc, only_valid_cert
+        )
 
     def correctly_signed_manage_name_id_request(
         self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
     ):
-        return self.correctly_signed_message(decoded_xml, "manage_name_id_request", must, origdoc, only_valid_cert)
+        return self.correctly_signed_message(
+            decoded_xml, "manage_name_id_request", must, origdoc, only_valid_cert
+        )
 
     def correctly_signed_manage_name_id_response(
         self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
     ):
-        return self.correctly_signed_message(decoded_xml, "manage_name_id_response", must, origdoc, only_valid_cert)
+        return self.correctly_signed_message(
+            decoded_xml, "manage_name_id_response", must, origdoc, only_valid_cert
+        )
 
     def correctly_signed_assertion_id_request(
         self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
     ):
-        return self.correctly_signed_message(decoded_xml, "assertion_id_request", must, origdoc, only_valid_cert)
+        return self.correctly_signed_message(
+            decoded_xml, "assertion_id_request", must, origdoc, only_valid_cert
+        )
 
     def correctly_signed_assertion_id_response(
         self, decoded_xml, must=False, origdoc=None, only_valid_cert=False, **kwargs
     ):
-        return self.correctly_signed_message(decoded_xml, "assertion", must, origdoc, only_valid_cert)
+        return self.correctly_signed_message(
+            decoded_xml, "assertion", must, origdoc, only_valid_cert
+        )
 
     def correctly_signed_response(
         self,
@@ -1672,7 +1855,9 @@ class SecurityContext:
             if "do_not_verify" in kwargs:
                 pass
             else:
-                self._check_signature(decoded_xml, response, class_name(response), origdoc)
+                self._check_signature(
+                    decoded_xml, response, class_name(response), origdoc
+                )
         elif require_response_signature:
             raise SignatureError("Signature missing for response")
 
@@ -1682,7 +1867,9 @@ class SecurityContext:
         """Deprecated function. See sign_statement()."""
         return self.sign_statement(statement, **kwargs)
 
-    def sign_statement(self, statement, node_name, key=None, key_file=None, node_id=None):
+    def sign_statement(
+        self, statement, node_name, key=None, key_file=None, node_id=None
+    ):
         """Sign a SAML statement.
 
         :param statement: The statement to be signed
@@ -1694,7 +1881,9 @@ class SecurityContext:
         """
         if not key_file and key:
             content = str(key).encode()
-            tmp = make_temp(content, suffix=".pem", delete_tmpfiles=self.delete_tmpfiles)
+            tmp = make_temp(
+                content, suffix=".pem", delete_tmpfiles=self.delete_tmpfiles
+            )
             key_file = tmp.name
 
         if not key and not key_file:
@@ -1729,9 +1918,19 @@ class SecurityContext:
         :param statement: The statement to be signed
         :return: The signed statement
         """
-        return self.sign_statement(statement, class_name(samlp.AttributeQuery()), **kwargs)
+        return self.sign_statement(
+            statement, class_name(samlp.AttributeQuery()), **kwargs
+        )
 
-    def multiple_signatures(self, statement, to_sign, key=None, key_file=None, sign_alg=None, digest_alg=None):
+    def multiple_signatures(
+        self,
+        statement,
+        to_sign,
+        key=None,
+        key_file=None,
+        sign_alg=None,
+        digest_alg=None,
+    ):
         """
         Sign multiple parts of a statement
 
@@ -1741,7 +1940,7 @@ class SecurityContext:
         :param key_file: A file that contains the key to be used
         :return: A possibly multiple signed statement
         """
-        for (item, sid) in to_sign:
+        for item, sid in to_sign:
             if not sid:
                 if not item.id:
                     sid = item.id = sid()
@@ -1801,14 +2000,21 @@ def pre_signature_part(
     digest_method = ds.DigestMethod(algorithm=digest_alg)
 
     reference = ds.Reference(
-        uri=f"#{ident}", digest_value=ds.DigestValue(), transforms=transforms, digest_method=digest_method
+        uri=f"#{ident}",
+        digest_value=ds.DigestValue(),
+        transforms=transforms,
+        digest_method=digest_method,
     )
 
     signed_info = ds.SignedInfo(
-        signature_method=signature_method, canonicalization_method=canonicalization_method, reference=reference
+        signature_method=signature_method,
+        canonicalization_method=canonicalization_method,
+        reference=reference,
     )
 
-    signature = ds.Signature(signed_info=signed_info, signature_value=ds.SignatureValue())
+    signature = ds.Signature(
+        signed_info=signed_info, signature_value=ds.SignatureValue()
+    )
 
     if identifier:
         signature.id = f"Signature{identifier}"
@@ -1864,9 +2070,17 @@ def pre_encryption_part(
     msg_encryption_method = EncryptionMethod(algorithm=msg_enc)
     key_encryption_method = EncryptionMethod(algorithm=key_enc)
 
-    x509_data = ds.X509Data(x509_certificate=ds.X509Certificate(text=encrypt_cert)) if encrypt_cert else None
+    x509_data = (
+        ds.X509Data(x509_certificate=ds.X509Certificate(text=encrypt_cert))
+        if encrypt_cert
+        else None
+    )
     key_name = ds.KeyName(text=key_name) if key_name else None
-    key_info = ds.KeyInfo(key_name=key_name, x509_data=x509_data) if key_name or x509_data else None
+    key_info = (
+        ds.KeyInfo(key_name=key_name, x509_data=x509_data)
+        if key_name or x509_data
+        else None
+    )
 
     encrypted_key = EncryptedKey(
         id=ek_id,
@@ -1908,7 +2122,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-s", "--list-sigalgs", dest="listsigalgs", action="store_true", help="List implemented signature algorithms"
+        "-s",
+        "--list-sigalgs",
+        dest="listsigalgs",
+        action="store_true",
+        help="List implemented signature algorithms",
     )
     args = parser.parse_args()
 

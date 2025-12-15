@@ -65,7 +65,10 @@ class PublicationType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.publisher = publisher
         self.creation_instant = creation_instant
@@ -104,7 +107,10 @@ class RegistrationInfoType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.registration_policy = registration_policy or []
         self.registration_authority = registration_authority
@@ -124,7 +130,10 @@ class PublicationInfoType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:metadata:rpi}UsagePolicy"] = ("usage_policy", [UsagePolicy])
+    c_children["{urn:oasis:names:tc:SAML:metadata:rpi}UsagePolicy"] = (
+        "usage_policy",
+        [UsagePolicy],
+    )
     c_cardinality["usage_policy"] = {"min": 0}
     c_attributes["publisher"] = ("publisher", "string", True)
     c_attributes["creationInstant"] = ("creation_instant", "dateTime", False)
@@ -142,7 +151,10 @@ class PublicationInfoType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.usage_policy = usage_policy or []
         self.publisher = publisher
@@ -208,13 +220,25 @@ class PublicationPathType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:metadata:rpi}Publication"] = ("publication", [Publication])
+    c_children["{urn:oasis:names:tc:SAML:metadata:rpi}Publication"] = (
+        "publication",
+        [Publication],
+    )
     c_cardinality["publication"] = {"min": 0}
     c_child_order.extend(["publication"])
 
-    def __init__(self, publication=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        publication=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.publication = publication or []
 

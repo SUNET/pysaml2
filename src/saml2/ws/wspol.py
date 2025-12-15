@@ -72,7 +72,10 @@ class PolicyAttachment(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}AppliesTo"] = ("applies_to", AppliesTo)
+    c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}AppliesTo"] = (
+        "applies_to",
+        AppliesTo,
+    )
     c_cardinality["policy"] = {"min": 0}
     c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}PolicyReference"] = (
         "policy_reference",
@@ -160,7 +163,9 @@ class Policy(OperatorContentType_):
     c_child_order = OperatorContentType_.c_child_order[:]
     c_cardinality = OperatorContentType_.c_cardinality.copy()
     c_attributes["Name"] = ("name", "anyURI", False)
-    c_attributes["{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Id"] = (
+    c_attributes[
+        "{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Id"
+    ] = (
         "Id",
         "tns:OperatorContentType",
         False,
@@ -226,22 +231,53 @@ def exactly_one_from_string(xml_string):
     return saml2.create_class_from_xml_string(ExactlyOne, xml_string)
 
 
-PolicyAttachment.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}Policy"] = ("policy", [Policy])
-OperatorContentType_.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}Policy"] = ("policy", [Policy])
-Policy.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}Policy"] = ("policy", [Policy])
-ExactlyOne.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}Policy"] = ("policy", [Policy])
-All.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}Policy"] = ("policy", [Policy])
-OperatorContentType_.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}All"] = ("all", [All])
+PolicyAttachment.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}Policy"] = (
+    "policy",
+    [Policy],
+)
+OperatorContentType_.c_children[
+    "{http://schemas.xmlsoap.org/ws/2004/09/policy}Policy"
+] = ("policy", [Policy])
+Policy.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}Policy"] = (
+    "policy",
+    [Policy],
+)
+ExactlyOne.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}Policy"] = (
+    "policy",
+    [Policy],
+)
+All.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}Policy"] = (
+    "policy",
+    [Policy],
+)
+OperatorContentType_.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}All"] = (
+    "all",
+    [All],
+)
 Policy.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}All"] = ("all", [All])
-ExactlyOne.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}All"] = ("all", [All])
+ExactlyOne.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}All"] = (
+    "all",
+    [All],
+)
 All.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}All"] = ("all", [All])
-OperatorContentType_.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}ExactlyOne"] = (
+OperatorContentType_.c_children[
+    "{http://schemas.xmlsoap.org/ws/2004/09/policy}ExactlyOne"
+] = (
     "exactly_one",
     [ExactlyOne],
 )
-Policy.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}ExactlyOne"] = ("exactly_one", [ExactlyOne])
-ExactlyOne.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}ExactlyOne"] = ("exactly_one", [ExactlyOne])
-All.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}ExactlyOne"] = ("exactly_one", [ExactlyOne])
+Policy.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}ExactlyOne"] = (
+    "exactly_one",
+    [ExactlyOne],
+)
+ExactlyOne.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}ExactlyOne"] = (
+    "exactly_one",
+    [ExactlyOne],
+)
+All.c_children["{http://schemas.xmlsoap.org/ws/2004/09/policy}ExactlyOne"] = (
+    "exactly_one",
+    [ExactlyOne],
+)
 
 ELEMENT_FROM_STRING = {
     Policy.c_tag: policy_from_string,

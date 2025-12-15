@@ -158,7 +158,9 @@ class IdentDB:
         if nformat == NAMEID_FORMAT_PERSISTENT:
             nameid = self.match_local_id(userid, sp_name_qualifier, name_qualifier)
             if nameid:
-                logger.debug(f"Found existing persistent NameId {nameid} for user {userid}")
+                logger.debug(
+                    f"Found existing persistent NameId {nameid} for user {userid}"
+                )
                 return nameid
 
         _id = self.create_id(nformat, name_qualifier, sp_name_qualifier)
@@ -207,7 +209,13 @@ class IdentDB:
 
         return res
 
-    def nim_args(self, local_policy=None, sp_name_qualifier="", name_id_policy=None, name_qualifier=""):
+    def nim_args(
+        self,
+        local_policy=None,
+        sp_name_qualifier="",
+        name_id_policy=None,
+        name_qualifier="",
+    ):
         """
 
         :param local_policy:
@@ -217,7 +225,9 @@ class IdentDB:
         :return:
         """
 
-        logger.debug("local_policy: %s, name_id_policy: %s", local_policy, name_id_policy)
+        logger.debug(
+            "local_policy: %s, name_id_policy: %s", local_policy, name_id_policy
+        )
 
         if name_id_policy and name_id_policy.sp_name_qualifier:
             sp_name_qualifier = name_id_policy.sp_name_qualifier
@@ -234,10 +244,19 @@ class IdentDB:
         if not name_qualifier:
             name_qualifier = self.name_qualifier
 
-        return {"nformat": nameid_format, "sp_name_qualifier": sp_name_qualifier, "name_qualifier": name_qualifier}
+        return {
+            "nformat": nameid_format,
+            "sp_name_qualifier": sp_name_qualifier,
+            "name_qualifier": name_qualifier,
+        }
 
     def construct_nameid(
-        self, userid, local_policy=None, sp_name_qualifier=None, name_id_policy=None, name_qualifier=""
+        self,
+        userid,
+        local_policy=None,
+        sp_name_qualifier=None,
+        name_id_policy=None,
+        name_qualifier="",
     ):
         """Returns a name_id for the userid. How the name_id is
         constructed depends on the context.
@@ -260,14 +279,18 @@ class IdentDB:
         return self.get_nameid(userid, **args)
 
     def transient_nameid(self, userid, sp_name_qualifier="", name_qualifier=""):
-        return self.get_nameid(userid, NAMEID_FORMAT_TRANSIENT, sp_name_qualifier, name_qualifier)
+        return self.get_nameid(
+            userid, NAMEID_FORMAT_TRANSIENT, sp_name_qualifier, name_qualifier
+        )
 
     def persistent_nameid(self, userid, sp_name_qualifier="", name_qualifier=""):
         nameid = self.match_local_id(userid, sp_name_qualifier, name_qualifier)
         if nameid:
             return nameid
         else:
-            return self.get_nameid(userid, NAMEID_FORMAT_PERSISTENT, sp_name_qualifier, name_qualifier)
+            return self.get_nameid(
+                userid, NAMEID_FORMAT_PERSISTENT, sp_name_qualifier, name_qualifier
+            )
 
     def find_local_id(self, name_id):
         """
@@ -335,7 +358,9 @@ class IdentDB:
         # else create and return a new one
         return self.construct_nameid(_id, name_id_policy=name_id_policy)
 
-    def handle_manage_name_id_request(self, name_id, new_id=None, new_encrypted_id="", terminate=""):
+    def handle_manage_name_id_request(
+        self, name_id, new_id=None, new_encrypted_id="", terminate=""
+    ):
         """
         Requests from the SP is about the SPProvidedID attribute.
         So this is about adding,replacing and removing said attribute.

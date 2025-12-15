@@ -141,12 +141,26 @@ def create_artifact(entity_id, message_handle, endpoint_index=0):
 
     if not isinstance(message_handle, bytes):
         message_handle = message_handle.encode("utf-8")
-    ter = b"".join((ARTIFACT_TYPECODE, (f"{endpoint_index:02x}").encode("ascii"), sourceid.digest(), message_handle))
+    ter = b"".join(
+        (
+            ARTIFACT_TYPECODE,
+            (f"{endpoint_index:02x}").encode("ascii"),
+            sourceid.digest(),
+            message_handle,
+        )
+    )
     return base64.b64encode(ter).decode("ascii")
 
 
 class Entity(HTTPBase):
-    def __init__(self, entity_type, config=None, config_file="", virtual_organization="", msg_cb=None):
+    def __init__(
+        self,
+        entity_type,
+        config=None,
+        config_file="",
+        virtual_organization="",
+        msg_cb=None,
+    ):
         self.entity_type = entity_type
         self.users = None
 
@@ -158,8 +172,12 @@ class Entity(HTTPBase):
             raise SAMLError("Missing configuration")
 
         def_sig = DefaultSignature()
-        self.signing_algorithm = self.config.getattr("signing_algorithm") or def_sig.get_sign_alg()
-        self.digest_algorithm = self.config.getattr("digest_algorithm") or def_sig.get_digest_alg()
+        self.signing_algorithm = (
+            self.config.getattr("signing_algorithm") or def_sig.get_sign_alg()
+        )
+        self.digest_algorithm = (
+            self.config.getattr("digest_algorithm") or def_sig.get_digest_alg()
+        )
 
         sign_config_per_entity_type = {
             "sp": self.config.getattr("authn_requests_signed", "sp"),
@@ -174,7 +192,9 @@ class Entity(HTTPBase):
                 continue
 
             if _val.startswith("http"):
-                r = requests.request("GET", _val, timeout=self.config.http_client_timeout)
+                r = requests.request(
+                    "GET", _val, timeout=self.config.http_client_timeout
+                )
                 if r.status_code == 200:
                     tmp = make_temp(r.text, ".pem", False, self.config.delete_tmpfiles)
                     setattr(self.config, item, tmp.name)
@@ -313,7 +333,9 @@ class Entity(HTTPBase):
             info["url"] = str(destination)
             info["method"] = "GET"
         elif binding == BINDING_SOAP or binding == BINDING_PAOS:
-            info = self.use_soap(msg_str, destination, sign=sign, sigalg=sign_alg, **kwargs)
+            info = self.use_soap(
+                msg_str, destination, sign=sign, sigalg=sign_alg, **kwargs
+            )
         elif binding == BINDING_URI:
             info = self.use_http_uri(msg_str, typ, destination)
         elif binding == BINDING_HTTP_ARTIFACT:
@@ -347,10 +369,14 @@ class Entity(HTTPBase):
         sfunc = getattr(self.metadata, service)
 
         if not bindings:
-            if isinstance(request, AuthnRequest) and isinstance(request.protocol_binding, str):
+            if isinstance(request, AuthnRequest) and isinstance(
+                request.protocol_binding, str
+            ):
                 bindings = [cast(SAMLBinding, request.protocol_binding)]
             else:
-                bindings = [cast(SAMLBinding, x) for x in self.config.preferred_binding[service]]
+                bindings = [
+                    cast(SAMLBinding, x) for x in self.config.preferred_binding[service]
+                ]
 
         if not descr_type:
             if self.entity_type == "sp":
@@ -379,7 +405,9 @@ class Entity(HTTPBase):
             except UnsupportedBinding:
                 pass
 
-        logger.error("Failed to find consumer URL: %s, %s, %s", entity_id, bindings, descr_type)
+        logger.error(
+            "Failed to find consumer URL: %s, %s, %s", entity_id, bindings, descr_type
+        )
         # logger.error("Bindings: %s", bindings)
         # logger.error("Entities: %s", self.metadata)
 
@@ -449,7 +477,9 @@ class Entity(HTTPBase):
                 else:
                     descr_type = "spsso"
 
-            binding, destination = self.pick_binding(rsrv, bindings, descr_type=descr_type, request=message)
+            binding, destination = self.pick_binding(
+                rsrv, bindings, descr_type=descr_type, request=message
+            )
             info["binding"] = binding
             info["destination"] = destination
 
@@ -503,7 +533,9 @@ class Entity(HTTPBase):
         :param text: The SOAP message
         :return: A dictionary with two keys "body" and "header"
         """
-        return class_instances_from_soap_enveloped_saml_thingies(text, [paos, ecp, samlp, samlec])
+        return class_instances_from_soap_enveloped_saml_thingies(
+            text, [paos, ecp, samlp, samlec]
+        )
 
     @staticmethod
     def unpack_soap_message(text):
@@ -538,11 +570,15 @@ class Entity(HTTPBase):
         digest_alg = digest_alg or self.digest_algorithm
         if sign_alg not in [long_name for short_name, long_name in SIG_ALLOWED_ALG]:
             raise Exception(f"Signature algo not in allowed list: {sign_alg}")
-        if digest_alg not in [long_name for short_name, long_name in DIGEST_ALLOWED_ALG]:
+        if digest_alg not in [
+            long_name for short_name, long_name in DIGEST_ALLOWED_ALG
+        ]:
             raise Exception(f"Digest algo not in allowed list: {digest_alg}")
 
         if msg.signature is None:
-            msg.signature = pre_signature_part(msg.id, self.sec.my_cert, 1, sign_alg=sign_alg, digest_alg=digest_alg)
+            msg.signature = pre_signature_part(
+                msg.id, self.sec.my_cert, 1, sign_alg=sign_alg, digest_alg=digest_alg
+            )
 
         if sign_prepare:
             return msg
@@ -706,7 +742,9 @@ class Entity(HTTPBase):
                 response = self.sec.encrypt_assertion(
                     response,
                     tmp.name,
-                    pre_encryption_part(key_name=_cert_name, encrypt_cert=unwrapped_cert),
+                    pre_encryption_part(
+                        key_name=_cert_name, encrypt_cert=unwrapped_cert
+                    ),
                     node_xpath=node_xpath,
                 )
                 return response
@@ -865,25 +903,35 @@ class Entity(HTTPBase):
 
                         # XXX prepare encrypt assertion
                         # tmp_assertion = response.assertion.advice.assertion[0]
-                        _assertion.advice.encrypted_assertion[0].add_extension_element(tmp_assertion)
+                        _assertion.advice.encrypted_assertion[0].add_extension_element(
+                            tmp_assertion
+                        )
                         if encrypt_assertion_self_contained:
-                            advice_tag = response.assertion.advice._to_element_tree().tag
+                            advice_tag = (
+                                response.assertion.advice._to_element_tree().tag
+                            )
                             assertion_tag = tmp_assertion._to_element_tree().tag
-                            response = (
-                                response.get_xml_string_with_self_contained_assertion_within_advice_encrypted_assertion(
-                                    assertion_tag, advice_tag
-                                )
+                            response = response.get_xml_string_with_self_contained_assertion_within_advice_encrypted_assertion(
+                                assertion_tag, advice_tag
                             )
                         node_xpath = "".join(
                             [
                                 f'/*[local-name()="{v}"]'
-                                for v in ["Response", "Assertion", "Advice", "EncryptedAssertion", "Assertion"]
+                                for v in [
+                                    "Response",
+                                    "Assertion",
+                                    "Advice",
+                                    "EncryptedAssertion",
+                                    "Assertion",
+                                ]
                             ]
                         )
 
                         # XXX sign assertion
                         if to_sign_advice:
-                            response = signed_instance_factory(response, self.sec, to_sign_advice)
+                            response = signed_instance_factory(
+                                response, self.sec, to_sign_advice
+                            )
 
                         # XXX encrypt assertion
                         response = self._encrypt_assertion(
@@ -932,10 +980,14 @@ class Entity(HTTPBase):
 
                 # XXX sign assertion
                 if to_sign_assertion:
-                    response = signed_instance_factory(response, self.sec, to_sign_assertion)
+                    response = signed_instance_factory(
+                        response, self.sec, to_sign_assertion
+                    )
 
                 # XXX encrypt assertion
-                response = self._encrypt_assertion(encrypt_cert_assertion, sp_entity_id, response)
+                response = self._encrypt_assertion(
+                    encrypt_cert_assertion, sp_entity_id, response
+                )
             else:
                 # XXX sign other parts! (defiend by to_sign)
                 if to_sign:
@@ -950,7 +1002,9 @@ class Entity(HTTPBase):
 
         # XXX sign response
         if sign:
-            return self.sign(response, to_sign=to_sign, sign_alg=sign_alg, digest_alg=digest_alg)
+            return self.sign(
+                response, to_sign=to_sign, sign_alg=sign_alg, digest_alg=digest_alg
+            )
 
         return response
 
@@ -1053,11 +1107,18 @@ class Entity(HTTPBase):
         except AttributeError:
             timeslack = 0
 
-        _request = request_cls(self.sec, receiver_addresses, self.config.attribute_converters, timeslack=timeslack)
+        _request = request_cls(
+            self.sec,
+            receiver_addresses,
+            self.config.attribute_converters,
+            timeslack=timeslack,
+        )
 
         xmlstr = self.unravel(enc_request, binding, request_cls.msgtype)
         must = self.config.getattr("want_authn_requests_signed", "idp")
-        only_valid_cert = self.config.getattr("want_authn_requests_only_with_valid_cert", "idp")
+        only_valid_cert = self.config.getattr(
+            "want_authn_requests_only_with_valid_cert", "idp"
+        )
         if only_valid_cert is None:
             only_valid_cert = False
         if only_valid_cert:
@@ -1162,7 +1223,9 @@ class Entity(HTTPBase):
 
         if subject_id:
             if self.entity_type == "idp":
-                name_id = NameID(text=self.users.get_entityid(subject_id, issuer_entity_id, False))
+                name_id = NameID(
+                    text=self.users.get_entityid(subject_id, issuer_entity_id, False)
+                )
             else:
                 name_id = NameID(text=subject_id)
 
@@ -1355,7 +1418,9 @@ class Entity(HTTPBase):
         elif terminate:
             kwargs["terminate"] = terminate
         else:
-            raise AttributeError("One of NewID, NewEncryptedNameID or Terminate has to be " "provided")
+            raise AttributeError(
+                "One of NewID, NewEncryptedNameID or Terminate has to be provided"
+            )
 
         return self._message(
             ManageNameIDRequest,
@@ -1378,7 +1443,9 @@ class Entity(HTTPBase):
             was not.
         """
 
-        return self._parse_request(xmlstr, saml_request.ManageNameIDRequest, "manage_name_id_service", binding)
+        return self._parse_request(
+            xmlstr, saml_request.ManageNameIDRequest, "manage_name_id_service", binding
+        )
 
     # XXX DONE ent create > _status_response
     def create_manage_name_id_response(
@@ -1392,7 +1459,6 @@ class Entity(HTTPBase):
         digest_alg=None,
         **kwargs,
     ):
-
         rinfo = self.response_args(request, bindings)
 
         response = self._status_response(
@@ -1461,7 +1527,9 @@ class Entity(HTTPBase):
             }
             if binding in bindings:
                 # expected return address
-                kwargs["return_addrs"] = self.config.endpoint(service, binding=binding, context=self.entity_type)
+                kwargs["return_addrs"] = self.config.endpoint(
+                    service, binding=binding, context=self.entity_type
+                )
 
         try:
             response = response_cls(self.sec, **kwargs)
@@ -1563,7 +1631,9 @@ class Entity(HTTPBase):
     def parse_logout_request_response(
         self, xmlstr: AnyStr, binding: SAMLBinding = BINDING_SOAP
     ) -> Optional[LogoutResponse]:
-        return self._parse_response(xmlstr, LogoutResponse, "single_logout_service", binding)
+        return self._parse_response(
+            xmlstr, LogoutResponse, "single_logout_service", binding
+        )
 
     # ------------------------------------------------------------------------
 
@@ -1620,7 +1690,9 @@ class Entity(HTTPBase):
 
         typecode = _art[:2]
         if typecode != ARTIFACT_TYPECODE:
-            raise ValueError(f"Invalid artifact typecode {repr(typecode)} should be {repr(ARTIFACT_TYPECODE)}")
+            raise ValueError(
+                f"Invalid artifact typecode {repr(typecode)} should be {repr(ARTIFACT_TYPECODE)}"
+            )
 
         try:
             endpoint_index = str(int(_art[2:4]))
@@ -1683,9 +1755,20 @@ class Entity(HTTPBase):
         return artifact_resolve_from_string(_resp)
 
     def parse_artifact_resolve_response(self, xmlstr):
-        kwargs = {"entity_id": self.config.entityid, "attribute_converters": self.config.attribute_converters}
+        kwargs = {
+            "entity_id": self.config.entityid,
+            "attribute_converters": self.config.attribute_converters,
+        }
 
-        resp = self._parse_response(xmlstr, saml_response.ArtifactResponse, "artifact_resolve", BINDING_SOAP, **kwargs)
+        resp = self._parse_response(
+            xmlstr,
+            saml_response.ArtifactResponse,
+            "artifact_resolve",
+            BINDING_SOAP,
+            **kwargs,
+        )
         # should just be one
-        elems = extension_elements_to_elements(resp.response.extension_elements, [samlp, saml])
+        elems = extension_elements_to_elements(
+            resp.response.extension_elements, [samlp, saml]
+        )
         return elems[0]

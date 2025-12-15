@@ -84,7 +84,10 @@ class NymType_(SamlBase):
 
     c_tag = "nymType"
     c_namespace = NAMESPACE
-    c_value_type = {"base": "xs:NMTOKEN", "enumeration": ["anonymity", "verinymity", "pseudonymity"]}
+    c_value_type = {
+        "base": "xs:NMTOKEN",
+        "enumeration": ["anonymity", "verinymity", "pseudonymity"],
+    }
     c_children = SamlBase.c_children.copy()
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
@@ -415,7 +418,13 @@ class MediumType_(SamlBase):
     c_namespace = NAMESPACE
     c_value_type = {
         "base": "xs:NMTOKEN",
-        "enumeration": ["memory", "smartcard", "token", "MobileDevice", "MobileAuthCard"],
+        "enumeration": [
+            "memory",
+            "smartcard",
+            "token",
+            "MobileDevice",
+            "MobileAuthCard",
+        ],
     }
     c_children = SamlBase.c_children.copy()
     c_attributes = SamlBase.c_attributes.copy()
@@ -557,7 +566,9 @@ class GoverningAgreementsType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}GoverningAgreementRef"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}GoverningAgreementRef"
+    ] = (
         "governing_agreement_ref",
         [GoverningAgreementRef],
     )
@@ -681,7 +692,10 @@ class SharedSecretChallengeResponseType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["method"] = ("method", "anyURI", False)
     c_child_order.extend(["extension"])
@@ -705,7 +719,9 @@ class SharedSecretChallengeResponseType_(SamlBase):
 
 
 def shared_secret_challenge_response_type__from_string(xml_string):
-    return saml2.create_class_from_xml_string(SharedSecretChallengeResponseType_, xml_string)
+    return saml2.create_class_from_xml_string(
+        SharedSecretChallengeResponseType_, xml_string
+    )
 
 
 class PublicKeyType_(SamlBase):
@@ -717,7 +733,10 @@ class PublicKeyType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["keyValidation"] = ("key_validation", "None", False)
     c_child_order.extend(["extension"])
@@ -768,13 +787,25 @@ class PasswordType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Length"] = ("length", Length)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Length"] = (
+        "length",
+        Length,
+    )
     c_cardinality["length"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Alphabet"] = ("alphabet", Alphabet)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Alphabet"] = (
+        "alphabet",
+        Alphabet,
+    )
     c_cardinality["alphabet"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Generation"] = ("generation", Generation)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Generation"] = (
+        "generation",
+        Generation,
+    )
     c_cardinality["generation"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["ExternalVerification"] = ("external_verification", "anyURI", False)
     c_child_order.extend(["length", "alphabet", "generation", "extension"])
@@ -816,10 +847,19 @@ class RestrictedPasswordType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Length"] = ("length", RestrictedPasswordType_Length)
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Generation"] = ("generation", Generation)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Length"] = (
+        "length",
+        RestrictedPasswordType_Length,
+    )
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Generation"] = (
+        "generation",
+        Generation,
+    )
     c_cardinality["generation"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["ExternalVerification"] = ("external_verification", "anyURI", False)
     c_child_order.extend(["length", "generation", "extension"])
@@ -859,8 +899,14 @@ class TokenType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}TimeSyncToken"] = ("time_sync_token", TimeSyncToken)
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}TimeSyncToken"] = (
+        "time_sync_token",
+        TimeSyncToken,
+    )
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["time_sync_token", "extension"])
 
@@ -895,22 +941,34 @@ class ActivationLimitType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ActivationLimitDuration"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ActivationLimitDuration"
+    ] = (
         "activation_limit_duration",
         ActivationLimitDuration,
     )
     c_cardinality["activation_limit_duration"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ActivationLimitUsages"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ActivationLimitUsages"
+    ] = (
         "activation_limit_usages",
         ActivationLimitUsages,
     )
     c_cardinality["activation_limit_usages"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ActivationLimitSession"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ActivationLimitSession"
+    ] = (
         "activation_limit_session",
         ActivationLimitSession,
     )
     c_cardinality["activation_limit_session"] = {"min": 0, "max": 1}
-    c_child_order.extend(["activation_limit_duration", "activation_limit_usages", "activation_limit_session"])
+    c_child_order.extend(
+        [
+            "activation_limit_duration",
+            "activation_limit_usages",
+            "activation_limit_session",
+        ]
+    )
 
     def __init__(
         self,
@@ -945,7 +1003,10 @@ class ExtensionOnlyType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["extension"])
 
@@ -1296,7 +1357,9 @@ class MobileNetworkEndToEndEncryption(ExtensionOnlyType_):
 
 
 def mobile_network_end_to_end_encryption_from_string(xml_string):
-    return saml2.create_class_from_xml_string(MobileNetworkEndToEndEncryption, xml_string)
+    return saml2.create_class_from_xml_string(
+        MobileNetworkEndToEndEncryption, xml_string
+    )
 
 
 class SSL(ExtensionOnlyType_):
@@ -1398,22 +1461,39 @@ class IdentificationType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}PhysicalVerification"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}PhysicalVerification"
+    ] = (
         "physical_verification",
         PhysicalVerification,
     )
     c_cardinality["physical_verification"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}WrittenConsent"] = ("written_consent", WrittenConsent)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}WrittenConsent"] = (
+        "written_consent",
+        WrittenConsent,
+    )
     c_cardinality["written_consent"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}GoverningAgreements"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}GoverningAgreements"
+    ] = (
         "governing_agreements",
         GoverningAgreements,
     )
     c_cardinality["governing_agreements"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["nym"] = ("nym", NymType_, False)
-    c_child_order.extend(["physical_verification", "written_consent", "governing_agreements", "extension"])
+    c_child_order.extend(
+        [
+            "physical_verification",
+            "written_consent",
+            "governing_agreements",
+            "extension",
+        ]
+    )
 
     def __init__(
         self,
@@ -1456,24 +1536,33 @@ class AuthenticatorTransportProtocolType_(SamlBase):
     c_cardinality["http"] = {"min": 0, "max": 1}
     c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SSL"] = ("ssl", SSL)
     c_cardinality["ssl"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}MobileNetworkNoEncryption"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}MobileNetworkNoEncryption"
+    ] = (
         "mobile_network_no_encryption",
         MobileNetworkNoEncryption,
     )
     c_cardinality["mobile_network_no_encryption"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}MobileNetworkRadioEncryption"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}MobileNetworkRadioEncryption"
+    ] = (
         "mobile_network_radio_encryption",
         MobileNetworkRadioEncryption,
     )
     c_cardinality["mobile_network_radio_encryption"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}MobileNetworkEndToEndEncryption"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}MobileNetworkEndToEndEncryption"
+    ] = (
         "mobile_network_end_to_end_encryption",
         MobileNetworkEndToEndEncryption,
     )
     c_cardinality["mobile_network_end_to_end_encryption"] = {"min": 0, "max": 1}
     c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}WTLS"] = ("wtls", WTLS)
     c_cardinality["wtls"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}IPSec"] = ("ip_sec", IPSec)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}IPSec"] = (
+        "ip_sec",
+        IPSec,
+    )
     c_cardinality["ip_sec"] = {"min": 0, "max": 1}
     c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}PSTN"] = ("pstn", PSTN)
     c_cardinality["pstn"] = {"min": 0, "max": 1}
@@ -1481,7 +1570,10 @@ class AuthenticatorTransportProtocolType_(SamlBase):
     c_cardinality["isdn"] = {"min": 0, "max": 1}
     c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ADSL"] = ("adsl", ADSL)
     c_cardinality["adsl"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(
         [
@@ -1536,7 +1628,9 @@ class AuthenticatorTransportProtocolType_(SamlBase):
 
 
 def authenticator_transport_protocol_type__from_string(xml_string):
-    return saml2.create_class_from_xml_string(AuthenticatorTransportProtocolType_, xml_string)
+    return saml2.create_class_from_xml_string(
+        AuthenticatorTransportProtocolType_, xml_string
+    )
 
 
 class RestrictedPassword(RestrictedPasswordType_):
@@ -1563,20 +1657,34 @@ class ActivationPinType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Length"] = ("length", Length)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Length"] = (
+        "length",
+        Length,
+    )
     c_cardinality["length"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Alphabet"] = ("alphabet", Alphabet)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Alphabet"] = (
+        "alphabet",
+        Alphabet,
+    )
     c_cardinality["alphabet"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Generation"] = ("generation", Generation)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Generation"] = (
+        "generation",
+        Generation,
+    )
     c_cardinality["generation"] = {"min": 0, "max": 1}
     c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ActivationLimit"] = (
         "activation_limit",
         ActivationLimit,
     )
     c_cardinality["activation_limit"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
-    c_child_order.extend(["length", "alphabet", "generation", "activation_limit", "extension"])
+    c_child_order.extend(
+        ["length", "alphabet", "generation", "activation_limit", "extension"]
+    )
 
     def __init__(
         self,
@@ -1615,9 +1723,15 @@ class SecurityAuditType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SwitchAudit"] = ("switch_audit", SwitchAudit)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SwitchAudit"] = (
+        "switch_audit",
+        SwitchAudit,
+    )
     c_cardinality["switch_audit"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["switch_audit", "extension"])
 
@@ -1652,7 +1766,9 @@ class AuthenticatorBaseType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}RestrictedPassword"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}RestrictedPassword"
+    ] = (
         "restricted_password",
         RestrictedPassword,
     )
@@ -1735,7 +1851,9 @@ class AuthenticatorTransportProtocol(AuthenticatorTransportProtocolType_):
 
 
 def authenticator_transport_protocol_from_string(xml_string):
-    return saml2.create_class_from_xml_string(AuthenticatorTransportProtocol, xml_string)
+    return saml2.create_class_from_xml_string(
+        AuthenticatorTransportProtocol, xml_string
+    )
 
 
 class SecurityAudit(SecurityAuditType_):
@@ -1762,14 +1880,22 @@ class OperationalProtectionType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SecurityAudit"] = ("security_audit", SecurityAudit)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SecurityAudit"] = (
+        "security_audit",
+        SecurityAudit,
+    )
     c_cardinality["security_audit"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}DeactivationCallCenter"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}DeactivationCallCenter"
+    ] = (
         "deactivation_call_center",
         DeactivationCallCenter,
     )
     c_cardinality["deactivation_call_center"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["security_audit", "deactivation_call_center", "extension"])
 
@@ -1806,23 +1932,49 @@ class PrincipalAuthenticationMechanismType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Password"] = ("password", Password)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Password"] = (
+        "password",
+        Password,
+    )
     c_cardinality["password"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}RestrictedPassword"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}RestrictedPassword"
+    ] = (
         "restricted_password",
         RestrictedPassword,
     )
     c_cardinality["restricted_password"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Token"] = ("token", Token)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Token"] = (
+        "token",
+        Token,
+    )
     c_cardinality["token"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Smartcard"] = ("smartcard", Smartcard)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Smartcard"] = (
+        "smartcard",
+        Smartcard,
+    )
     c_cardinality["smartcard"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ActivationPin"] = ("activation_pin", ActivationPin)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ActivationPin"] = (
+        "activation_pin",
+        ActivationPin,
+    )
     c_cardinality["activation_pin"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["preauth"] = ("preauth", "integer", False)
-    c_child_order.extend(["password", "restricted_password", "token", "smartcard", "activation_pin", "extension"])
+    c_child_order.extend(
+        [
+            "password",
+            "restricted_password",
+            "token",
+            "smartcard",
+            "activation_pin",
+            "extension",
+        ]
+    )
 
     def __init__(
         self,
@@ -1853,7 +2005,9 @@ class PrincipalAuthenticationMechanismType_(SamlBase):
 
 
 def principal_authentication_mechanism_type__from_string(xml_string):
-    return saml2.create_class_from_xml_string(PrincipalAuthenticationMechanismType_, xml_string)
+    return saml2.create_class_from_xml_string(
+        PrincipalAuthenticationMechanismType_, xml_string
+    )
 
 
 class KeyActivationType_(SamlBase):
@@ -1865,9 +2019,15 @@ class KeyActivationType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ActivationPin"] = ("activation_pin", ActivationPin)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ActivationPin"] = (
+        "activation_pin",
+        ActivationPin,
+    )
     c_cardinality["activation_pin"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["activation_pin", "extension"])
 
@@ -1920,7 +2080,9 @@ class PrincipalAuthenticationMechanism(PrincipalAuthenticationMechanismType_):
 
 
 def principal_authentication_mechanism_from_string(xml_string):
-    return saml2.create_class_from_xml_string(PrincipalAuthenticationMechanism, xml_string)
+    return saml2.create_class_from_xml_string(
+        PrincipalAuthenticationMechanism, xml_string
+    )
 
 
 class OperationalProtection(OperationalProtectionType_):
@@ -1947,13 +2109,25 @@ class PrivateKeyProtectionType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}KeyActivation"] = ("key_activation", KeyActivation)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}KeyActivation"] = (
+        "key_activation",
+        KeyActivation,
+    )
     c_cardinality["key_activation"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}KeyStorage"] = ("key_storage", KeyStorage)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}KeyStorage"] = (
+        "key_storage",
+        KeyStorage,
+    )
     c_cardinality["key_storage"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}KeySharing"] = ("key_sharing", KeySharing)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}KeySharing"] = (
+        "key_sharing",
+        KeySharing,
+    )
     c_cardinality["key_sharing"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["key_activation", "key_storage", "key_sharing", "extension"])
 
@@ -1992,11 +2166,20 @@ class SecretKeyProtectionType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}KeyActivation"] = ("key_activation", KeyActivation)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}KeyActivation"] = (
+        "key_activation",
+        KeyActivation,
+    )
     c_cardinality["key_activation"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}KeyStorage"] = ("key_storage", KeyStorage)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}KeyStorage"] = (
+        "key_storage",
+        KeyStorage,
+    )
     c_cardinality["key_storage"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(["key_activation", "key_storage", "extension"])
 
@@ -2033,21 +2216,36 @@ class AuthnMethodBaseType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}PrincipalAuthenticationMechanism"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}PrincipalAuthenticationMechanism"
+    ] = (
         "principal_authentication_mechanism",
         PrincipalAuthenticationMechanism,
     )
     c_cardinality["principal_authentication_mechanism"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Authenticator"] = ("authenticator", Authenticator)
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}AuthenticatorTransportProtocol"] = (
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Authenticator"] = (
+        "authenticator",
+        Authenticator,
+    )
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}AuthenticatorTransportProtocol"
+    ] = (
         "authenticator_transport_protocol",
         AuthenticatorTransportProtocol,
     )
     c_cardinality["authenticator_transport_protocol"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(
-        ["principal_authentication_mechanism", "authenticator", "authenticator_transport_protocol", "extension"]
+        [
+            "principal_authentication_mechanism",
+            "authenticator",
+            "authenticator_transport_protocol",
+            "extension",
+        ]
     )
 
     def __init__(
@@ -2130,19 +2328,28 @@ class TechnicalProtectionBaseType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}PrivateKeyProtection"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}PrivateKeyProtection"
+    ] = (
         "private_key_protection",
         PrivateKeyProtection,
     )
     c_cardinality["private_key_protection"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SecretKeyProtection"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SecretKeyProtection"
+    ] = (
         "secret_key_protection",
         SecretKeyProtection,
     )
     c_cardinality["secret_key_protection"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
-    c_child_order.extend(["private_key_protection", "secret_key_protection", "extension"])
+    c_child_order.extend(
+        ["private_key_protection", "secret_key_protection", "extension"]
+    )
 
     def __init__(
         self,
@@ -2192,25 +2399,40 @@ class AuthnContextDeclarationBaseType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Identification"] = ("identification", Identification)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Identification"] = (
+        "identification",
+        Identification,
+    )
     c_cardinality["identification"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}TechnicalProtection"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}TechnicalProtection"
+    ] = (
         "technical_protection",
         TechnicalProtection,
     )
     c_cardinality["technical_protection"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}OperationalProtection"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}OperationalProtection"
+    ] = (
         "operational_protection",
         OperationalProtection,
     )
     c_cardinality["operational_protection"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}AuthnMethod"] = ("authn_method", AuthnMethod)
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}GoverningAgreements"] = (
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}AuthnMethod"] = (
+        "authn_method",
+        AuthnMethod,
+    )
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}GoverningAgreements"
+    ] = (
         "governing_agreements",
         GoverningAgreements,
     )
     c_cardinality["governing_agreements"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_attributes["ID"] = ("id", "ID", False)
     c_child_order.extend(
@@ -2253,7 +2475,9 @@ class AuthnContextDeclarationBaseType_(SamlBase):
 
 
 def authn_context_declaration_base_type__from_string(xml_string):
-    return saml2.create_class_from_xml_string(AuthnContextDeclarationBaseType_, xml_string)
+    return saml2.create_class_from_xml_string(
+        AuthnContextDeclarationBaseType_, xml_string
+    )
 
 
 class AuthenticationContextDeclaration(AuthnContextDeclarationBaseType_):
@@ -2268,7 +2492,9 @@ class AuthenticationContextDeclaration(AuthnContextDeclarationBaseType_):
 
 
 def authentication_context_declaration_from_string(xml_string):
-    return saml2.create_class_from_xml_string(AuthenticationContextDeclaration, xml_string)
+    return saml2.create_class_from_xml_string(
+        AuthenticationContextDeclaration, xml_string
+    )
 
 
 # ..................
@@ -2287,50 +2513,83 @@ class ComplexAuthenticatorType_(SamlBase):
         PreviousSession,
     )
     c_cardinality["previous_session"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ResumeSession"] = ("resume_session", ResumeSession)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ResumeSession"] = (
+        "resume_session",
+        ResumeSession,
+    )
     c_cardinality["resume_session"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}DigSig"] = ("dig_sig", DigSig)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}DigSig"] = (
+        "dig_sig",
+        DigSig,
+    )
     c_cardinality["dig_sig"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Password"] = ("password", Password)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Password"] = (
+        "password",
+        Password,
+    )
     c_cardinality["password"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}RestrictedPassword" ""] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}RestrictedPassword"
+    ] = (
         "restricted_password",
         RestrictedPassword,
     )
     c_cardinality["restricted_password"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ZeroKnowledge"] = ("zero_knowledge", ZeroKnowledge)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ZeroKnowledge"] = (
+        "zero_knowledge",
+        ZeroKnowledge,
+    )
     c_cardinality["zero_knowledge"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SharedSecretChallengeResponse"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SharedSecretChallengeResponse"
+    ] = (
         "shared_secret_challenge_response",
         SharedSecretChallengeResponse,
     )
     c_cardinality["shared_secret_challenge_response"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SharedSecretDynamicPlaintext"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SharedSecretDynamicPlaintext"
+    ] = (
         "shared_secret_dynamic_plaintext",
         SharedSecretDynamicPlaintext,
     )
     c_cardinality["shared_secret_dynamic_plaintext"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}IPAddress"] = ("ip_address", IPAddress)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}IPAddress"] = (
+        "ip_address",
+        IPAddress,
+    )
     c_cardinality["ip_address"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}AsymmetricDecryption"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}AsymmetricDecryption"
+    ] = (
         "asymmetric_decryption",
         AsymmetricDecryption,
     )
     c_cardinality["asymmetric_decryption"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}AsymmetricKeyAgreement"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}AsymmetricKeyAgreement"
+    ] = (
         "asymmetric_key_agreement",
         AsymmetricKeyAgreement,
     )
     c_cardinality["asymmetric_key_agreement"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SubscriberLineNumber"] = (
+    c_children[
+        "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}SubscriberLineNumber"
+    ] = (
         "subscriber_line_number",
         SubscriberLineNumber,
     )
     c_cardinality["subscriber_line_number"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}UserSuffix"] = ("user_suffix", UserSuffix)
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}UserSuffix"] = (
+        "user_suffix",
+        UserSuffix,
+    )
     c_cardinality["user_suffix"] = {"min": 0, "max": 1}
     c_cardinality["complex_authenticator"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = ("extension", [Extension])
+    c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}Extension"] = (
+        "extension",
+        [Extension],
+    )
     c_cardinality["extension"] = {"min": 0}
     c_child_order.extend(
         [
@@ -2416,11 +2675,15 @@ def complex_authenticator_from_string(xml_string):
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-ComplexAuthenticatorType_.c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ComplexAuthenticator"] = (
+ComplexAuthenticatorType_.c_children[
+    "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ComplexAuthenticator"
+] = (
     "complex_authenticator",
     ComplexAuthenticator,
 )
-ComplexAuthenticator.c_children["{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ComplexAuthenticator"] = (
+ComplexAuthenticator.c_children[
+    "{urn:oasis:names:tc:SAML:2.0:ac:classes:Password}ComplexAuthenticator"
+] = (
     "complex_authenticator",
     ComplexAuthenticator,
 )

@@ -112,7 +112,9 @@ def validate_before(not_before, slack):
         nbefore = calendar.timegm(time_util.str_to_time(not_before))
         if nbefore > now + slack:
             now_str = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
-            raise ToEarly(f"Can't use response yet: (now={now_str} + slack={int(slack)}) <= notbefore={not_before}")
+            raise ToEarly(
+                f"Can't use response yet: (now={now_str} + slack={int(slack)}) <= notbefore={not_before}"
+            )
     return True
 
 
@@ -333,7 +335,9 @@ def _valid_instance(instance, val):
     except NotValid as exc:
         raise NotValid(f"Class '{instance.__class__.__name__}' instance: {exc.args[0]}")
     except OutsideCardinality as exc:
-        raise NotValid(f"Class '{instance.__class__.__name__}' instance cardinality error: {exc.args[0]}")
+        raise NotValid(
+            f"Class '{instance.__class__.__name__}' instance cardinality error: {exc.args[0]}"
+        )
 
 
 ERROR_TEXT = "Wrong type of value '%s' on attribute '%s' expected it to be %s"
@@ -354,7 +358,7 @@ def valid_instance(instance):
         except NotValid as exc:
             raise NotValid(f"Class '{class_name}' instance: {exc.args[0]}")
 
-    for (name, typ, required) in instclass.c_attributes.values():
+    for name, typ, required in instclass.c_attributes.values():
         value = getattr(instance, name, "")
         if required and not value:
             txt = f"Required value on property '{name}' missing"
@@ -375,7 +379,7 @@ def valid_instance(instance):
                 txt = ERROR_TEXT % (value, name, exc.args[0])
                 raise NotValid(f"Class '{class_name}' instance: {txt}")
 
-    for (name, _spec) in instclass.c_children.values():
+    for name, _spec in instclass.c_children.values():
         value = getattr(instance, name, "")
 
         try:
@@ -402,9 +406,13 @@ def valid_instance(instance):
 
             if _card:
                 if _cmin is not None and _cmin > vlen:
-                    raise NotValid(f"Class '{class_name}' instance cardinality error: less then min ({vlen}<{_cmin})")
+                    raise NotValid(
+                        f"Class '{class_name}' instance cardinality error: less then min ({vlen}<{_cmin})"
+                    )
                 if _cmax is not None and vlen > _cmax:
-                    raise NotValid(f"Class '{class_name}' instance cardinality error: more then max ({vlen}>{_cmax})")
+                    raise NotValid(
+                        f"Class '{class_name}' instance cardinality error: more then max ({vlen}>{_cmax})"
+                    )
 
             if _list:
                 for val in value:
@@ -414,12 +422,18 @@ def valid_instance(instance):
                 _valid_instance(instance, value)
         else:
             if _cmin:
-                raise NotValid(f"Class '{class_name}' instance cardinality error: too few values on {name}")
+                raise NotValid(
+                    f"Class '{class_name}' instance cardinality error: too few values on {name}"
+                )
 
     return True
 
 
 def valid_domain_name(dns_name):
-    m = re.match(r"^[a-z0-9]+([-.]{ 1 }[a-z0-9]+).[a-z]{2,5}(:[0-9]{1,5})?(\/.)?$", dns_name, re.I)
+    m = re.match(
+        r"^[a-z0-9]+([-.]{ 1 }[a-z0-9]+).[a-z]{2,5}(:[0-9]{1,5})?(\/.)?$",
+        dns_name,
+        re.I,
+    )
     if not m:
         raise ValueError("Not a proper domain name")

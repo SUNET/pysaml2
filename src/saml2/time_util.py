@@ -6,15 +6,18 @@ different types of information.
 """
 
 import calendar
-from datetime import datetime
-from datetime import timedelta
 import re
 import sys
 import time
+from datetime import datetime
+from datetime import timezone
+from datetime import timedelta
 
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-TIME_FORMAT_WITH_FRAGMENT = re.compile(r"^(\d{4,4}-\d{2,2}-\d{2,2}T\d{2,2}:\d{2,2}:\d{2,2})(\.\d*)?Z?$")
+TIME_FORMAT_WITH_FRAGMENT = re.compile(
+    r"^(\d{4,4}-\d{2,2}-\d{2,2}T\d{2,2}:\d{2,2}:\d{2,2})(\.\d*)?Z?$"
+)
 
 # ---------------------------------------------------------------------------
 # I'm sure this is implemented somewhere else can't find it now though, so I
@@ -104,7 +107,9 @@ def parse_duration(duration):
                             else:
                                 raise Exception("Not a float")
                     else:
-                        raise ValueError("Fraction not allowed on other than smallest value")
+                        raise ValueError(
+                            "Fraction not allowed on other than smallest value"
+                        )
                 index = mod + index + 1
             except ValueError:
                 dic[typ] = 0
@@ -116,7 +121,6 @@ def parse_duration(duration):
 
 
 def add_duration(tid, duration):
-
     (sign, dur) = parse_duration(duration)
 
     if sign == "+":
@@ -159,7 +163,9 @@ def add_duration(tid, duration):
             month = modulo(temp, 1, 13)
             year += f_quotient(temp, 1, 13)
 
-        return time.localtime(time.mktime((year, month, days, hour, minutes, secs, 0, 0, -1)))
+        return time.localtime(
+            time.mktime((year, month, days, hour, minutes, secs, 0, 0, -1))
+        )
     else:
         pass
 
@@ -167,7 +173,9 @@ def add_duration(tid, duration):
 # ---------------------------------------------------------------------------
 
 
-def time_in_a_while(days=0, seconds=0, microseconds=0, milliseconds=0, minutes=0, hours=0, weeks=0):
+def time_in_a_while(
+    days=0, seconds=0, microseconds=0, milliseconds=0, minutes=0, hours=0, weeks=0
+):
     """
     format of timedelta:
         timedelta([days[, seconds[, microseconds[, milliseconds[,
@@ -175,20 +183,31 @@ def time_in_a_while(days=0, seconds=0, microseconds=0, milliseconds=0, minutes=0
     :return: UTC time
     """
     delta = timedelta(days, seconds, microseconds, milliseconds, minutes, hours, weeks)
-    return datetime.utcnow() + delta
+    return datetime.now(timezone.utc) + delta
 
 
-def time_a_while_ago(days=0, seconds=0, microseconds=0, milliseconds=0, minutes=0, hours=0, weeks=0):
+def time_a_while_ago(
+    days=0, seconds=0, microseconds=0, milliseconds=0, minutes=0, hours=0, weeks=0
+):
     """
     format of timedelta:
         timedelta([days[, seconds[, microseconds[, milliseconds[,
                     minutes[, hours[, weeks]]]]]]])
     """
     delta = timedelta(days, seconds, microseconds, milliseconds, minutes, hours, weeks)
-    return datetime.utcnow() - delta
+    return datetime.now(timezone.utc) - delta
 
 
-def in_a_while(days=0, seconds=0, microseconds=0, milliseconds=0, minutes=0, hours=0, weeks=0, format=TIME_FORMAT):
+def in_a_while(
+    days=0,
+    seconds=0,
+    microseconds=0,
+    milliseconds=0,
+    minutes=0,
+    hours=0,
+    weeks=0,
+    format=TIME_FORMAT,
+):
     """
     format of timedelta:
         timedelta([days[, seconds[, microseconds[, milliseconds[,
@@ -197,11 +216,24 @@ def in_a_while(days=0, seconds=0, microseconds=0, milliseconds=0, minutes=0, hou
     if format is None:
         format = TIME_FORMAT
 
-    return time_in_a_while(days, seconds, microseconds, milliseconds, minutes, hours, weeks).strftime(format)
+    return time_in_a_while(
+        days, seconds, microseconds, milliseconds, minutes, hours, weeks
+    ).strftime(format)
 
 
-def a_while_ago(days=0, seconds=0, microseconds=0, milliseconds=0, minutes=0, hours=0, weeks=0, format=TIME_FORMAT):
-    return time_a_while_ago(days, seconds, microseconds, milliseconds, minutes, hours, weeks).strftime(format)
+def a_while_ago(
+    days=0,
+    seconds=0,
+    microseconds=0,
+    milliseconds=0,
+    minutes=0,
+    hours=0,
+    weeks=0,
+    format=TIME_FORMAT,
+):
+    return time_a_while_ago(
+        days, seconds, microseconds, milliseconds, minutes, hours, weeks
+    ).strftime(format)
 
 
 # ---------------------------------------------------------------------------

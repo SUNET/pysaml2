@@ -53,9 +53,13 @@ NAMEID_FORMAT_UNSPECIFIED = "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecifi
 # subject as email address
 NAMEID_FORMAT_EMAILADDRESS = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
 # subject as x509 key
-NAMEID_FORMAT_X509SUBJECTNAME = "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName"
+NAMEID_FORMAT_X509SUBJECTNAME = (
+    "urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName"
+)
 # subject as windows domain name
-NAMEID_FORMAT_WINDOWSDOMAINQUALIFIEDNAME = "urn:oasis:names:tc:SAML:1.1:nameid-format:WindowsDomainQualifiedName"
+NAMEID_FORMAT_WINDOWSDOMAINQUALIFIEDNAME = (
+    "urn:oasis:names:tc:SAML:1.1:nameid-format:WindowsDomainQualifiedName"
+)
 # subject from a kerberos instance
 NAMEID_FORMAT_KERBEROS = "urn:oasis:names:tc:SAML:2.0:nameid-format:kerberos"
 # subject as name
@@ -88,7 +92,9 @@ PROFILE_ATTRIBUTE_BASIC = "urn:oasis:names:tc:SAML:2.0:profiles:attribute:basic"
 # authenticate the request with login credentials
 AUTHN_PASSWORD = "urn:oasis:names:tc:SAML:2.0:ac:classes:Password"
 # authenticate the request with login credentials, over tls/https
-AUTHN_PASSWORD_PROTECTED = "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+AUTHN_PASSWORD_PROTECTED = (
+    "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+)
 
 # attribute statements is key:value metadata shared with your app
 
@@ -152,7 +158,10 @@ class AttributeValueBase(SamlBase):
         self._extatt = {}
 
         SamlBase.__init__(
-            self, text=None, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=None,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         if self._extatt:
             self.extension_attributes = self._extatt
@@ -173,9 +182,13 @@ class AttributeValueBase(SamlBase):
     def verify(self):
         if not self.text and not self.extension_elements:
             if not self.extension_attributes:
-                raise Exception("Attribute value base should not have extension attributes")
+                raise Exception(
+                    "Attribute value base should not have extension attributes"
+                )
             if self.extension_attributes[XSI_NIL] != "true":
-                raise Exception("Attribute value base should not have extension attributes")
+                raise Exception(
+                    "Attribute value base should not have extension attributes"
+                )
             return True
         else:
             SamlBase.verify(self)
@@ -295,7 +308,9 @@ class AttributeValueBase(SamlBase):
             "base64Binary": {
                 "type": str,
                 "to_type": str,
-                "to_text": (lambda x: base64.encodebytes(x.encode()) if base64encode else x),
+                "to_text": (
+                    lambda x: base64.encodebytes(x.encode()) if base64encode else x
+                ),
             },
             "anyType": {
                 "type": type(value),
@@ -309,7 +324,11 @@ class AttributeValueBase(SamlBase):
             },
         }
 
-        xsd_string = "base64Binary" if base64encode else self.get_type() or type_to_xsd.get(type(value))
+        xsd_string = (
+            "base64Binary"
+            if base64encode
+            else self.get_type() or type_to_xsd.get(type(value))
+        )
 
         xsd_ns, xsd_type = (
             ["", type(None)]
@@ -341,7 +360,9 @@ class AttributeValueBase(SamlBase):
             _wrong_type_value(xsd=xsd_type, value=value)
 
         text = to_text(value)
-        self.set_type(f"{xsd_ns}:{xsd_type}" if xsd_ns else xsd_type if xsd_type else "")
+        self.set_type(
+            f"{xsd_ns}:{xsd_type}" if xsd_ns else xsd_type if xsd_type else ""
+        )
         SamlBase.__setattr__(self, "text", text)
         return self
 
@@ -384,10 +405,18 @@ class BaseIDAbstractType_(SamlBase):
     c_attributes["SPNameQualifier"] = ("sp_name_qualifier", "string", False)
 
     def __init__(
-        self, name_qualifier=None, sp_name_qualifier=None, text=None, extension_elements=None, extension_attributes=None
+        self,
+        name_qualifier=None,
+        sp_name_qualifier=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.name_qualifier = name_qualifier
         self.sp_name_qualifier = sp_name_qualifier
@@ -419,7 +448,10 @@ class NameIDType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.name_qualifier = name_qualifier
         self.sp_name_qualifier = sp_name_qualifier
@@ -440,16 +472,30 @@ class EncryptedElementType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://www.w3.org/2001/04/xmlenc#}EncryptedData"] = ("encrypted_data", xenc.EncryptedData)
-    c_children["{http://www.w3.org/2001/04/xmlenc#}EncryptedKey"] = ("encrypted_key", [xenc.EncryptedKey])
+    c_children["{http://www.w3.org/2001/04/xmlenc#}EncryptedData"] = (
+        "encrypted_data",
+        xenc.EncryptedData,
+    )
+    c_children["{http://www.w3.org/2001/04/xmlenc#}EncryptedKey"] = (
+        "encrypted_key",
+        [xenc.EncryptedKey],
+    )
     c_cardinality["encrypted_key"] = {"min": 0}
     c_child_order.extend(["encrypted_data", "encrypted_key"])
 
     def __init__(
-        self, encrypted_data=None, encrypted_key=None, text=None, extension_elements=None, extension_attributes=None
+        self,
+        encrypted_data=None,
+        encrypted_key=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.encrypted_data = encrypted_data
         self.encrypted_key = encrypted_key or []
@@ -536,7 +582,12 @@ class SubjectConfirmationDataType_(SamlBase):
     c_attributes["Recipient"] = ("recipient", "anyURI", False)
     c_attributes["InResponseTo"] = ("in_response_to", "NCName", False)
     c_attributes["Address"] = ("address", "string", False)
-    c_any = {"namespace": "##any", "processContents": "lax", "minOccurs": "0", "maxOccurs": "unbounded"}
+    c_any = {
+        "namespace": "##any",
+        "processContents": "lax",
+        "minOccurs": "0",
+        "maxOccurs": "unbounded",
+    }
     c_any_attribute = {"namespace": "##other", "processContents": "lax"}
 
     def __init__(
@@ -551,7 +602,10 @@ class SubjectConfirmationDataType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.not_before = not_before
         self.not_on_or_after = not_on_or_after
@@ -574,13 +628,25 @@ class KeyInfoConfirmationDataType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{http://www.w3.org/2000/09/xmldsig#}KeyInfo"] = ("key_info", [ds.KeyInfo])
+    c_children["{http://www.w3.org/2000/09/xmldsig#}KeyInfo"] = (
+        "key_info",
+        [ds.KeyInfo],
+    )
     c_cardinality["key_info"] = {"min": 1}
     c_child_order.extend(["key_info"])
 
-    def __init__(self, key_info=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        key_info=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.key_info = key_info or []
 
@@ -641,14 +707,27 @@ class ProxyRestrictionType_(ConditionAbstractType_):
     c_attributes = ConditionAbstractType_.c_attributes.copy()
     c_child_order = ConditionAbstractType_.c_child_order[:]
     c_cardinality = ConditionAbstractType_.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Audience"] = ("audience", [Audience])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Audience"] = (
+        "audience",
+        [Audience],
+    )
     c_cardinality["audience"] = {"min": 0}
     c_attributes["Count"] = ("count", "nonNegativeInteger", False)
     c_child_order.extend(["audience"])
 
-    def __init__(self, audience=None, count=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        audience=None,
+        count=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         ConditionAbstractType_.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.audience = audience or []
         self.count = count
@@ -696,9 +775,19 @@ class SubjectLocalityType_(SamlBase):
     c_attributes["Address"] = ("address", "string", False)
     c_attributes["DNSName"] = ("dns_name", "string", False)
 
-    def __init__(self, address=None, dns_name=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        address=None,
+        dns_name=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.address = address
         self.dns_name = dns_name
@@ -778,7 +867,10 @@ class DecisionType_(SamlBase):
 
     c_tag = "DecisionType"
     c_namespace = NAMESPACE
-    c_value_type = {"base": "string", "enumeration": ["Permit", "Deny", "Indeterminate"]}
+    c_value_type = {
+        "base": "string",
+        "enumeration": ["Permit", "Deny", "Indeterminate"],
+    }
     c_children = SamlBase.c_children.copy()
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
@@ -801,9 +893,18 @@ class ActionType_(SamlBase):
     c_cardinality = SamlBase.c_cardinality.copy()
     c_attributes["Namespace"] = ("namespace", "anyURI", True)
 
-    def __init__(self, namespace=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        namespace=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.namespace = namespace
 
@@ -923,13 +1024,25 @@ class AudienceRestrictionType_(ConditionAbstractType_):
     c_attributes = ConditionAbstractType_.c_attributes.copy()
     c_child_order = ConditionAbstractType_.c_child_order[:]
     c_cardinality = ConditionAbstractType_.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Audience"] = ("audience", [Audience])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Audience"] = (
+        "audience",
+        [Audience],
+    )
     c_cardinality["audience"] = {"min": 1}
     c_child_order.extend(["audience"])
 
-    def __init__(self, audience=None, text=None, extension_elements=None, extension_attributes=None):
+    def __init__(
+        self,
+        audience=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
+    ):
         ConditionAbstractType_.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.audience = audience or []
 
@@ -1023,7 +1136,10 @@ class AuthnContextType_(SamlBase):
         "authn_context_class_ref",
         AuthnContextClassRef,
     )
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AuthnContextDecl"] = ("authn_context_decl", AuthnContextDecl)
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AuthnContextDecl"] = (
+        "authn_context_decl",
+        AuthnContextDecl,
+    )
     c_cardinality["authn_context_decl"] = {"min": 0, "max": 1}
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AuthnContextDeclRef"] = (
         "authn_context_decl_ref",
@@ -1036,7 +1152,12 @@ class AuthnContextType_(SamlBase):
     )
     c_cardinality["authenticating_authority"] = {"min": 0}
     c_child_order.extend(
-        ["authn_context_class_ref", "authn_context_decl", "authn_context_decl_ref", "authenticating_authority"]
+        [
+            "authn_context_class_ref",
+            "authn_context_decl",
+            "authn_context_decl_ref",
+            "authenticating_authority",
+        ]
     )
 
     def __init__(
@@ -1050,7 +1171,10 @@ class AuthnContextType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.authn_context_class_ref = authn_context_class_ref
         self.authn_context_decl = authn_context_decl
@@ -1059,7 +1183,10 @@ class AuthnContextType_(SamlBase):
 
     def verify(self):
         if self.authn_context_decl and self.authn_context_decl_ref:
-            raise Exception("Invalid Response: " "Cannot have both <AuthnContextDecl> and <AuthnContextDeclRef>")
+            raise Exception(
+                "Invalid Response: "
+                "Cannot have both <AuthnContextDecl> and <AuthnContextDeclRef>"
+            )
         return SamlBase.verify(self)
 
 
@@ -1091,7 +1218,10 @@ class AttributeType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AttributeValue"] = ("attribute_value", [AttributeValue])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AttributeValue"] = (
+        "attribute_value",
+        [AttributeValue],
+    )
     c_cardinality["attribute_value"] = {"min": 0}
     c_attributes["Name"] = ("name", "string", True)
     c_attributes["NameFormat"] = ("name_format", "anyURI", False)
@@ -1110,7 +1240,10 @@ class AttributeType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.attribute_value = attribute_value or []
         self.name = name
@@ -1141,7 +1274,10 @@ class SubjectConfirmationType_(SamlBase):
     c_cardinality["base_id"] = {"min": 0, "max": 1}
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}NameID"] = ("name_id", NameID)
     c_cardinality["name_id"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}EncryptedID"] = ("encrypted_id", EncryptedID)
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}EncryptedID"] = (
+        "encrypted_id",
+        EncryptedID,
+    )
     c_cardinality["encrypted_id"] = {"min": 0, "max": 1}
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}SubjectConfirmationData"] = (
         "subject_confirmation_data",
@@ -1149,7 +1285,9 @@ class SubjectConfirmationType_(SamlBase):
     )
     c_cardinality["subject_confirmation_data"] = {"min": 0, "max": 1}
     c_attributes["Method"] = ("method", "anyURI", True)
-    c_child_order.extend(["base_id", "name_id", "encrypted_id", "subject_confirmation_data"])
+    c_child_order.extend(
+        ["base_id", "name_id", "encrypted_id", "subject_confirmation_data"]
+    )
 
     def __init__(
         self,
@@ -1163,7 +1301,10 @@ class SubjectConfirmationType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.base_id = base_id
         self.name_id = name_id
@@ -1245,20 +1386,31 @@ class ConditionsType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Condition"] = ("condition", [Condition])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Condition"] = (
+        "condition",
+        [Condition],
+    )
     c_cardinality["condition"] = {"min": 0}
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AudienceRestriction"] = (
         "audience_restriction",
         [AudienceRestriction],
     )
     c_cardinality["audience_restriction"] = {"min": 0}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}OneTimeUse"] = ("one_time_use", [OneTimeUse])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}OneTimeUse"] = (
+        "one_time_use",
+        [OneTimeUse],
+    )
     c_cardinality["one_time_use"] = {"min": 0}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}ProxyRestriction"] = ("proxy_restriction", [ProxyRestriction])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}ProxyRestriction"] = (
+        "proxy_restriction",
+        [ProxyRestriction],
+    )
     c_cardinality["proxy_restriction"] = {"min": 0}
     c_attributes["NotBefore"] = ("not_before", "dateTime", False)
     c_attributes["NotOnOrAfter"] = ("not_on_or_after", "dateTime", False)
-    c_child_order.extend(["condition", "audience_restriction", "one_time_use", "proxy_restriction"])
+    c_child_order.extend(
+        ["condition", "audience_restriction", "one_time_use", "proxy_restriction"]
+    )
 
     def __init__(
         self,
@@ -1273,7 +1425,10 @@ class ConditionsType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.condition = condition or []
         self.audience_restriction = audience_restriction or []
@@ -1306,9 +1461,15 @@ class AuthnStatementType_(StatementAbstractType_):
     c_attributes = StatementAbstractType_.c_attributes.copy()
     c_child_order = StatementAbstractType_.c_child_order[:]
     c_cardinality = StatementAbstractType_.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}SubjectLocality"] = ("subject_locality", SubjectLocality)
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}SubjectLocality"] = (
+        "subject_locality",
+        SubjectLocality,
+    )
     c_cardinality["subject_locality"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AuthnContext"] = ("authn_context", AuthnContext)
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AuthnContext"] = (
+        "authn_context",
+        AuthnContext,
+    )
     c_attributes["AuthnInstant"] = ("authn_instant", "dateTime", True)
     c_attributes["SessionIndex"] = ("session_index", "string", False)
     c_attributes["SessionNotOnOrAfter"] = ("session_not_on_or_after", "dateTime", False)
@@ -1326,7 +1487,10 @@ class AuthnStatementType_(StatementAbstractType_):
         extension_attributes=None,
     ):
         StatementAbstractType_.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.subject_locality = subject_locality
         self.authn_context = authn_context
@@ -1349,7 +1513,10 @@ class AttributeStatementType_(StatementAbstractType_):
     c_attributes = StatementAbstractType_.c_attributes.copy()
     c_child_order = StatementAbstractType_.c_child_order[:]
     c_cardinality = StatementAbstractType_.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Attribute"] = ("attribute", [Attribute])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Attribute"] = (
+        "attribute",
+        [Attribute],
+    )
     c_cardinality["attribute"] = {"min": 0}
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}EncryptedAttribute"] = (
         "encrypted_attribute",
@@ -1359,10 +1526,18 @@ class AttributeStatementType_(StatementAbstractType_):
     c_child_order.extend(["attribute", "encrypted_attribute"])
 
     def __init__(
-        self, attribute=None, encrypted_attribute=None, text=None, extension_elements=None, extension_attributes=None
+        self,
+        attribute=None,
+        encrypted_attribute=None,
+        text=None,
+        extension_elements=None,
+        extension_attributes=None,
     ):
         StatementAbstractType_.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.attribute = attribute or []
         self.encrypted_attribute = encrypted_attribute or []
@@ -1385,7 +1560,10 @@ class SubjectType_(SamlBase):
     c_cardinality["base_id"] = {"min": 0, "max": 1}
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}NameID"] = ("name_id", NameID)
     c_cardinality["name_id"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}EncryptedID"] = ("encrypted_id", EncryptedID)
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}EncryptedID"] = (
+        "encrypted_id",
+        EncryptedID,
+    )
     c_cardinality["encrypted_id"] = {"min": 0, "max": 1}
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}SubjectConfirmation"] = (
         "subject_confirmation",
@@ -1405,7 +1583,10 @@ class SubjectType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.base_id = base_id
         self.name_id = name_id
@@ -1489,9 +1670,15 @@ class EvidenceType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AssertionIDRef"] = ("assertion_id_ref", [AssertionIDRef])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AssertionIDRef"] = (
+        "assertion_id_ref",
+        [AssertionIDRef],
+    )
     c_cardinality["assertion_id_ref"] = {"min": 0}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AssertionURIRef"] = ("assertion_uri_ref", [AssertionURIRef])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AssertionURIRef"] = (
+        "assertion_uri_ref",
+        [AssertionURIRef],
+    )
     c_cardinality["assertion_uri_ref"] = {"min": 0}
     c_cardinality["assertion"] = {"min": 0}
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}EncryptedAssertion"] = (
@@ -1499,7 +1686,9 @@ class EvidenceType_(SamlBase):
         [EncryptedAssertion],
     )
     c_cardinality["encrypted_assertion"] = {"min": 0}
-    c_child_order.extend(["assertion_id_ref", "assertion_uri_ref", "assertion", "encrypted_assertion"])
+    c_child_order.extend(
+        ["assertion_id_ref", "assertion_uri_ref", "assertion", "encrypted_assertion"]
+    )
 
     def __init__(
         self,
@@ -1512,7 +1701,10 @@ class EvidenceType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.assertion_id_ref = assertion_id_ref or []
         self.assertion_uri_ref = assertion_uri_ref or []
@@ -1551,7 +1743,10 @@ class AuthzDecisionStatementType_(StatementAbstractType_):
     c_cardinality = StatementAbstractType_.c_cardinality.copy()
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Action"] = ("action", [Action])
     c_cardinality["action"] = {"min": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Evidence"] = ("evidence", Evidence)
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Evidence"] = (
+        "evidence",
+        Evidence,
+    )
     c_cardinality["evidence"] = {"min": 0, "max": 1}
     c_attributes["Resource"] = ("resource", "anyURI", True)
     c_attributes["Decision"] = ("decision", DecisionType_, True)
@@ -1568,7 +1763,10 @@ class AuthzDecisionStatementType_(StatementAbstractType_):
         extension_attributes=None,
     ):
         StatementAbstractType_.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.action = action or []
         self.evidence = evidence
@@ -1608,16 +1806,28 @@ class AssertionType_(SamlBase):
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Issuer"] = ("issuer", Issuer)
-    c_children["{http://www.w3.org/2000/09/xmldsig#}Signature"] = ("signature", ds.Signature)
+    c_children["{http://www.w3.org/2000/09/xmldsig#}Signature"] = (
+        "signature",
+        ds.Signature,
+    )
     c_cardinality["signature"] = {"min": 0, "max": 1}
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Subject"] = ("subject", Subject)
     c_cardinality["subject"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Conditions"] = ("conditions", Conditions)
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Conditions"] = (
+        "conditions",
+        Conditions,
+    )
     c_cardinality["conditions"] = {"min": 0, "max": 1}
     c_cardinality["advice"] = {"min": 0, "max": 1}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Statement"] = ("statement", [Statement])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Statement"] = (
+        "statement",
+        [Statement],
+    )
     c_cardinality["statement"] = {"min": 0}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AuthnStatement"] = ("authn_statement", [AuthnStatement])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AuthnStatement"] = (
+        "authn_statement",
+        [AuthnStatement],
+    )
     c_cardinality["authn_statement"] = {"min": 0}
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AuthzDecisionStatement"] = (
         "authz_decision_statement",
@@ -1665,7 +1875,10 @@ class AssertionType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.issuer = issuer
         self.signature = signature
@@ -1682,13 +1895,20 @@ class AssertionType_(SamlBase):
 
     def verify(self):
         # If no statement MUST contain a subject element
-        if self.attribute_statement or self.statement or self.authn_statement or self.authz_decision_statement:
+        if (
+            self.attribute_statement
+            or self.statement
+            or self.authn_statement
+            or self.authz_decision_statement
+        ):
             pass
         elif not self.subject:
             raise MustValueError("If no statement MUST contain a subject element")
 
         if self.authn_statement and not self.subject:
-            raise MustValueError("An assertion with an AuthnStatement must contain a Subject")
+            raise MustValueError(
+                "An assertion with an AuthnStatement must contain a Subject"
+            )
 
         return SamlBase.verify(self)
 
@@ -1721,18 +1941,29 @@ class AdviceType_(SamlBase):
     c_attributes = SamlBase.c_attributes.copy()
     c_child_order = SamlBase.c_child_order[:]
     c_cardinality = SamlBase.c_cardinality.copy()
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AssertionIDRef"] = ("assertion_id_ref", [AssertionIDRef])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AssertionIDRef"] = (
+        "assertion_id_ref",
+        [AssertionIDRef],
+    )
     c_cardinality["assertion_id_ref"] = {"min": 0}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AssertionURIRef"] = ("assertion_uri_ref", [AssertionURIRef])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}AssertionURIRef"] = (
+        "assertion_uri_ref",
+        [AssertionURIRef],
+    )
     c_cardinality["assertion_uri_ref"] = {"min": 0}
-    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Assertion"] = ("assertion", [Assertion])
+    c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Assertion"] = (
+        "assertion",
+        [Assertion],
+    )
     c_cardinality["assertion"] = {"min": 0}
     c_children["{urn:oasis:names:tc:SAML:2.0:assertion}EncryptedAssertion"] = (
         "encrypted_assertion",
         [EncryptedAssertion],
     )
     c_cardinality["encrypted_assertion"] = {"min": 0}
-    c_child_order.extend(["assertion_id_ref", "assertion_uri_ref", "assertion", "encrypted_assertion"])
+    c_child_order.extend(
+        ["assertion_id_ref", "assertion_uri_ref", "assertion", "encrypted_assertion"]
+    )
     c_any = {"namespace": "##other", "processContents": "lax"}
 
     def __init__(
@@ -1746,7 +1977,10 @@ class AdviceType_(SamlBase):
         extension_attributes=None,
     ):
         SamlBase.__init__(
-            self, text=text, extension_elements=extension_elements, extension_attributes=extension_attributes
+            self,
+            text=text,
+            extension_elements=extension_elements,
+            extension_attributes=extension_attributes,
         )
         self.assertion_id_ref = assertion_id_ref or []
         self.assertion_uri_ref = assertion_uri_ref or []
@@ -1774,10 +2008,22 @@ def advice_from_string(xml_string):
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-EvidenceType_.c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Assertion"] = ("assertion", [Assertion])
-Evidence.c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Assertion"] = ("assertion", [Assertion])
-AssertionType_.c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Advice"] = ("advice", Advice)
-Assertion.c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Advice"] = ("advice", Advice)
+EvidenceType_.c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Assertion"] = (
+    "assertion",
+    [Assertion],
+)
+Evidence.c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Assertion"] = (
+    "assertion",
+    [Assertion],
+)
+AssertionType_.c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Advice"] = (
+    "advice",
+    Advice,
+)
+Assertion.c_children["{urn:oasis:names:tc:SAML:2.0:assertion}Advice"] = (
+    "advice",
+    Advice,
+)
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 AG_IDNameQualifiers = [

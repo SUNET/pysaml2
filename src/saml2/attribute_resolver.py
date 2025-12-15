@@ -5,6 +5,7 @@
 Contains classes and functions that a SAML2.0 Service Provider (SP) may use
 to do attribute aggregation.
 """
+
 import logging
 
 # from saml2 import client
@@ -40,7 +41,9 @@ class AttributeResolver:
                     if attr_serv.binding != BINDING_SOAP:
                         continue
                     # attribute query assumes SOAP binding
-                    session_info = self.saml2client.attribute_query(name_id, attr_serv.location, issuer_id=issuer)
+                    session_info = self.saml2client.attribute_query(
+                        name_id, attr_serv.location, issuer_id=issuer
+                    )
                     if session_info:
                         result.append(session_info)
         return result

@@ -250,14 +250,22 @@ def error_status_factory(info):
 
         try:
             exc_context = info.args[0]
-            err_ctx = {"status_message_text": exc_context} if isinstance(exc_context, str) else exc_context
+            err_ctx = (
+                {"status_message_text": exc_context}
+                if isinstance(exc_context, str)
+                else exc_context
+            )
         except IndexError:
             err_ctx = {"status_message_text": str(info)}
 
         status_message_text = err_ctx.get("status_message_text")
-        status_code_status_code_value = err_ctx.get("status_code_status_code_value", exc_val)
+        status_code_status_code_value = err_ctx.get(
+            "status_code_status_code_value", exc_val
+        )
 
-    status_msg = samlp.StatusMessage(text=status_message_text) if status_message_text else None
+    status_msg = (
+        samlp.StatusMessage(text=status_message_text) if status_message_text else None
+    )
 
     status = samlp.Status(
         status_message=status_msg,
@@ -276,7 +284,9 @@ def success_status_factory():
 def status_message_factory(message, code, fro=samlp.STATUS_RESPONDER):
     return samlp.Status(
         status_message=samlp.StatusMessage(text=message),
-        status_code=samlp.StatusCode(value=fro, status_code=samlp.StatusCode(value=code)),
+        status_code=samlp.StatusCode(
+            value=fro, status_code=samlp.StatusCode(value=code)
+        ),
     )
 
 
